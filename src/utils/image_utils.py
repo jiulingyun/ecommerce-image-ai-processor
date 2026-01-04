@@ -3,6 +3,8 @@
 提供图片读取、保存、格式转换等工具函数。
 """
 
+from __future__ import annotations
+
 import base64
 import io
 from pathlib import Path

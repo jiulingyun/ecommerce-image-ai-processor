@@ -1,5 +1,7 @@
 """配置管理器模块."""
 
+from __future__ import annotations
+
 import json
 from pathlib import Path
 from typing import Any, Optional

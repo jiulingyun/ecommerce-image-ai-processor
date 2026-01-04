@@ -1,5 +1,7 @@
 """电商图片批量AI合成与处理桌面工具 - 应用入口."""
 
+from __future__ import annotations
+
 import sys
 from pathlib import Path
 

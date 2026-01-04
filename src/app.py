@@ -1,5 +1,7 @@
 """应用初始化和管理."""
 
+from __future__ import annotations
+
 from pathlib import Path
 from typing import Optional
 

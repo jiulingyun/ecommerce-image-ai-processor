@@ -3,6 +3,8 @@
 提供统一的错误处理机制和用户友好的错误消息。
 """
 
+from __future__ import annotations
+
 import traceback
 from typing import Any, Callable, Optional, Type, TypeVar
 

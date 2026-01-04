@@ -3,6 +3,8 @@
 提供各种通用辅助函数。
 """
 
+from __future__ import annotations
+
 import hashlib
 import uuid
 from datetime import datetime

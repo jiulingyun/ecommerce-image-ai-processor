@@ -1,5 +1,7 @@
 """自定义异常类."""
 
+from __future__ import annotations
+
 
 class AppException(Exception):
     """应用基础异常类.

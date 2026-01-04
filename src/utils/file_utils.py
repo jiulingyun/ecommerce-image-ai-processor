@@ -3,6 +3,8 @@
 提供文件和目录操作的工具函数。
 """
 
+from __future__ import annotations
+
 import os
 import shutil
 import tempfile

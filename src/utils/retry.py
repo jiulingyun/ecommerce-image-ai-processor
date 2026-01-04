@@ -9,6 +9,8 @@ Features:
     - 重试回调
 """
 
+from __future__ import annotations
+
 import asyncio
 import functools
 import time

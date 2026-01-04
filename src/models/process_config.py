@@ -1,5 +1,7 @@
 """处理配置模型."""
 
+from __future__ import annotations
+
 import json
 from typing import Optional
 

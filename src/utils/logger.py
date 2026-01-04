@@ -9,6 +9,8 @@ Features:
     - 全局日志级别管理
 """
 
+from __future__ import annotations
+
 import logging
 import sys
 from logging.handlers import RotatingFileHandler
