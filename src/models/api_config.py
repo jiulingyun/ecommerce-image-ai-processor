@@ -26,7 +26,7 @@ class AIModelConfig(BaseModel):
     """
 
     model: str = Field(
-        default="gpt-image-1.5",
+        default="qwen-image-edit-plus",
         description="AI 模型名称",
     )
     max_tokens: int = Field(

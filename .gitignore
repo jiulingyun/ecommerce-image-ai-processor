@@ -115,3 +115,5 @@ dmypy.json
 # PyInstaller build
 *.exe
 *.app
+
+demo_output/
