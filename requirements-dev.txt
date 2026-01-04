@@ -1,0 +1,27 @@
+# 电商图片批量AI合成与处理桌面工具 - 开发依赖
+
+# 包含生产依赖
+-r requirements.txt
+
+# 测试框架
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-asyncio>=0.21.0
+pytest-qt>=4.2.0
+
+# 代码格式化
+black>=23.0.0
+isort>=5.12.0
+
+# 类型检查
+mypy>=1.5.0
+
+# 代码检查
+ruff>=0.1.0
+
+# 打包工具
+pyinstaller>=6.0.0
+
+# 文档
+mkdocs>=1.5.0
+mkdocs-material>=9.0.0
