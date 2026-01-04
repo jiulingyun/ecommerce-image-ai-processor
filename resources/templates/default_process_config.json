@@ -1,0 +1,21 @@
+{
+  "background": {
+    "color": [255, 255, 255]
+  },
+  "border": {
+    "enabled": false,
+    "width": 2,
+    "color": [0, 0, 0]
+  },
+  "text": {
+    "enabled": false,
+    "content": "",
+    "position": [10, 10],
+    "font_size": 14,
+    "color": [0, 0, 0]
+  },
+  "output": {
+    "size": [800, 800],
+    "quality": 85
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "base_url": "https://api.openai.com/v1",
+  "timeout": 60,
+  "max_retries": 3,
+  "retry_delay": 1.0,
+  "model": {
+    "model": "gpt-image-1.5",
+    "max_tokens": 4096,
+    "temperature": 0.7
+  }
+}
