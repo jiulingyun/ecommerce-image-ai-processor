@@ -82,11 +82,22 @@ class AIService:
             if not self._config.has_api_key:
                 raise APIKeyNotFoundError()
 
+            # 根据 provider 类型决定是否传递 base_url
+            # DashScope 使用默认 URL，OpenAI 可以自定义
+            provider_type_enum = (
+                self._provider_type
+                if isinstance(self._provider_type, AIProviderType)
+                else AIProviderType(self._provider_type)
+            )
+            base_url = None
+            if provider_type_enum == AIProviderType.OPENAI:
+                base_url = self._config.base_url
+
             self._provider = create_ai_provider(
                 provider_type=self._provider_type,
                 api_key=self._config.get_api_key_value(),
                 model=self._config.model.model,
-                base_url=self._config.base_url if "dashscope" not in self._config.base_url else None,
+                base_url=base_url,
                 timeout=self._config.timeout,
             )
 
