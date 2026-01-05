@@ -20,6 +20,14 @@ from src.ui.widgets.toast_notification import (
     show_error,
     show_info,
 )
+from src.ui.widgets.template_editor import (
+    TemplateCanvas,
+    LayerGraphicsItem,
+    TextLayerItem,
+    ShapeLayerItem,
+    ImageLayerItem,
+    create_layer_item,
+)
 
 __all__ = [
     "AIConfigPanel",
@@ -41,4 +49,11 @@ __all__ = [
     "show_warning",
     "show_error",
     "show_info",
+    # 模板编辑器
+    "TemplateCanvas",
+    "LayerGraphicsItem",
+    "TextLayerItem",
+    "ShapeLayerItem",
+    "ImageLayerItem",
+    "create_layer_item",
 ]
