@@ -70,8 +70,7 @@ class BatchProcessor:
         self._semaphore: Optional[asyncio.Semaphore] = None
         self._is_cancelled = False
         self._is_paused = False
-        self._pause_event = asyncio.Event()
-        self._pause_event.set()  # 初始状态为非暂停
+        self._pause_event: Optional[asyncio.Event] = None  # 延迟创建
 
     @property
     def image_service(self) -> ImageService:
@@ -166,7 +165,8 @@ class BatchProcessor:
         # 初始化
         self._is_cancelled = False
         self._is_paused = False
-        self._pause_event.set()
+        self._pause_event = asyncio.Event()
+        self._pause_event.set()  # 初始状态为非暂停
         self._semaphore = asyncio.Semaphore(self._queue.concurrent_limit)
         self._queue.start()
 
