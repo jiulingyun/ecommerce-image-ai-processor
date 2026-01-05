@@ -5,14 +5,21 @@ from __future__ import annotations
 import pytest
 
 from src.models.process_config import (
+    AIPromptConfig,
     BackgroundConfig,
     BorderConfig,
     BorderStyle,
     BORDER_STYLE_NAMES,
     OutputConfig,
     OutputFormat,
+    PositionHint,
+    POSITION_HINT_NAMES,
     PresetColor,
     PRESET_COLOR_VALUES,
+    ProcessConfig,
+    PromptTemplate,
+    PROMPT_TEMPLATE_CONTENT,
+    PROMPT_TEMPLATE_NAMES,
     QualityPreset,
     QUALITY_PRESET_VALUES,
     ResizeMode,
@@ -760,3 +767,185 @@ class TestOutputConfig:
             assert "value" in mode_info
             assert "mode" in mode_info
             assert "name" in mode_info
+
+
+# ===================
+# AIPromptConfig 测试
+# ===================
+class TestAIPromptConfig:
+    """测试 AIPromptConfig 模型."""
+
+    def test_default_values(self) -> None:
+        """测试默认值."""
+        config = AIPromptConfig()
+        assert config.template == PromptTemplate.STANDARD_COMPOSITE
+        assert config.custom_prompt == ""
+        assert config.position_hint == PositionHint.AUTO
+        assert config.use_default is True
+
+    def test_from_template(self) -> None:
+        """测试从模板创建."""
+        config = AIPromptConfig.from_template(PromptTemplate.LOGO_OVERLAY)
+        assert config.template == PromptTemplate.LOGO_OVERLAY
+        assert config.use_default is True
+
+        config = AIPromptConfig.from_template(PromptTemplate.BACKGROUND_REPLACE)
+        assert config.template == PromptTemplate.BACKGROUND_REPLACE
+
+    def test_custom_prompt(self) -> None:
+        """测试自定义提示词创建."""
+        config = AIPromptConfig.custom("我的自定义提示词")
+        assert config.template == PromptTemplate.CUSTOM
+        assert config.custom_prompt == "我的自定义提示词"
+        assert config.use_default is False
+
+    def test_custom_with_position(self) -> None:
+        """测试带位置的自定义提示词."""
+        config = AIPromptConfig.custom("测试提示词", PositionHint.CENTER)
+        assert config.position_hint == PositionHint.CENTER
+        assert config.custom_prompt == "测试提示词"
+
+    def test_get_effective_prompt_default(self) -> None:
+        """测试默认模板的生效提示词."""
+        config = AIPromptConfig()
+        prompt = config.get_effective_prompt()
+        assert prompt == PROMPT_TEMPLATE_CONTENT[PromptTemplate.STANDARD_COMPOSITE]
+
+    def test_get_effective_prompt_template(self) -> None:
+        """测试不同模板的生效提示词."""
+        for template in PromptTemplate:
+            if template == PromptTemplate.CUSTOM:
+                continue
+            config = AIPromptConfig.from_template(template)
+            prompt = config.get_effective_prompt()
+            assert prompt == PROMPT_TEMPLATE_CONTENT[template]
+
+    def test_get_effective_prompt_custom(self) -> None:
+        """测试自定义提示词的生效提示词."""
+        config = AIPromptConfig.custom("我的提示词内容")
+        assert config.get_effective_prompt() == "我的提示词内容"
+
+    def test_get_effective_prompt_custom_empty(self) -> None:
+        """测试空自定义提示词回退到默认."""
+        config = AIPromptConfig(
+            template=PromptTemplate.CUSTOM,
+            custom_prompt="",
+            use_default=False,
+        )
+        prompt = config.get_effective_prompt()
+        # 应回退到默认模板
+        assert prompt == PROMPT_TEMPLATE_CONTENT[PromptTemplate.STANDARD_COMPOSITE]
+
+    def test_get_position_description(self) -> None:
+        """测试位置描述."""
+        config = AIPromptConfig(position_hint=PositionHint.AUTO)
+        assert config.get_position_description() == "合适的"
+
+        config = AIPromptConfig(position_hint=PositionHint.CENTER)
+        assert config.get_position_description() == "居中"
+
+        config = AIPromptConfig(position_hint=PositionHint.LEFT)
+        assert config.get_position_description() == "偏左"
+
+    def test_get_full_prompt_auto(self) -> None:
+        """测试自动位置的完整提示词."""
+        config = AIPromptConfig(position_hint=PositionHint.AUTO)
+        full_prompt = config.get_full_prompt()
+        # AUTO 位置不应添加额外位置说明
+        assert full_prompt == config.get_effective_prompt()
+
+    def test_get_full_prompt_with_position(self) -> None:
+        """测试带位置的完整提示词."""
+        config = AIPromptConfig(position_hint=PositionHint.CENTER)
+        full_prompt = config.get_full_prompt()
+        assert "位置要求" in full_prompt
+        assert "居中" in full_prompt
+
+    def test_get_available_templates(self) -> None:
+        """测试获取可用模板列表."""
+        templates = AIPromptConfig.get_available_templates()
+        assert len(templates) == len(PromptTemplate)
+
+        for template_info in templates:
+            assert "value" in template_info
+            assert "template" in template_info
+            assert "name" in template_info
+            assert "content" in template_info
+            assert isinstance(template_info["template"], PromptTemplate)
+
+    def test_get_available_positions(self) -> None:
+        """测试获取可用位置列表."""
+        positions = AIPromptConfig.get_available_positions()
+        assert len(positions) == len(PositionHint)
+
+        for pos_info in positions:
+            assert "value" in pos_info
+            assert "position" in pos_info
+            assert "name" in pos_info
+            assert isinstance(pos_info["position"], PositionHint)
+
+    def test_prompt_template_names(self) -> None:
+        """测试模板名称映射."""
+        for template in PromptTemplate:
+            assert template in PROMPT_TEMPLATE_NAMES
+            assert PROMPT_TEMPLATE_NAMES[template]  # 非空
+
+    def test_position_hint_names(self) -> None:
+        """测试位置名称映射."""
+        for pos in PositionHint:
+            assert pos in POSITION_HINT_NAMES
+            assert POSITION_HINT_NAMES[pos]  # 非空
+
+    def test_prompt_max_length(self) -> None:
+        """测试提示词最大长度限制."""
+        # 应该能接受 1000 字符
+        long_prompt = "a" * 1000
+        config = AIPromptConfig(custom_prompt=long_prompt)
+        assert len(config.custom_prompt) == 1000
+
+        # 超过 1000 字符应该失败
+        with pytest.raises(ValueError):
+            AIPromptConfig(custom_prompt="a" * 1001)
+
+
+# ===================
+# ProcessConfig 集成测试
+# ===================
+class TestProcessConfigWithPrompt:
+    """测试 ProcessConfig 中的 AIPromptConfig 集成."""
+
+    def test_default_prompt_config(self) -> None:
+        """测试默认提示词配置."""
+        config = ProcessConfig()
+        assert config.prompt is not None
+        assert isinstance(config.prompt, AIPromptConfig)
+        assert config.prompt.template == PromptTemplate.STANDARD_COMPOSITE
+
+    def test_process_config_with_custom_prompt(self) -> None:
+        """测试带自定义提示词的处理配置."""
+        prompt_config = AIPromptConfig.custom("自定义合成提示词")
+        config = ProcessConfig(prompt=prompt_config)
+        
+        assert config.prompt.custom_prompt == "自定义合成提示词"
+        assert config.prompt.template == PromptTemplate.CUSTOM
+
+    def test_process_config_to_json_with_prompt(self) -> None:
+        """测试带提示词配置的 JSON 序列化."""
+        config = ProcessConfig(
+            prompt=AIPromptConfig.from_template(PromptTemplate.LOGO_OVERLAY)
+        )
+        json_str = config.to_json()
+        
+        # 从 JSON 恢复
+        restored = ProcessConfig.from_json(json_str)
+        assert restored.prompt.template == PromptTemplate.LOGO_OVERLAY
+
+    def test_process_config_to_dict_with_prompt(self) -> None:
+        """测试带提示词配置的字典序列化."""
+        config = ProcessConfig(
+            prompt=AIPromptConfig(position_hint=PositionHint.CENTER)
+        )
+        data = config.to_dict()
+        
+        assert "prompt" in data
+        assert data["prompt"]["position_hint"] == "center"

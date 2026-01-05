@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import re
 from enum import Enum
-from typing import ClassVar, Optional
+from typing import ClassVar, List, Optional
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -26,6 +26,227 @@ from src.utils.constants import (
 RGBColor = tuple[int, int, int]
 Position = tuple[int, int]
 Size = tuple[int, int]
+
+
+# ===================
+# AI 提示词配置
+# ===================
+
+
+class PromptTemplate(str, Enum):
+    """提示词模板枚举."""
+
+    STANDARD_COMPOSITE = "standard_composite"  # 标准合成
+    LOGO_OVERLAY = "logo_overlay"  # Logo 贴图
+    BACKGROUND_REPLACE = "background_replace"  # 背景替换
+    PRODUCT_SHOWCASE = "product_showcase"  # 商品展示
+    CUSTOM = "custom"  # 自定义
+
+
+class PositionHint(str, Enum):
+    """位置提示枚举."""
+
+    AUTO = "auto"  # 自动（AI决定）
+    CENTER = "center"  # 居中
+    LEFT = "left"  # 偏左
+    RIGHT = "right"  # 偏右
+    TOP = "top"  # 顶部
+    BOTTOM = "bottom"  # 底部
+
+
+# 模板中文名称
+PROMPT_TEMPLATE_NAMES: dict[PromptTemplate, str] = {
+    PromptTemplate.STANDARD_COMPOSITE: "标准合成",
+    PromptTemplate.LOGO_OVERLAY: "Logo 贴图",
+    PromptTemplate.BACKGROUND_REPLACE: "背景替换",
+    PromptTemplate.PRODUCT_SHOWCASE: "商品展示",
+    PromptTemplate.CUSTOM: "自定义",
+}
+
+# 位置提示中文名称
+POSITION_HINT_NAMES: dict[PositionHint, str] = {
+    PositionHint.AUTO: "自动",
+    PositionHint.CENTER: "居中",
+    PositionHint.LEFT: "偏左",
+    PositionHint.RIGHT: "偏右",
+    PositionHint.TOP: "顶部",
+    PositionHint.BOTTOM: "底部",
+}
+
+# 预设提示词模板内容
+PROMPT_TEMPLATE_CONTENT: dict[PromptTemplate, str] = {
+    PromptTemplate.STANDARD_COMPOSITE: (
+        "将图2中的商品自然地合成到图1的背景场景中。"
+        "要求：保持商品原有细节和颜色，光影与背景协调统一，"
+        "整体效果自然真实，符合电商产品展示标准。"
+    ),
+    PromptTemplate.LOGO_OVERLAY: (
+        "将图2中的商标/Logo合成到图1中商品的合适位置上。"
+        "要求：Logo大小适中，位置自然，与商品表面贴合，"
+        "保持Logo清晰度，整体效果真实自然。"
+    ),
+    PromptTemplate.BACKGROUND_REPLACE: (
+        "保留图1中的商品主体，将其背景替换为图2中的背景场景。"
+        "要求：商品边缘处理干净自然，光影与新背景融合，"
+        "整体效果协调统一。"
+    ),
+    PromptTemplate.PRODUCT_SHOWCASE: (
+        "将图1中的商品放置在图2的展示场景中，创建专业的产品展示图。"
+        "要求：商品摆放位置合适，大小比例协调，"
+        "整体构图美观，适合电商平台展示。"
+    ),
+    PromptTemplate.CUSTOM: "",  # 自定义模板为空
+}
+
+
+class AIPromptConfig(BaseModel):
+    """AI 提示词配置.
+
+    支持预设模板和自定义提示词，用于控制 AI 图片合成效果。
+
+    Attributes:
+        template: 选择的提示词模板
+        custom_prompt: 自定义提示词内容
+        position_hint: 位置提示
+        use_default: 是否使用默认提示词（忽略自定义）
+
+    Example:
+        >>> config = AIPromptConfig(template=PromptTemplate.LOGO_OVERLAY)
+        >>> config.get_effective_prompt()
+        '将图2中的商标/Logo合成到图1中商品的合适位置上...'
+        >>>
+        >>> config = AIPromptConfig.custom("我的自定义提示词")
+        >>> config.get_effective_prompt()
+        '我的自定义提示词'
+    """
+
+    template: PromptTemplate = Field(
+        default=PromptTemplate.STANDARD_COMPOSITE,
+        description="提示词模板",
+    )
+    custom_prompt: str = Field(
+        default="",
+        max_length=1000,
+        description="自定义提示词内容",
+    )
+    position_hint: PositionHint = Field(
+        default=PositionHint.AUTO,
+        description="位置提示",
+    )
+    use_default: bool = Field(
+        default=True,
+        description="是否使用默认模板提示词",
+    )
+
+    def get_effective_prompt(self) -> str:
+        """获取实际生效的提示词.
+
+        Returns:
+            实际使用的提示词字符串
+        """
+        if self.template == PromptTemplate.CUSTOM or not self.use_default:
+            return self.custom_prompt or PROMPT_TEMPLATE_CONTENT[
+                PromptTemplate.STANDARD_COMPOSITE
+            ]
+        return PROMPT_TEMPLATE_CONTENT.get(
+            self.template,
+            PROMPT_TEMPLATE_CONTENT[PromptTemplate.STANDARD_COMPOSITE],
+        )
+
+    def get_position_description(self) -> str:
+        """获取位置描述文本.
+
+        Returns:
+            位置描述字符串，用于提示词中
+        """
+        position_desc = {
+            PositionHint.AUTO: "合适的",
+            PositionHint.CENTER: "居中",
+            PositionHint.LEFT: "偏左",
+            PositionHint.RIGHT: "偏右",
+            PositionHint.TOP: "顶部",
+            PositionHint.BOTTOM: "底部",
+        }
+        return position_desc.get(self.position_hint, "合适的")
+
+    def get_full_prompt(self) -> str:
+        """获取完整提示词（包含位置提示）.
+
+        Returns:
+            包含位置描述的完整提示词
+        """
+        base_prompt = self.get_effective_prompt()
+        if self.position_hint != PositionHint.AUTO:
+            return f"{base_prompt} 位置要求：{self.get_position_description()}位置。"
+        return base_prompt
+
+    @classmethod
+    def from_template(cls, template: PromptTemplate) -> "AIPromptConfig":
+        """从模板创建配置.
+
+        Args:
+            template: 模板类型
+
+        Returns:
+            AIPromptConfig 实例
+        """
+        return cls(template=template, use_default=True)
+
+    @classmethod
+    def custom(cls, prompt: str, position: PositionHint = PositionHint.AUTO) -> "AIPromptConfig":
+        """创建自定义提示词配置.
+
+        Args:
+            prompt: 自定义提示词
+            position: 位置提示
+
+        Returns:
+            AIPromptConfig 实例
+        """
+        return cls(
+            template=PromptTemplate.CUSTOM,
+            custom_prompt=prompt,
+            position_hint=position,
+            use_default=False,
+        )
+
+    @classmethod
+    def get_available_templates(cls) -> List[dict]:
+        """获取所有可用的模板（供 UI 使用）.
+
+        Returns:
+            模板信息列表
+        """
+        return [
+            {
+                "value": template.value,
+                "template": template,
+                "name": PROMPT_TEMPLATE_NAMES[template],
+                "content": PROMPT_TEMPLATE_CONTENT[template],
+            }
+            for template in PromptTemplate
+        ]
+
+    @classmethod
+    def get_available_positions(cls) -> List[dict]:
+        """获取所有可用的位置提示（供 UI 使用）.
+
+        Returns:
+            位置提示信息列表
+        """
+        return [
+            {
+                "value": pos.value,
+                "position": pos,
+                "name": POSITION_HINT_NAMES[pos],
+            }
+            for pos in PositionHint
+        ]
+
+
+# ===================
+# 背景颜色配置
+# ===================
 
 
 class PresetColor(str, Enum):
@@ -1079,15 +1300,16 @@ class OutputConfig(BaseModel):
 class ProcessConfig(BaseModel):
     """图片处理配置.
 
-    包含背景、边框、文字和输出的完整配置。
+    包含 AI 提示词、背景、边框、文字和输出的完整配置。
 
     Example:
         >>> config = ProcessConfig()
+        >>> config.prompt.template = PromptTemplate.LOGO_OVERLAY
         >>> config.border.enabled = True
-        >>> config.border.width = 5
         >>> json_str = config.to_json()
     """
 
+    prompt: AIPromptConfig = Field(default_factory=AIPromptConfig)
     background: BackgroundConfig = Field(default_factory=BackgroundConfig)
     border: BorderConfig = Field(default_factory=BorderConfig)
     text: TextConfig = Field(default_factory=TextConfig)

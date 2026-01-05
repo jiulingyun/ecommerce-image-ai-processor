@@ -22,8 +22,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Optional
 
-from PyQt6.QtCore import Qt, pyqtSignal, QSize
-from PyQt6.QtGui import QAction, QKeySequence, QCloseEvent
+from PyQt6.QtCore import Qt, pyqtSignal, QSize, QEvent
+from PyQt6.QtGui import QAction, QKeySequence, QCloseEvent, QResizeEvent
 from PyQt6.QtWidgets import (
     QApplication,
     QFrame,
@@ -34,6 +34,8 @@ from PyQt6.QtWidgets import (
     QMenuBar,
     QMessageBox,
     QProgressBar,
+    QScrollArea,
+    QSizePolicy,
     QSplitter,
     QStatusBar,
     QToolBar,
@@ -41,8 +43,33 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+
+class ConstrainedScrollArea(QScrollArea):
+    """约束内容宽度的滚动区域.
+    
+    确保内容宽度不超过滚动区域的可视区域宽度。
+    """
+    
+    def resizeEvent(self, event: QResizeEvent) -> None:
+        """Resize 事件处理."""
+        super().resizeEvent(event)
+        widget = self.widget()
+        if widget:
+            # 设置内容宽度为视口宽度（减去滚动条宽度）
+            scrollbar_width = self.verticalScrollBar().width() if self.verticalScrollBar().isVisible() else 0
+            available_width = self.viewport().width()
+            widget.setFixedWidth(available_width)
+
 from src.models.image_task import ImageTask
-from src.ui.widgets import ImagePairPanel, ImagePreview, TaskListWidget
+from src.ui.widgets import (
+    AIConfigPanel,
+    ImagePairPanel,
+    ImagePreview,
+    ProcessConfigPanel,
+    PromptConfigPanel,
+    QueueProgressPanel,
+    TaskListWidget,
+)
 from src.utils.constants import (
     APP_NAME,
     APP_VERSION,
@@ -121,7 +148,11 @@ class MainWindow(QMainWindow):
         # 业务组件引用
         self._image_pair_panel: Optional[ImagePairPanel] = None
         self._task_list_widget: Optional[TaskListWidget] = None
+        self._queue_progress_panel: Optional[QueueProgressPanel] = None
         self._image_preview: Optional[ImagePreview] = None
+        self._ai_config_panel: Optional[AIConfigPanel] = None
+        self._prompt_config_panel: Optional[PromptConfigPanel] = None
+        self._process_config_panel: Optional[ProcessConfigPanel] = None
 
         # 任务管理
         self._tasks: dict[str, ImageTask] = {}  # task_id -> ImageTask
@@ -401,6 +432,16 @@ class MainWindow(QMainWindow):
         self._task_list_widget = TaskListWidget()
         layout.addWidget(self._task_list_widget, 1)
 
+        # 分隔线
+        separator2 = QFrame()
+        separator2.setFrameShape(QFrame.Shape.HLine)
+        separator2.setFrameShadow(QFrame.Shadow.Sunken)
+        layout.addWidget(separator2)
+
+        # 队列进度面板
+        self._queue_progress_panel = QueueProgressPanel()
+        layout.addWidget(self._queue_progress_panel)
+
         return panel
 
     def _create_center_panel(self) -> QFrame:
@@ -413,36 +454,58 @@ class MainWindow(QMainWindow):
         self._image_preview = ImagePreview()
         return self._image_preview
 
-    def _create_right_panel(self) -> QFrame:
+    def _create_right_panel(self) -> QScrollArea:
         """创建右侧面板 - 配置面板.
 
         Returns:
-            右侧面板 QFrame
+            右侧面板 QScrollArea
         """
-        panel = QFrame()
-        panel.setProperty("configPanel", True)
-        layout = QVBoxLayout(panel)
-        layout.setContentsMargins(12, 12, 12, 12)
+        # 创建滚动区域以支持内容超出时滚动
+        scroll_area = ConstrainedScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+        scroll_area.setStyleSheet("QScrollArea { background-color: #ffffff; border: none; }")
 
-        # 标题
-        title_label = QLabel("处理配置")
-        title_label.setProperty("heading", True)
-        layout.addWidget(title_label)
+        # 内容容器
+        content_widget = QWidget()
+        content_widget.setObjectName("rightPanelContent")
+        layout = QVBoxLayout(content_widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
-        # 配置区域占位（后续任务实现）
-        config_placeholder = QLabel(
-            "配置面板区域\n\n"
-            "• 背景配置\n"
-            "• 边框配置\n"
-            "• 文字配置\n"
-            "• 输出配置\n\n"
-            "(后续任务实现)"
-        )
-        config_placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        config_placeholder.setStyleSheet("color: #999; padding: 20px;")
-        layout.addWidget(config_placeholder, 1)
+        # AI 服务配置面板
+        self._ai_config_panel = AIConfigPanel()
+        layout.addWidget(self._ai_config_panel)
 
-        return panel
+        # 分隔线
+        separator = QFrame()
+        separator.setFrameShape(QFrame.Shape.HLine)
+        separator.setFrameShadow(QFrame.Shadow.Sunken)
+        separator.setStyleSheet("background-color: #e8e8e8;")
+        layout.addWidget(separator)
+
+        # AI 提示词配置面板
+        self._prompt_config_panel = PromptConfigPanel()
+        layout.addWidget(self._prompt_config_panel)
+
+        # 分隔线
+        separator2 = QFrame()
+        separator2.setFrameShape(QFrame.Shape.HLine)
+        separator2.setFrameShadow(QFrame.Shadow.Sunken)
+        separator2.setStyleSheet("background-color: #e8e8e8;")
+        layout.addWidget(separator2)
+
+        # 后期处理配置面板
+        self._process_config_panel = ProcessConfigPanel()
+        layout.addWidget(self._process_config_panel)
+
+        # 底部弹性空间
+        layout.addStretch()
+
+        scroll_area.setWidget(content_widget)
+        return scroll_area
 
     def _setup_statusbar(self) -> None:
         """设置状态栏."""
@@ -473,6 +536,12 @@ class MainWindow(QMainWindow):
         if self._task_list_widget:
             self._task_list_widget.task_selected.connect(self._on_task_selected)
             self._task_list_widget.task_deleted.connect(self._on_task_deleted)
+
+        # 队列进度面板信号
+        if self._queue_progress_panel:
+            self._queue_progress_panel.start_clicked.connect(self._on_start_process)
+            self._queue_progress_panel.pause_clicked.connect(self._on_pause_process)
+            self._queue_progress_panel.cancel_clicked.connect(self._on_cancel_process)
 
     def _update_actions_state(self) -> None:
         """更新操作按钮状态."""
@@ -516,9 +585,10 @@ class MainWindow(QMainWindow):
         self._queue_count = min(count, MAX_QUEUE_SIZE)
         if self._queue_label:
             self._queue_label.setText(f"队列: {self._queue_count}/{MAX_QUEUE_SIZE}")
-        
-        # 移除已删除标签的更新逻辑
-        # if hasattr(self, "_queue_info_label") and self._queue_info_label:
+
+        # 更新进度面板的任务数
+        if self._queue_progress_panel:
+            self._queue_progress_panel.set_total_tasks(self._queue_count)
         
         self._update_actions_state()
 
@@ -546,6 +616,10 @@ class MainWindow(QMainWindow):
         self._is_processing = is_processing
         self._is_paused = is_paused
         self._update_actions_state()
+
+        # 同步进度面板状态
+        if self._queue_progress_panel:
+            self._queue_progress_panel.set_processing_state(is_processing, is_paused)
 
         if not is_processing:
             self.update_progress(0, "就绪")
@@ -635,6 +709,10 @@ class MainWindow(QMainWindow):
             # 更新配对面板
             if self._image_pair_panel:
                 self._image_pair_panel.set_queue_count(0)
+
+            # 重置进度面板
+            if self._queue_progress_panel:
+                self._queue_progress_panel.reset()
 
             self.queue_cleared.emit()
             self.update_queue_count(0)

@@ -22,6 +22,7 @@ from PyQt6.QtWidgets import (
     QLabel,
     QListWidget,
     QListWidgetItem,
+    QProgressBar,
     QPushButton,
     QSizePolicy,
     QVBoxLayout,
@@ -154,8 +155,27 @@ class TaskListItem(QFrame):
 
         # 状态
         self._status_label = QLabel()
-        self._update_status_display()
         info_layout.addWidget(self._status_label)
+
+        # 进度条（处理时显示）
+        self._progress_bar = QProgressBar()
+        self._progress_bar.setFixedHeight(4)
+        self._progress_bar.setTextVisible(False)
+        self._progress_bar.setStyleSheet("""
+            QProgressBar {
+                background-color: #f0f0f0;
+                border: none;
+                border-radius: 2px;
+            }
+            QProgressBar::chunk {
+                background-color: #1890ff;
+                border-radius: 2px;
+            }
+        """)
+        self._progress_bar.setVisible(False)
+        info_layout.addWidget(self._progress_bar)
+
+        self._update_status_display()
         
         info_layout.addStretch()  # 底部弹簧
         layout.addLayout(info_layout, 1)
@@ -216,11 +236,17 @@ class TaskListItem(QFrame):
             self._task.status, ("未知", "#999")
         )
 
-        if self._task.status == TaskStatus.PROCESSING:
+        is_processing = self._task.status == TaskStatus.PROCESSING
+        if is_processing:
             text = f"处理中 {self._task.progress}%"
 
         self._status_label.setText(text)
         self._status_label.setStyleSheet(f"font-size: 10px; color: {color};")
+
+        # 更新进度条
+        self._progress_bar.setVisible(is_processing)
+        if is_processing:
+            self._progress_bar.setValue(self._task.progress)
 
     def update_task(self, task: ImageTask) -> None:
         """更新任务状态.

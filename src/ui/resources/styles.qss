@@ -233,15 +233,24 @@ QComboBox:focus {
 
 QComboBox::drop-down {
     border: none;
-    width: 20px;
+    width: 24px;  /* 稍微加宽 */
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
 }
 
 QComboBox::down-arrow {
     image: none;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-top: 6px solid #666666;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid #666666;
+    width: 0;
+    height: 0;
     margin-right: 8px;
+}
+
+QComboBox::down-arrow:on {
+    border-top-color: #1890ff;
+    top: 1px;
 }
 
 QComboBox QAbstractItemView {
@@ -342,19 +351,29 @@ QGroupBox {
     background-color: #ffffff;
     border: 1px solid #e8e8e8;
     border-radius: 8px;
-    margin-top: 12px;
-    padding: 16px;
-    padding-top: 24px;
+    margin-top: 8px;
+    padding: 12px;
+    padding-top: 28px;
+    font-weight: bold;
 }
 
 QGroupBox::title {
     subcontrol-origin: margin;
     subcontrol-position: top left;
     left: 12px;
-    padding: 0 4px;
+    top: 4px;
+    padding: 0 6px;
     background-color: #ffffff;
     font-weight: bold;
     color: #333333;
+}
+
+/* 确保 GroupBox 内部组件正常显示 */
+QGroupBox QComboBox,
+QGroupBox QLineEdit,
+QGroupBox QPlainTextEdit,
+QGroupBox QLabel {
+    font-weight: normal;
 }
 
 /* ===================
@@ -531,8 +550,7 @@ QFrame[card="true"] {
 }
 
 QFrame[card="true"]:hover {
-    border-color: #d9d9d9;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border-color: #bfbfbf;
 }
 
 /* ===================

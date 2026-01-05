@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import Optional
 
 from src.models.api_config import APIConfig
+from src.models.process_config import ProcessConfig, AIPromptConfig
 from src.services.ai_providers import (
     BaseAIImageProvider,
     AIProviderType,
@@ -143,6 +144,7 @@ class AIService:
         product: bytes,
         prompt: Optional[str] = None,
         position_hint: Optional[str] = None,
+        config: Optional[ProcessConfig] = None,
     ) -> bytes:
         """将商品合成到背景图中.
 
@@ -151,8 +153,9 @@ class AIService:
         Args:
             background: 背景图片的字节数据
             product: 商品图片的字节数据（建议为透明背景）
-            prompt: 可选的合成提示词
+            prompt: 可选的合成提示词（优先于 config）
             position_hint: 位置提示（如 "center", "left", "right"）
+            config: 处理配置（包含 AI 提示词配置）
 
         Returns:
             合成后的图片字节数据
@@ -163,17 +166,26 @@ class AIService:
             APIRequestError: 当 API 请求失败时
             APITimeoutError: 当请求超时时
         """
-        # 构建合成提示词
-        position_desc = position_hint or "合适"
-        default_prompt = (
-            f"将图2中的商标/图案合成到图1中的商品上。"
-            f"合成要求：符合图1的风格、光线、角度，"
-            f"商标大小适中，位置在{position_desc}位置，看上去自然合理。"
-        )
+        # 确定实际使用的提示词
+        effective_prompt = prompt
+        
+        if effective_prompt is None:
+            # 优先从 config 中获取提示词
+            if config is not None and config.prompt is not None:
+                effective_prompt = config.prompt.get_full_prompt()
+                logger.debug(f"使用配置中的提示词: {effective_prompt[:50]}...")
+            else:
+                # 使用默认提示词
+                position_desc = position_hint or "合适"
+                effective_prompt = (
+                    f"将图2中的商标/图案合成到图1中的商品上。"
+                    f"合成要求：符合图1的风格、光线、角度，"
+                    f"商标大小适中，位置在{position_desc}位置，看上去自然合理。"
+                )
 
         return await self.provider.composite_images(
             images=[background, product],
-            prompt=prompt or default_prompt,
+            prompt=effective_prompt,
         )
 
     async def edit_image(
