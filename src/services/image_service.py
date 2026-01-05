@@ -27,6 +27,9 @@ from src.models.process_config import (
     BorderStyle,
     PresetColor,
     ProcessConfig,
+    TextConfig,
+    TextPosition,
+    TextAlign,
 )
 from src.services.ai_service import AIService, get_ai_service
 from src.utils.constants import (
@@ -45,14 +48,19 @@ from src.utils.image_utils import (
     add_border,
     add_border_expand,
     add_solid_background,
+    add_text,
     apply_background_with_padding,
     bytes_to_image,
+    calculate_text_position,
     composite_with_background,
     create_background_preview,
     create_border_preview,
+    create_text_preview,
     create_thumbnail,
     ensure_rgba,
     fit_to_size,
+    get_available_fonts,
+    get_text_size,
     image_to_bytes,
     load_image,
     save_image,
@@ -973,6 +981,277 @@ class ImageService:
             ...     print(f"{s['name']}: {s['value']}")
         """
         return BorderConfig.get_available_styles()
+
+    # ==========================================
+    # 文字添加功能
+    # ==========================================
+
+    async def add_image_text(
+        self,
+        input_path: Union[str, Path],
+        output_path: Optional[Union[str, Path]] = None,
+        config: Optional[TextConfig] = None,
+        text: Optional[str] = None,
+        position: Optional[Tuple[int, int]] = None,
+        font_size: int = 14,
+        color: Optional[Tuple[int, int, int]] = None,
+        on_progress: Optional[ProgressCallback] = None,
+    ) -> Path:
+        """为图片添加文字.
+
+        支持多种文字样式，可通过配置对象或直接指定参数。
+
+        Args:
+            input_path: 输入图片路径
+            output_path: 输出图片路径，如果为 None 则自动生成
+            config: 文字配置对象
+            text: 文字内容，优先级低于 config
+            position: 文字位置 (x, y)，优先级低于 config
+            font_size: 字体大小，优先级低于 config
+            color: 文字颜色 RGB，优先级低于 config
+            on_progress: 进度回调函数
+
+        Returns:
+            输出文件路径
+
+        Raises:
+            ImageNotFoundError: 输入文件不存在
+            ImageProcessError: 图片处理失败
+
+        Example:
+            >>> service = ImageService()
+            >>> # 使用配置对象
+            >>> config = TextConfig(text="水印", preset_position=TextPosition.BOTTOM_RIGHT)
+            >>> result = await service.add_image_text("input.jpg", config=config)
+            >>>
+            >>> # 直接指定参数
+            >>> result = await service.add_image_text(
+            ...     "input.jpg",
+            ...     text="水印",
+            ...     position=(10, 10),
+            ...     font_size=24,
+            ...     color=(128, 128, 128)
+            ... )
+        """
+        input_path = Path(input_path)
+        logger.info(f"开始添加文字: {input_path}")
+
+        def report_progress(progress: int, message: str) -> None:
+            if on_progress:
+                on_progress(progress, message)
+            logger.debug(f"进度 {progress}%: {message}")
+
+        try:
+            # Step 1: 确定文字参数 (5%)
+            report_progress(5, "准备文字配置")
+
+            if config is not None:
+                if not config.enabled:
+                    # 文字未启用，直接复制原文件
+                    output_path = self._get_output_path(input_path, output_path, "_text.jpg")
+                    import shutil
+                    shutil.copy(input_path, output_path)
+                    report_progress(100, "完成（文字未启用）")
+                    return output_path
+                text_content = config.content
+                text_font_size = config.font_size
+                text_color = config.get_effective_color()
+                text_opacity = config.opacity
+                text_font_family = config.font_family
+                text_background_enabled = config.background_enabled
+                text_background_color = config.background_color
+                text_background_opacity = config.background_opacity
+                text_background_padding = config.background_padding
+                text_stroke_enabled = config.stroke_enabled
+                text_stroke_color = config.stroke_color
+                text_stroke_width = config.stroke_width
+                text_position_preset = config.preset_position
+                text_custom_position = config.custom_position
+                text_margin = config.margin
+            else:
+                text_content = text if text is not None else ""
+                text_font_size = font_size
+                text_color = color if color is not None else (0, 0, 0)
+                text_opacity = 100
+                text_font_family = None
+                text_background_enabled = False
+                text_background_color = (0, 0, 0)
+                text_background_opacity = 50
+                text_background_padding = 5
+                text_stroke_enabled = False
+                text_stroke_color = (255, 255, 255)
+                text_stroke_width = 1
+                text_position_preset = None
+                text_custom_position = position
+                text_margin = 10
+
+            if not text_content:
+                # 没有文字内容，直接复制原文件
+                output_path = self._get_output_path(input_path, output_path, "_text.jpg")
+                import shutil
+                shutil.copy(input_path, output_path)
+                report_progress(100, "完成（无文字内容）")
+                return output_path
+
+            # Step 2: 验证输入文件 (10%)
+            report_progress(10, "验证输入文件")
+            validate_image_file(input_path)
+
+            # Step 3: 加载图片 (30%)
+            report_progress(30, "加载图片")
+            loop = asyncio.get_event_loop()
+            image = await loop.run_in_executor(None, load_image, input_path)
+
+            # Step 4: 计算文字位置 (40%)
+            report_progress(40, "计算文字位置")
+            if text_custom_position is not None:
+                final_position = text_custom_position
+            elif text_position_preset is not None and text_position_preset != TextPosition.CUSTOM:
+                # 计算预设位置
+                text_size = get_text_size(text_content, text_font_family, text_font_size)
+                final_position = calculate_text_position(
+                    image.size,
+                    text_size,
+                    text_position_preset.value,
+                    text_margin,
+                )
+            else:
+                # 默认位置：右下角
+                text_size = get_text_size(text_content, text_font_family, text_font_size)
+                final_position = calculate_text_position(
+                    image.size,
+                    text_size,
+                    "bottom_right",
+                    text_margin,
+                )
+
+            # Step 5: 添加文字 (60%)
+            report_progress(60, "添加文字")
+            result_image = await loop.run_in_executor(
+                None,
+                add_text,
+                image,
+                text_content,
+                final_position,
+                text_font_size,
+                text_color,
+                text_opacity,
+                text_font_family,
+                text_background_enabled,
+                text_background_color,
+                text_background_opacity,
+                text_background_padding,
+                text_stroke_enabled,
+                text_stroke_color,
+                text_stroke_width,
+            )
+
+            # Step 6: 保存结果 (90%)
+            report_progress(90, "保存结果")
+            output_path = self._get_output_path(input_path, output_path, "_text.jpg")
+            await loop.run_in_executor(
+                None, save_image, result_image, output_path, DEFAULT_OUTPUT_QUALITY
+            )
+
+            # 完成 (100%)
+            report_progress(100, "完成")
+            logger.info(f"文字添加完成: {output_path}")
+
+            return output_path
+
+        except Exception as e:
+            logger.exception(f"文字添加失败: {input_path}")
+            raise ImageProcessError(f"文字添加失败: {e}") from e
+
+    def generate_text_preview(
+        self,
+        text: str = "预览文字",
+        font_size: int = 24,
+        color: Optional[Tuple[int, int, int]] = None,
+        config: Optional[TextConfig] = None,
+        size: Tuple[int, int] = PREVIEW_SIZE,
+        background_color: Tuple[int, int, int] = (255, 255, 255),
+    ) -> Image.Image:
+        """生成文字样式预览图.
+
+        用于 UI 中显示选中的文字效果。
+
+        Args:
+            text: 预览文字内容
+            font_size: 字体大小
+            color: 文字颜色 RGB
+            config: 文字配置对象
+            size: 预览图尺寸
+            background_color: 背景颜色
+
+        Returns:
+            预览图片
+
+        Example:
+            >>> service = ImageService()
+            >>> preview = service.generate_text_preview(
+            ...     text="水印预览",
+            ...     font_size=24,
+            ...     color=(128, 128, 128)
+            ... )
+            >>> preview.show()
+        """
+        # 确定参数
+        if config is not None:
+            preview_text = config.content or text
+            preview_font_size = config.font_size
+            preview_color = config.get_effective_color()
+            preview_font_family = config.font_family
+        else:
+            preview_text = text
+            preview_font_size = font_size
+            preview_color = color if color is not None else (0, 0, 0)
+            preview_font_family = None
+
+        return create_text_preview(
+            text=preview_text,
+            font_size=preview_font_size,
+            color=preview_color,
+            background_color=background_color,
+            size=size,
+            font_family=preview_font_family,
+        )
+
+    def get_text_positions(self) -> list[dict]:
+        """获取所有可用的文字位置.
+
+        供 UI 位置选择器使用。
+
+        Returns:
+            文字位置信息列表，每项包含 value, position, name 字段
+
+        Example:
+            >>> service = ImageService()
+            >>> positions = service.get_text_positions()
+            >>> for p in positions:
+            ...     print(f"{p['name']}: {p['value']}")
+        """
+        return TextConfig.get_available_positions()
+
+    def get_text_aligns(self) -> list[dict]:
+        """获取所有可用的文字对齐方式.
+
+        供 UI 对齐选择器使用。
+
+        Returns:
+            对齐方式信息列表，每项包含 value, align, name 字段
+        """
+        return TextConfig.get_available_aligns()
+
+    def get_available_fonts(self) -> list[dict]:
+        """获取可用的字体列表.
+
+        供 UI 字体选择器使用。
+
+        Returns:
+            字体信息列表，每项包含 name, path 字段
+        """
+        return get_available_fonts()
 
 
 # 单例实例

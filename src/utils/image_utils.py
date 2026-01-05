@@ -916,3 +916,471 @@ def add_border_expand(
         result = add_border(result, width, color, style)
 
     return result
+
+
+# ===================
+# 文字绘制工具函数
+# ===================
+
+def get_font(
+    font_family: Optional[str] = None,
+    font_size: int = 14,
+    bold: bool = False,
+    italic: bool = False,
+):
+    """获取字体对象.
+
+    Args:
+        font_family: 字体名称或路径
+        font_size: 字体大小
+        bold: 是否粗体
+        italic: 是否斜体
+
+    Returns:
+        PIL ImageFont 对象
+    """
+    from PIL import ImageFont
+    import platform
+
+    # 默认字体列表（按优先级）
+    default_fonts = {
+        "Darwin": [  # macOS
+            "/System/Library/Fonts/PingFang.ttc",
+            "/System/Library/Fonts/STHeiti Light.ttc",
+            "/Library/Fonts/Arial.ttf",
+        ],
+        "Windows": [
+            "C:/Windows/Fonts/msyh.ttc",  # 微软雅黑
+            "C:/Windows/Fonts/simsun.ttc",  # 宋体
+            "C:/Windows/Fonts/arial.ttf",
+        ],
+        "Linux": [
+            "/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        ],
+    }
+
+    system = platform.system()
+
+    # 如果指定了字体
+    if font_family:
+        try:
+            return ImageFont.truetype(font_family, font_size)
+        except OSError:
+            pass
+
+    # 尝试系统默认字体
+    for font_path in default_fonts.get(system, []):
+        try:
+            return ImageFont.truetype(font_path, font_size)
+        except OSError:
+            continue
+
+    # 回退到默认字体
+    try:
+        return ImageFont.truetype("arial.ttf", font_size)
+    except OSError:
+        return ImageFont.load_default()
+
+
+def get_text_size(
+    text: str,
+    font_family: Optional[str] = None,
+    font_size: int = 14,
+) -> Tuple[int, int]:
+    """获取文字尺寸.
+
+    Args:
+        text: 文字内容
+        font_family: 字体名称
+        font_size: 字体大小
+
+    Returns:
+        (宽度, 高度) 元组
+    """
+    from PIL import ImageDraw, Image as PILImage
+
+    font = get_font(font_family, font_size)
+
+    # 创建临时图像来测量文字尺寸
+    dummy_img = PILImage.new("RGB", (1, 1))
+    draw = ImageDraw.Draw(dummy_img)
+    bbox = draw.textbbox((0, 0), text, font=font)
+
+    return bbox[2] - bbox[0], bbox[3] - bbox[1]
+
+
+def add_text_simple(
+    image: Image.Image,
+    text: str,
+    position: Tuple[int, int],
+    font_size: int = 14,
+    color: Tuple[int, int, int] = (0, 0, 0),
+    font_family: Optional[str] = None,
+) -> Image.Image:
+    """添加简单文字.
+
+    Args:
+        image: PIL Image 对象
+        text: 文字内容
+        position: 位置 (x, y)
+        font_size: 字体大小
+        color: 文字颜色
+        font_family: 字体名称
+
+    Returns:
+        添加文字后的图片
+    """
+    from PIL import ImageDraw
+
+    if image.mode != "RGB":
+        image = image.convert("RGB")
+
+    result = image.copy()
+    draw = ImageDraw.Draw(result)
+    font = get_font(font_family, font_size)
+
+    draw.text(position, text, font=font, fill=color)
+
+    return result
+
+
+def add_text_with_stroke(
+    image: Image.Image,
+    text: str,
+    position: Tuple[int, int],
+    font_size: int = 14,
+    color: Tuple[int, int, int] = (0, 0, 0),
+    stroke_color: Tuple[int, int, int] = (255, 255, 255),
+    stroke_width: int = 1,
+    font_family: Optional[str] = None,
+) -> Image.Image:
+    """添加带描边的文字.
+
+    Args:
+        image: PIL Image 对象
+        text: 文字内容
+        position: 位置 (x, y)
+        font_size: 字体大小
+        color: 文字颜色
+        stroke_color: 描边颜色
+        stroke_width: 描边宽度
+        font_family: 字体名称
+
+    Returns:
+        添加文字后的图片
+    """
+    from PIL import ImageDraw
+
+    if image.mode != "RGB":
+        image = image.convert("RGB")
+
+    result = image.copy()
+    draw = ImageDraw.Draw(result)
+    font = get_font(font_family, font_size)
+    x, y = position
+
+    # 绘制描边（在四个方向绘制偏移文字）
+    for dx in range(-stroke_width, stroke_width + 1):
+        for dy in range(-stroke_width, stroke_width + 1):
+            if dx != 0 or dy != 0:
+                draw.text((x + dx, y + dy), text, font=font, fill=stroke_color)
+
+    # 绘制主文字
+    draw.text(position, text, font=font, fill=color)
+
+    return result
+
+
+def add_text_with_background(
+    image: Image.Image,
+    text: str,
+    position: Tuple[int, int],
+    font_size: int = 14,
+    color: Tuple[int, int, int] = (255, 255, 255),
+    background_color: Tuple[int, int, int] = (0, 0, 0),
+    background_opacity: int = 100,
+    padding: int = 5,
+    font_family: Optional[str] = None,
+) -> Image.Image:
+    """添加带背景的文字（标签效果）.
+
+    Args:
+        image: PIL Image 对象
+        text: 文字内容
+        position: 位置 (x, y)
+        font_size: 字体大小
+        color: 文字颜色
+        background_color: 背景颜色
+        background_opacity: 背景不透明度 (0-100)
+        padding: 内边距
+        font_family: 字体名称
+
+    Returns:
+        添加文字后的图片
+    """
+    from PIL import ImageDraw
+
+    # 转换为 RGBA 以支持透明度
+    if image.mode != "RGBA":
+        result = image.convert("RGBA")
+    else:
+        result = image.copy()
+
+    font = get_font(font_family, font_size)
+
+    # 获取文字尺寸
+    text_w, text_h = get_text_size(text, font_family, font_size)
+
+    # 计算背景区域
+    x, y = position
+    bg_x1 = x - padding
+    bg_y1 = y - padding
+    bg_x2 = x + text_w + padding
+    bg_y2 = y + text_h + padding
+
+    # 创建背景层
+    alpha = int(background_opacity * 255 / 100)
+    bg_layer = Image.new("RGBA", result.size, (0, 0, 0, 0))
+    bg_draw = ImageDraw.Draw(bg_layer)
+    bg_draw.rectangle(
+        [bg_x1, bg_y1, bg_x2, bg_y2],
+        fill=(*background_color, alpha),
+    )
+
+    # 合成背景
+    result = Image.alpha_composite(result, bg_layer)
+
+    # 绘制文字
+    draw = ImageDraw.Draw(result)
+    draw.text(position, text, font=font, fill=(*color, 255))
+
+    return result.convert("RGB")
+
+
+def add_text(
+    image: Image.Image,
+    text: str,
+    position: Tuple[int, int],
+    font_size: int = 14,
+    color: Tuple[int, int, int] = (0, 0, 0),
+    opacity: int = 100,
+    font_family: Optional[str] = None,
+    background_enabled: bool = False,
+    background_color: Tuple[int, int, int] = (0, 0, 0),
+    background_opacity: int = 50,
+    background_padding: int = 5,
+    stroke_enabled: bool = False,
+    stroke_color: Tuple[int, int, int] = (255, 255, 255),
+    stroke_width: int = 1,
+) -> Image.Image:
+    """添加文字（通用函数）.
+
+    支持文字背景、描边、透明度等样式。
+
+    Args:
+        image: PIL Image 对象
+        text: 文字内容
+        position: 位置 (x, y)
+        font_size: 字体大小
+        color: 文字颜色
+        opacity: 不透明度 (0-100)
+        font_family: 字体名称
+        background_enabled: 是否启用背景
+        background_color: 背景颜色
+        background_opacity: 背景不透明度
+        background_padding: 背景内边距
+        stroke_enabled: 是否启用描边
+        stroke_color: 描边颜色
+        stroke_width: 描边宽度
+
+    Returns:
+        添加文字后的图片
+
+    Example:
+        >>> from PIL import Image
+        >>> img = Image.new("RGB", (400, 300), (255, 255, 255))
+        >>> result = add_text(img, "水印", (10, 10), font_size=24, color=(128, 128, 128))
+    """
+    from PIL import ImageDraw
+
+    if not text:
+        return image
+
+    # 如果启用背景，使用背景版本
+    if background_enabled:
+        return add_text_with_background(
+            image=image,
+            text=text,
+            position=position,
+            font_size=font_size,
+            color=color,
+            background_color=background_color,
+            background_opacity=background_opacity,
+            padding=background_padding,
+            font_family=font_family,
+        )
+
+    # 如果启用描边，使用描边版本
+    if stroke_enabled:
+        return add_text_with_stroke(
+            image=image,
+            text=text,
+            position=position,
+            font_size=font_size,
+            color=color,
+            stroke_color=stroke_color,
+            stroke_width=stroke_width,
+            font_family=font_family,
+        )
+
+    # 处理透明度
+    if opacity < 100:
+        # 需要使用 RGBA 模式
+        if image.mode != "RGBA":
+            result = image.convert("RGBA")
+        else:
+            result = image.copy()
+
+        # 创建文字层
+        text_layer = Image.new("RGBA", result.size, (0, 0, 0, 0))
+        text_draw = ImageDraw.Draw(text_layer)
+        font = get_font(font_family, font_size)
+        alpha = int(opacity * 255 / 100)
+        text_draw.text(position, text, font=font, fill=(*color, alpha))
+
+        # 合成
+        result = Image.alpha_composite(result, text_layer)
+        return result.convert("RGB")
+
+    # 简单文字
+    return add_text_simple(
+        image=image,
+        text=text,
+        position=position,
+        font_size=font_size,
+        color=color,
+        font_family=font_family,
+    )
+
+
+def create_text_preview(
+    text: str,
+    font_size: int = 24,
+    color: Tuple[int, int, int] = (0, 0, 0),
+    background_color: Tuple[int, int, int] = (255, 255, 255),
+    size: Tuple[int, int] = (200, 50),
+    font_family: Optional[str] = None,
+) -> Image.Image:
+    """创建文字预览图.
+
+    Args:
+        text: 文字内容
+        font_size: 字体大小
+        color: 文字颜色
+        background_color: 背景颜色
+        size: 预览图尺寸
+        font_family: 字体名称
+
+    Returns:
+        预览图片
+    """
+    preview = Image.new("RGB", size, background_color)
+
+    # 获取文字尺寸并居中
+    text_w, text_h = get_text_size(text, font_family, font_size)
+    x = (size[0] - text_w) // 2
+    y = (size[1] - text_h) // 2
+
+    return add_text_simple(
+        preview, text, (x, y), font_size, color, font_family
+    )
+
+
+def get_available_fonts() -> list[dict]:
+    """获取可用的字体列表.
+
+    Returns:
+        字体信息列表，每项包含 name, path 字段
+    """
+    import platform
+    from pathlib import Path
+
+    fonts = []
+    system = platform.system()
+
+    # 系统字体目录
+    font_dirs = {
+        "Darwin": [
+            Path("/System/Library/Fonts"),
+            Path("/Library/Fonts"),
+            Path.home() / "Library/Fonts",
+        ],
+        "Windows": [
+            Path("C:/Windows/Fonts"),
+        ],
+        "Linux": [
+            Path("/usr/share/fonts"),
+            Path.home() / ".fonts",
+        ],
+    }
+
+    for font_dir in font_dirs.get(system, []):
+        if not font_dir.exists():
+            continue
+        for font_file in font_dir.glob("**/*.ttf"):
+            fonts.append({
+                "name": font_file.stem,
+                "path": str(font_file),
+            })
+        for font_file in font_dir.glob("**/*.otf"):
+            fonts.append({
+                "name": font_file.stem,
+                "path": str(font_file),
+            })
+
+    return fonts[:50]  # 限制返回数量
+
+
+def calculate_text_position(
+    image_size: Tuple[int, int],
+    text_size: Tuple[int, int],
+    position: str,
+    margin: int = 10,
+    align: str = "left",
+) -> Tuple[int, int]:
+    """根据预设位置计算文字坐标.
+
+    Args:
+        image_size: 图片尺寸 (宽, 高)
+        text_size: 文字尺寸 (宽, 高)
+        position: 预设位置，可选:
+            - "top_left", "top_center", "top_right"
+            - "middle_left", "middle_center", "middle_right"
+            - "bottom_left", "bottom_center", "bottom_right"
+        margin: 边距
+        align: 对齐方式 ("left", "center", "right")
+
+    Returns:
+        (x, y) 坐标元组
+    """
+    img_w, img_h = image_size
+    text_w, text_h = text_size
+
+    # 水平位置
+    if "left" in position:
+        x = margin
+    elif "right" in position:
+        x = img_w - text_w - margin
+    else:  # center
+        x = (img_w - text_w) // 2
+
+    # 垂直位置
+    if "top" in position:
+        y = margin
+    elif "bottom" in position:
+        y = img_h - text_h - margin
+    else:  # middle
+        y = (img_h - text_h) // 2
+
+    return (x, y)

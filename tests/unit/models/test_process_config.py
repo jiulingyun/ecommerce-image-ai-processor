@@ -11,6 +11,10 @@ from src.models.process_config import (
     BORDER_STYLE_NAMES,
     PresetColor,
     PRESET_COLOR_VALUES,
+    TextAlign,
+    TextConfig,
+    TextPosition,
+    TEXT_POSITION_NAMES,
     hex_to_rgb,
     rgb_to_hex,
     validate_rgb_color,
@@ -347,3 +351,230 @@ class TestBorderConfig:
         assert restored.width == config.width
         assert restored.get_effective_color() == config.get_effective_color()
         assert restored.style == config.style
+
+
+# ===================
+# TextPosition 测试
+# ===================
+class TestTextPosition:
+    """测试 TextPosition 枚举."""
+
+    def test_text_position_values(self) -> None:
+        """测试文字位置枚举值."""
+        assert TextPosition.TOP_LEFT.value == "top_left"
+        assert TextPosition.TOP_CENTER.value == "top_center"
+        assert TextPosition.TOP_RIGHT.value == "top_right"
+        assert TextPosition.CENTER_LEFT.value == "center_left"
+        assert TextPosition.CENTER.value == "center"
+        assert TextPosition.CENTER_RIGHT.value == "center_right"
+        assert TextPosition.BOTTOM_LEFT.value == "bottom_left"
+        assert TextPosition.BOTTOM_CENTER.value == "bottom_center"
+        assert TextPosition.BOTTOM_RIGHT.value == "bottom_right"
+        assert TextPosition.CUSTOM.value == "custom"
+
+    def test_all_positions_have_names(self) -> None:
+        """测试所有位置都有中文名称."""
+        for position in TextPosition:
+            assert position in TEXT_POSITION_NAMES
+            assert isinstance(TEXT_POSITION_NAMES[position], str)
+
+
+class TestTextAlign:
+    """测试 TextAlign 枚举."""
+
+    def test_text_align_values(self) -> None:
+        """测试文字对齐枚举值."""
+        assert TextAlign.LEFT.value == "left"
+        assert TextAlign.CENTER.value == "center"
+        assert TextAlign.RIGHT.value == "right"
+
+
+# ===================
+# TextConfig 测试
+# ===================
+class TestTextConfig:
+    """测试 TextConfig 模型."""
+
+    def test_default_values(self) -> None:
+        """测试默认值."""
+        config = TextConfig()
+        assert config.enabled is False
+        assert config.content == ""
+        assert config.font_size == 14
+        assert config.color == (0, 0, 0)
+        assert config.opacity == 100
+        assert config.preset_position == TextPosition.BOTTOM_RIGHT
+        assert config.align == TextAlign.LEFT
+
+    def test_enabled_config(self) -> None:
+        """测试启用文字."""
+        config = TextConfig(enabled=True, content="测试水印")
+        assert config.enabled is True
+        assert config.content == "测试水印"
+
+    def test_from_hex(self) -> None:
+        """测试从 HEX 颜色创建."""
+        config = TextConfig.from_hex(
+            "#FF5733",
+            content="水印",
+            font_size=24,
+            preset_position=TextPosition.TOP_LEFT,
+        )
+        assert config.enabled is True
+        assert config.content == "水印"
+        assert config.font_size == 24
+        assert config.get_effective_color() == (255, 87, 51)
+        assert config.preset_position == TextPosition.TOP_LEFT
+
+    def test_get_effective_color(self) -> None:
+        """测试获取有效颜色."""
+        config = TextConfig(color=(128, 64, 32))
+        assert config.get_effective_color() == (128, 64, 32)
+
+        # 测试 HEX 颜色同步
+        config = TextConfig(hex_color="#FF0000")
+        assert config.get_effective_color() == (255, 0, 0)
+
+    def test_font_size_validation(self) -> None:
+        """测试字体大小验证."""
+        # 有效大小
+        config = TextConfig(font_size=8)
+        assert config.font_size == 8
+        config = TextConfig(font_size=200)
+        assert config.font_size == 200
+
+        # 无效大小
+        with pytest.raises(ValueError):
+            TextConfig(font_size=7)
+        with pytest.raises(ValueError):
+            TextConfig(font_size=201)
+
+    def test_opacity_validation(self) -> None:
+        """测试不透明度验证."""
+        # 有效不透明度
+        config = TextConfig(opacity=0)
+        assert config.opacity == 0
+        config = TextConfig(opacity=100)
+        assert config.opacity == 100
+
+        # 无效不透明度
+        with pytest.raises(ValueError):
+            TextConfig(opacity=-1)
+        with pytest.raises(ValueError):
+            TextConfig(opacity=101)
+
+    def test_background_config(self) -> None:
+        """测试背景配置."""
+        config = TextConfig(
+            background_enabled=True,
+            background_color=(255, 255, 0),
+            background_opacity=80,
+            background_padding=10,
+        )
+        assert config.background_enabled is True
+        assert config.background_color == (255, 255, 0)
+        assert config.background_opacity == 80
+        assert config.background_padding == 10
+
+    def test_stroke_config(self) -> None:
+        """测试描边配置."""
+        config = TextConfig(
+            stroke_enabled=True,
+            stroke_color=(255, 255, 255),
+            stroke_width=3,
+        )
+        assert config.stroke_enabled is True
+        assert config.stroke_color == (255, 255, 255)
+        assert config.stroke_width == 3
+
+    def test_create_watermark(self) -> None:
+        """测试创建水印配置."""
+        config = TextConfig.create_watermark(
+            content="版权所有",
+            opacity=50,
+            color=(128, 128, 128),
+        )
+        assert config.content == "版权所有"
+        assert config.opacity == 50
+        assert config.get_effective_color() == (128, 128, 128)
+        assert config.preset_position == TextPosition.BOTTOM_RIGHT
+
+    def test_create_label(self) -> None:
+        """测试创建标签配置."""
+        config = TextConfig.create_label(
+            content="热卖",
+            position=TextPosition.TOP_LEFT,
+        )
+        assert config.content == "热卖"
+        assert config.background_enabled is True
+        assert config.preset_position == TextPosition.TOP_LEFT
+
+    def test_get_effective_position_preset(self) -> None:
+        """测试获取预设位置."""
+        config = TextConfig(preset_position=TextPosition.TOP_CENTER)
+        pos = config.get_effective_position((400, 300), (100, 20))
+        # 顶部居中: x = (400-100)//2 = 150
+        assert pos[0] == 150
+        assert pos[1] == 10  # 默认 margin
+
+    def test_get_effective_position_custom(self) -> None:
+        """测试获取自定义位置."""
+        config = TextConfig(
+            preset_position=TextPosition.CUSTOM,
+            custom_position=(50, 100),
+        )
+        pos = config.get_effective_position((400, 300), (100, 20))
+        assert pos == (50, 100)
+
+    def test_get_available_positions(self) -> None:
+        """测试获取可用位置列表."""
+        positions = TextConfig.get_available_positions()
+        assert len(positions) == len(TextPosition) - 1  # 不包括 CUSTOM
+
+        for pos_info in positions:
+            assert "value" in pos_info
+            assert "position" in pos_info
+            assert "name" in pos_info
+            assert isinstance(pos_info["position"], TextPosition)
+
+    def test_get_available_aligns(self) -> None:
+        """测试获取可用对齐方式列表."""
+        aligns = TextConfig.get_available_aligns()
+        assert len(aligns) == len(TextAlign)
+
+        for align_info in aligns:
+            assert "value" in align_info
+            assert "align" in align_info
+            assert "name" in align_info
+            assert isinstance(align_info["align"], TextAlign)
+
+    def test_serialization(self) -> None:
+        """测试序列化."""
+        config = TextConfig.from_hex(
+            "#FF5733",
+            content="水印测试",
+            font_size=24,
+            preset_position=TextPosition.TOP_LEFT,
+        )
+        data = config.model_dump()
+
+        assert "enabled" in data
+        assert "content" in data
+        assert "font_size" in data
+        assert "color" in data
+        assert "preset_position" in data
+
+        # 反序列化
+        restored = TextConfig.model_validate(data)
+        assert restored.content == config.content
+        assert restored.font_size == config.font_size
+        assert restored.get_effective_color() == config.get_effective_color()
+        assert restored.preset_position == config.preset_position
+
+    def test_layer_name_for_template(self) -> None:
+        """测试模板系统的图层名称字段."""
+        config = TextConfig(layer_name="watermark_layer")
+        assert config.layer_name == "watermark_layer"
+
+        config = TextConfig()
+        assert config.layer_name is None
