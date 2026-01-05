@@ -238,3 +238,83 @@ class TestLayerSignals:
         assert hasattr(item.signals, "deselected")
         assert hasattr(item.signals, "position_changed")
         assert hasattr(item.signals, "size_changed")
+        assert hasattr(item.signals, "edit_started")
+        assert hasattr(item.signals, "edit_finished")
+
+
+# ===================
+# 文字编辑测试
+# ===================
+
+
+class TestTextLayerItemEditing:
+    """测试文字图层编辑功能."""
+
+    def test_should_not_be_editing_initially(self, app):
+        """初始应不在编辑模式."""
+        layer = TextLayer(content="Test")
+        item = TextLayerItem(layer)
+        assert item.is_editing is False
+
+    def test_should_start_editing(self, app):
+        """应能开始编辑."""
+        layer = TextLayer(content="Test")
+        item = TextLayerItem(layer)
+        item.start_editing()
+        assert item.is_editing is True
+
+    def test_should_not_start_editing_when_locked(self, app):
+        """锁定时不应能开始编辑."""
+        layer = TextLayer(content="Test", locked=True)
+        item = TextLayerItem(layer)
+        item.start_editing()
+        assert item.is_editing is False
+
+    def test_should_finish_editing(self, app):
+        """应能结束编辑."""
+        layer = TextLayer(content="Old")
+        item = TextLayerItem(layer)
+        item.start_editing()
+        item.finish_editing("New")
+        assert item.is_editing is False
+        assert layer.content == "New"
+
+    def test_should_cancel_editing(self, app):
+        """应能取消编辑."""
+        layer = TextLayer(content="Original")
+        item = TextLayerItem(layer)
+        item.start_editing()
+        item.cancel_editing()
+        assert item.is_editing is False
+        assert layer.content == "Original"  # 内容未改变
+
+    def test_should_emit_edit_started_signal(self, app):
+        """开始编辑时应发出信号."""
+        layer = TextLayer(content="Test")
+        item = TextLayerItem(layer)
+        signal_received = []
+
+        def on_edit_started(layer_id):
+            signal_received.append(layer_id)
+
+        item.signals.edit_started.connect(on_edit_started)
+        item.start_editing()
+
+        assert len(signal_received) == 1
+        assert signal_received[0] == layer.id
+
+    def test_should_emit_edit_finished_signal(self, app):
+        """结束编辑时应发出信号."""
+        layer = TextLayer(content="Old")
+        item = TextLayerItem(layer)
+        signal_received = []
+
+        def on_edit_finished(layer_id, content):
+            signal_received.append((layer_id, content))
+
+        item.signals.edit_finished.connect(on_edit_finished)
+        item.start_editing()
+        item.finish_editing("New")
+
+        assert len(signal_received) == 1
+        assert signal_received[0] == (layer.id, "New")
