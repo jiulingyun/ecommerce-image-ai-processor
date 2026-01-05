@@ -66,6 +66,7 @@ from src.ui.widgets import (
     AIConfigPanel,
     ImagePairPanel,
     ImagePreview,
+    OutputConfigPanel,
     ProcessConfigPanel,
     PromptConfigPanel,
     QueueProgressPanel,
@@ -154,6 +155,7 @@ class MainWindow(QMainWindow):
         self._ai_config_panel: Optional[AIConfigPanel] = None
         self._prompt_config_panel: Optional[PromptConfigPanel] = None
         self._process_config_panel: Optional[ProcessConfigPanel] = None
+        self._output_config_panel: Optional[OutputConfigPanel] = None
 
         # 任务管理
         self._tasks: dict[str, ImageTask] = {}  # task_id -> ImageTask
@@ -501,6 +503,17 @@ class MainWindow(QMainWindow):
         # 后期处理配置面板
         self._process_config_panel = ProcessConfigPanel()
         layout.addWidget(self._process_config_panel)
+
+        # 分隔线
+        separator3 = QFrame()
+        separator3.setFrameShape(QFrame.Shape.HLine)
+        separator3.setFrameShadow(QFrame.Shadow.Sunken)
+        separator3.setStyleSheet("background-color: #e8e8e8;")
+        layout.addWidget(separator3)
+
+        # 输出配置面板
+        self._output_config_panel = OutputConfigPanel()
+        layout.addWidget(self._output_config_panel)
 
         # 底部弹性空间
         layout.addStretch()

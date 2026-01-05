@@ -4,9 +4,10 @@
 
 Features:
     - 大图预览显示
-    - 背景图/商品图切换
+    - 背景图/商品图/处理结果切换
     - 适应缩放
     - 显示图片信息
+    - 处理前后对比预览
 """
 
 from __future__ import annotations
@@ -25,6 +26,7 @@ from PyQt6.QtWidgets import (
     QRadioButton,
     QScrollArea,
     QSizePolicy,
+    QStackedWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -36,10 +38,18 @@ from src.utils.logger import setup_logger
 logger = setup_logger(__name__)
 
 
+class PreviewMode:
+    """预览模式常量."""
+
+    BACKGROUND = "background"  # 背景图
+    PRODUCT = "product"  # 商品图
+    RESULT = "result"  # 处理结果
+
+
 class ImagePreview(QFrame):
     """图片预览组件.
 
-    显示选中任务的大图预览，支持切换查看背景图和商品图。
+    显示选中任务的大图预览，支持切换查看背景图、商品图和处理结果。
 
     Signals:
         image_changed: 预览图片切换信号
@@ -63,8 +73,9 @@ class ImagePreview(QFrame):
         super().__init__(parent)
 
         self._current_task: Optional[ImageTask] = None
-        self._show_background: bool = True  # True=背景图, False=商品图
+        self._preview_mode: str = PreviewMode.BACKGROUND
         self._original_pixmap: Optional[QPixmap] = None
+        self._result_pixmap: Optional[QPixmap] = None  # 处理结果图
 
         self._setup_ui()
 
@@ -78,9 +89,19 @@ class ImagePreview(QFrame):
         return self._current_task
 
     @property
+    def preview_mode(self) -> str:
+        """当前预览模式."""
+        return self._preview_mode
+
+    @property
     def is_showing_background(self) -> bool:
         """是否显示背景图."""
-        return self._show_background
+        return self._preview_mode == PreviewMode.BACKGROUND
+
+    @property
+    def has_result(self) -> bool:
+        """是否有处理结果."""
+        return self._result_pixmap is not None
 
     # ========================
     # 初始化
@@ -110,14 +131,24 @@ class ImagePreview(QFrame):
         switch_layout.setContentsMargins(0, 0, 0, 0)
         switch_layout.setSpacing(8)
 
+        self._btn_group = QButtonGroup(self)
+
         self._bg_radio = QRadioButton("背景图")
         self._bg_radio.setChecked(True)
         self._bg_radio.toggled.connect(self._on_switch_image)
+        self._btn_group.addButton(self._bg_radio)
         switch_layout.addWidget(self._bg_radio)
 
         self._prod_radio = QRadioButton("商品图")
         self._prod_radio.toggled.connect(self._on_switch_image)
+        self._btn_group.addButton(self._prod_radio)
         switch_layout.addWidget(self._prod_radio)
+
+        self._result_radio = QRadioButton("处理结果")
+        self._result_radio.toggled.connect(self._on_switch_image)
+        self._btn_group.addButton(self._result_radio)
+        self._result_radio.hide()  # 默认隐藏，有结果时显示
+        switch_layout.addWidget(self._result_radio)
 
         self._switch_container.hide()
         header_layout.addWidget(self._switch_container)
@@ -173,11 +204,18 @@ class ImagePreview(QFrame):
             task: 任务对象，None 表示清空
         """
         self._current_task = task
+        self._result_pixmap = None
 
         if task:
-            self._show_background = True
+            self._preview_mode = PreviewMode.BACKGROUND
             self._bg_radio.setChecked(True)
+            self._result_radio.hide()
             self._switch_container.show()
+
+            # 如果任务有结果路径，加载结果
+            if task.output_path:
+                self._load_result_image(task.output_path)
+
             self._load_image()
         else:
             self._show_empty_state()
@@ -186,19 +224,37 @@ class ImagePreview(QFrame):
         """清空预览."""
         self.set_task(None)
 
+    def set_result_image(self, image_path: str) -> None:
+        """设置处理结果图片.
+
+        Args:
+            image_path: 结果图片路径
+        """
+        self._load_result_image(image_path)
+        # 自动切换到结果显示
+        if self._result_pixmap:
+            self.switch_to_result()
+
     def switch_to_background(self) -> None:
         """切换到背景图."""
-        if self._current_task and not self._show_background:
-            self._show_background = True
+        if self._current_task and self._preview_mode != PreviewMode.BACKGROUND:
+            self._preview_mode = PreviewMode.BACKGROUND
             self._bg_radio.setChecked(True)
             self._load_image()
 
     def switch_to_product(self) -> None:
         """切换到商品图."""
-        if self._current_task and self._show_background:
-            self._show_background = False
+        if self._current_task and self._preview_mode != PreviewMode.PRODUCT:
+            self._preview_mode = PreviewMode.PRODUCT
             self._prod_radio.setChecked(True)
             self._load_image()
+
+    def switch_to_result(self) -> None:
+        """切换到处理结果."""
+        if self._result_pixmap and self._preview_mode != PreviewMode.RESULT:
+            self._preview_mode = PreviewMode.RESULT
+            self._result_radio.setChecked(True)
+            self._show_result_image()
 
     # ========================
     # 私有方法
@@ -207,22 +263,42 @@ class ImagePreview(QFrame):
     def _show_empty_state(self) -> None:
         """显示空状态."""
         self._switch_container.hide()
+        self._result_radio.hide()
         self._image_label.clear()
         self._image_label.setText("")
         self._info_label.clear()
         self._original_pixmap = None
+        self._result_pixmap = None
 
         # 显示空状态文本
         self._image_label.setText("选择任务后\n在此预览图片")
         self._image_label.setStyleSheet("font-size: 16px; color: #999;")
+
+    def _load_result_image(self, image_path: str) -> None:
+        """加载处理结果图片."""
+        try:
+            pixmap = QPixmap(image_path)
+            if not pixmap.isNull():
+                self._result_pixmap = pixmap
+                self._result_radio.show()
+                logger.debug(f"加载处理结果: {image_path}")
+            else:
+                logger.warning(f"无法加载处理结果图: {image_path}")
+        except Exception as e:
+            logger.error(f"加载处理结果失败: {e}")
 
     def _load_image(self) -> None:
         """加载当前图片."""
         if not self._current_task:
             return
 
+        # 处理结果单独显示
+        if self._preview_mode == PreviewMode.RESULT:
+            self._show_result_image()
+            return
+
         # 获取图片路径
-        if self._show_background:
+        if self._preview_mode == PreviewMode.BACKGROUND:
             image_path = self._current_task.background_path
             image_type = "背景图"
         else:
@@ -288,6 +364,21 @@ class ImagePreview(QFrame):
     # 槽函数
     # ========================
 
+    def _show_result_image(self) -> None:
+        """显示处理结果图片."""
+        if not self._result_pixmap:
+            return
+
+        self._original_pixmap = self._result_pixmap
+        self._image_label.setStyleSheet("")
+        self._update_preview_size()
+
+        # 显示图片信息
+        width, height = self._result_pixmap.width(), self._result_pixmap.height()
+        self._info_label.setText(f"处理结果\n尺寸: {width} × {height}")
+
+        self.image_changed.emit()
+
     def _on_switch_image(self, checked: bool) -> None:
         """切换图片."""
         if not checked:
@@ -295,11 +386,13 @@ class ImagePreview(QFrame):
 
         sender = self.sender()
         if sender == self._bg_radio:
-            self._show_background = True
+            self._preview_mode = PreviewMode.BACKGROUND
         elif sender == self._prod_radio:
-            self._show_background = False
+            self._preview_mode = PreviewMode.PRODUCT
+        elif sender == self._result_radio:
+            self._preview_mode = PreviewMode.RESULT
 
-        if self._current_task:
+        if self._current_task or self._preview_mode == PreviewMode.RESULT:
             self._load_image()
 
     # ========================
