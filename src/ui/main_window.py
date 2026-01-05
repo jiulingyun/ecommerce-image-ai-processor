@@ -66,7 +66,7 @@ from src.models.batch_queue import QueueStats
 from src.models.image_task import ImageTask, TaskStatus
 from src.models.process_config import ProcessConfig
 from src.services.ai_service import get_ai_service
-from src.ui.dialogs import SettingsDialog
+from src.ui.dialogs import SettingsDialog, TemplateEditorWindow
 from src.ui.widgets import (
     ImagePairPanel,
     ImagePreview,
@@ -177,6 +177,7 @@ class MainWindow(QMainWindow):
         self._action_cancel: Optional[QAction] = None
         self._action_clear: Optional[QAction] = None
         self._action_settings: Optional[QAction] = None
+        self._action_template_editor: Optional[QAction] = None
 
         # Toast 通知管理器
         self._toast_manager: Optional[ToastManager] = None
@@ -270,6 +271,11 @@ class MainWindow(QMainWindow):
         if process_menu:
             self._setup_process_menu(process_menu)
 
+        # 模板菜单
+        template_menu = menubar.addMenu("模板(&T)")
+        if template_menu:
+            self._setup_template_menu(template_menu)
+
         # 帮助菜单
         help_menu = menubar.addMenu("帮助(&H)")
         if help_menu:
@@ -334,6 +340,15 @@ class MainWindow(QMainWindow):
         self._action_cancel.triggered.connect(self._on_cancel_process)
         menu.addAction(self._action_cancel)
 
+    def _setup_template_menu(self, menu: QMenu) -> None:
+        """设置模板菜单."""
+        # 模板编辑器
+        self._action_template_editor = QAction("模板编辑器(&E)...", self)
+        self._action_template_editor.setShortcut(QKeySequence("Ctrl+Shift+T"))
+        self._action_template_editor.setStatusTip("打开模板编辑器，创建和编辑模板")
+        self._action_template_editor.triggered.connect(self._on_open_template_editor)
+        menu.addAction(self._action_template_editor)
+
     def _setup_help_menu(self, menu: QMenu) -> None:
         """设置帮助菜单."""
         # 使用帮助
@@ -386,6 +401,11 @@ class MainWindow(QMainWindow):
             spacer.sizePolicy().verticalPolicy().Preferred,
         )
         self._toolbar.addWidget(spacer)
+
+        # 模板编辑器按钮
+        if self._action_template_editor:
+            self._action_template_editor.setText("模板编辑器")
+            self._toolbar.addAction(self._action_template_editor)
 
         # 设置按钮
         if self._action_settings:
@@ -1169,6 +1189,12 @@ class MainWindow(QMainWindow):
         ai_service = get_ai_service(config=config)
         self.show_status_message("AI 配置已更新")
         logger.info("AI 服务配置已更新")
+
+    def _on_open_template_editor(self) -> None:
+        """打开模板编辑器."""
+        editor = TemplateEditorWindow(self)
+        editor.show()
+        logger.info("打开模板编辑器")
 
     def _on_about(self) -> None:
         """显示关于对话框."""
