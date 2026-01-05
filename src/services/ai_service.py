@@ -173,7 +173,7 @@ class AIService:
             # 优先从 config 中获取提示词
             if config is not None and config.prompt is not None:
                 effective_prompt = config.prompt.get_full_prompt()
-                logger.debug(f"使用配置中的提示词: {effective_prompt[:50]}...")
+                logger.info(f"使用配置中的提示词: {effective_prompt}")
             else:
                 # 使用默认提示词
                 position_desc = position_hint or "合适"
@@ -182,6 +182,9 @@ class AIService:
                     f"合成要求：符合图1的风格、光线、角度，"
                     f"商标大小适中，位置在{position_desc}位置，看上去自然合理。"
                 )
+                logger.info(f"使用默认提示词: {effective_prompt}")
+        else:
+            logger.info(f"使用传入的提示词: {effective_prompt}")
 
         return await self.provider.composite_images(
             images=[background, product],

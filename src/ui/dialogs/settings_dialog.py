@@ -34,6 +34,8 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.config_manager import get_config
+from src.models.api_config import APIConfig, AIModelConfig
+from src.services.ai_service import get_ai_service
 from src.utils.constants import (
     APP_DATA_DIR,
     DEFAULT_OUTPUT_HEIGHT,
@@ -217,6 +219,130 @@ class OutputSettingsWidget(QWidget):
             self._quality_label.setText(f"{quality}%")
 
 
+class AISettingsWidget(QWidget):
+    """AI 服务设置面板."""
+
+    config_changed = pyqtSignal(object)  # APIConfig
+
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
+        super().__init__(parent)
+        self._config_manager = get_config()
+        self._is_password_visible = False
+        self._setup_ui()
+
+    def _setup_ui(self) -> None:
+        layout = QVBoxLayout(self)
+        layout.setSpacing(16)
+
+        # DashScope 配置组
+        provider_group = QGroupBox("DashScope (通义千问)")
+        provider_layout = QVBoxLayout(provider_group)
+        provider_layout.setSpacing(12)
+
+        # API Key 输入
+        api_key_layout = QHBoxLayout()
+        api_key_label = QLabel("API Key:")
+        api_key_label.setFixedWidth(80)
+        api_key_layout.addWidget(api_key_label)
+
+        self._api_key_input = QLineEdit()
+        self._api_key_input.setPlaceholderText("sk-...")
+        self._api_key_input.setEchoMode(QLineEdit.EchoMode.Password)
+        api_key_layout.addWidget(self._api_key_input)
+
+        self._toggle_key_btn = QPushButton("👁")
+        self._toggle_key_btn.setFixedSize(28, 28)
+        self._toggle_key_btn.setToolTip("显示/隐藏 API Key")
+        self._toggle_key_btn.clicked.connect(self._toggle_api_key_visibility)
+        api_key_layout.addWidget(self._toggle_key_btn)
+
+        provider_layout.addLayout(api_key_layout)
+
+        # 模型选择
+        model_layout = QHBoxLayout()
+        model_label = QLabel("模型:")
+        model_label.setFixedWidth(80)
+        model_layout.addWidget(model_label)
+
+        self._model_combo = QComboBox()
+        self._model_combo.addItems([
+            "wanx-background-generation-v2",
+            "qwen-image-edit-plus",
+            "wanx-style-cosplay-v1"
+        ])
+        model_layout.addWidget(self._model_combo)
+
+        provider_layout.addLayout(model_layout)
+
+        # 测试连接按钮
+        self._test_btn = QPushButton("测试连接")
+        self._test_btn.clicked.connect(self._test_connection)
+        provider_layout.addWidget(self._test_btn)
+
+        layout.addWidget(provider_group)
+
+        # 说明
+        hint_label = QLabel(
+            "提示：您可以在阿里云 DashScope 控制台获取 API Key\n"
+            "https://dashscope.console.aliyun.com/"
+        )
+        hint_label.setStyleSheet("color: #666; font-size: 11px;")
+        hint_label.setWordWrap(True)
+        layout.addWidget(hint_label)
+
+        layout.addStretch()
+
+    def _toggle_api_key_visibility(self) -> None:
+        """切换 API Key 可见性."""
+        self._is_password_visible = not self._is_password_visible
+        if self._is_password_visible:
+            self._api_key_input.setEchoMode(QLineEdit.EchoMode.Normal)
+            self._toggle_key_btn.setText("🔒")
+        else:
+            self._api_key_input.setEchoMode(QLineEdit.EchoMode.Password)
+            self._toggle_key_btn.setText("👁")
+
+    def _test_connection(self) -> None:
+        """测试连接."""
+        api_key = self._api_key_input.text().strip()
+        if not api_key:
+            QMessageBox.warning(self, "提示", "请先输入 API Key")
+            return
+
+        self._test_btn.setEnabled(False)
+        self._test_btn.setText("正在测试...")
+
+        try:
+            config = APIConfig(api_key=api_key)
+            # 简单验证配置格式
+            QMessageBox.information(
+                self, "测试通过",
+                "API 配置格式正确\n(实际连接需在处理时验证)"
+            )
+        except Exception as e:
+            QMessageBox.critical(self, "测试失败", f"配置无效: {e}")
+        finally:
+            self._test_btn.setEnabled(True)
+            self._test_btn.setText("测试连接")
+
+    def get_settings(self) -> dict:
+        """获取当前设置."""
+        return {
+            "api_key": self._api_key_input.text().strip(),
+            "model": self._model_combo.currentText(),
+        }
+
+    def set_settings(self, settings: dict) -> None:
+        """设置当前值."""
+        if "api_key" in settings and settings["api_key"]:
+            self._api_key_input.setText(settings["api_key"])
+
+        if "model" in settings:
+            index = self._model_combo.findText(settings["model"])
+            if index >= 0:
+                self._model_combo.setCurrentIndex(index)
+
+
 class PathSettingsWidget(QWidget):
     """路径设置面板."""
 
@@ -322,9 +448,11 @@ class SettingsDialog(QDialog):
 
     Signals:
         settings_changed: 设置已变更信号
+        ai_config_changed: AI 配置变更信号
     """
 
     settings_changed = pyqtSignal()
+    ai_config_changed = pyqtSignal(object)  # APIConfig
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
@@ -336,13 +464,17 @@ class SettingsDialog(QDialog):
         """设置 UI."""
         self.setWindowTitle("应用设置")
         self.setMinimumSize(500, 450)
-        self.resize(550, 500)
+        self.resize(550, 520)
 
         layout = QVBoxLayout(self)
         layout.setSpacing(16)
 
         # 标签页
         self._tab_widget = QTabWidget()
+
+        # AI 服务设置标签页（放在第一个）
+        self._ai_widget = AISettingsWidget()
+        self._tab_widget.addTab(self._ai_widget, "AI 服务")
 
         # 通用设置标签页
         self._general_widget = GeneralSettingsWidget()
@@ -412,6 +544,14 @@ class SettingsDialog(QDialog):
             }
             self._path_widget.set_settings(path_settings)
 
+            # 加载 AI 配置
+            api_config = self._config_manager.get_user_config("api_config", {})
+            ai_settings = {
+                "api_key": api_config.get("api_key", ""),
+                "model": api_config.get("model", {}).get("model", "wanx-background-generation-v2"),
+            }
+            self._ai_widget.set_settings(ai_settings)
+
             logger.debug("设置对话框加载完成")
 
         except Exception as e:
@@ -428,10 +568,31 @@ class SettingsDialog(QDialog):
             general = self._general_widget.get_settings()
             output = self._output_widget.get_settings()
             path = self._path_widget.get_settings()
+            ai = self._ai_widget.get_settings()
 
-            # 合并并保存
+            # 合并并保存通用设置
             all_settings = {**general, **output, **path}
             self._config_manager.save_user_config(all_settings)
+
+            # 保存 AI 配置
+            if ai.get("api_key"):
+                api_config_data = {
+                    "api_key": ai["api_key"],
+                    "model": {"model": ai.get("model", "wanx-background-generation-v2")}
+                }
+                self._config_manager.set_user_config("api_config", api_config_data)
+
+                # 更新 AI 服务单例
+                try:
+                    api_config = APIConfig(
+                        api_key=ai["api_key"],
+                        model=AIModelConfig(model=ai.get("model", "wanx-background-generation-v2"))
+                    )
+                    get_ai_service(config=api_config)
+                    self.ai_config_changed.emit(api_config)
+                    logger.info("AI 服务配置已更新")
+                except Exception as e:
+                    logger.warning(f"更新 AI 服务失败: {e}")
 
             # 重新加载配置以应用变更
             self._config_manager.reload()
@@ -485,4 +646,5 @@ class SettingsDialog(QDialog):
         general = self._general_widget.get_settings()
         output = self._output_widget.get_settings()
         path = self._path_widget.get_settings()
-        return {**general, **output, **path}
+        ai = self._ai_widget.get_settings()
+        return {**general, **output, **path, "ai": ai}

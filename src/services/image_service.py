@@ -335,6 +335,7 @@ class ImageService:
                 task.background_path,
                 product_nobg,
                 lambda p, m: report_progress(int(35 + p * 0.35), m),
+                config=config,
             )
 
             # Step 3: 后期处理 (70-90%)
@@ -354,7 +355,9 @@ class ImageService:
             )
 
             # 完成
+            logger.info(f"DEBUG before mark_completed: task.status={task.status}")
             task.mark_completed(str(output_path))
+            logger.info(f"DEBUG after mark_completed: task.status={task.status}, task.output_path={task.output_path}")
             report_progress(100, "完成")
             logger.info(f"任务完成: {task.id}")
 
@@ -390,6 +393,7 @@ class ImageService:
         background_path: str,
         product_bytes: bytes,
         on_progress: Optional[ProgressCallback] = None,
+        config: Optional[ProcessConfig] = None,
     ) -> bytes:
         """合成商品到场景（内部方法）."""
         bg_image = load_image(background_path)
@@ -402,6 +406,7 @@ class ImageService:
         result = await self.ai_service.composite_product(
             background=bg_bytes,
             product=product_bytes,
+            config=config,
         )
 
         if on_progress:
@@ -442,12 +447,14 @@ class ImageService:
         if config.text.enabled and config.text.content:
             if on_progress:
                 on_progress(60, "添加文字")
+            # 计算文字位置
+            text_position = config.text.get_effective_position(image.size)
             image = await loop.run_in_executor(
                 None,
                 self._add_text,
                 image,
                 config.text.content,
-                config.text.position,
+                text_position,
                 config.text.font_size,
                 config.text.color,
             )

@@ -61,11 +61,13 @@ class ConstrainedScrollArea(QScrollArea):
             widget.setFixedWidth(available_width)
 
 from src.core.queue_worker import QueueController, get_queue_controller
+from src.models.api_config import APIConfig
 from src.models.batch_queue import QueueStats
 from src.models.image_task import ImageTask, TaskStatus
+from src.models.process_config import ProcessConfig
+from src.services.ai_service import get_ai_service
 from src.ui.dialogs import SettingsDialog
 from src.ui.widgets import (
-    AIConfigPanel,
     ImagePairPanel,
     ImagePreview,
     OutputConfigPanel,
@@ -160,7 +162,6 @@ class MainWindow(QMainWindow):
         self._task_list_widget: Optional[TaskListWidget] = None
         self._queue_progress_panel: Optional[QueueProgressPanel] = None
         self._image_preview: Optional[ImagePreview] = None
-        self._ai_config_panel: Optional[AIConfigPanel] = None
         self._prompt_config_panel: Optional[PromptConfigPanel] = None
         self._process_config_panel: Optional[ProcessConfigPanel] = None
         self._output_config_panel: Optional[OutputConfigPanel] = None
@@ -494,17 +495,6 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # AI 服务配置面板
-        self._ai_config_panel = AIConfigPanel()
-        layout.addWidget(self._ai_config_panel)
-
-        # 分隔线
-        separator = QFrame()
-        separator.setFrameShape(QFrame.Shape.HLine)
-        separator.setFrameShadow(QFrame.Shadow.Sunken)
-        separator.setStyleSheet("background-color: #e8e8e8;")
-        layout.addWidget(separator)
-
         # AI 提示词配置面板
         self._prompt_config_panel = PromptConfigPanel()
         layout.addWidget(self._prompt_config_panel)
@@ -587,6 +577,75 @@ class MainWindow(QMainWindow):
             self._queue_progress_panel.start_clicked.connect(self._on_start_process)
             self._queue_progress_panel.pause_clicked.connect(self._on_pause_process)
             self._queue_progress_panel.cancel_clicked.connect(self._on_cancel_process)
+
+    def _collect_current_config(self) -> ProcessConfig:
+        """从右侧面板收集当前配置.
+
+        Returns:
+            当前的处理配置
+        """
+        # 获取提示词配置
+        prompt_config = None
+        if self._prompt_config_panel:
+            prompt_config = self._prompt_config_panel.get_config()
+
+        # 获取后期处理配置（背景、边框、文字）
+        process_config = ProcessConfig()
+        if self._process_config_panel:
+            process_config = self._process_config_panel.get_config()
+
+        # 获取输出配置
+        output_config = None
+        if self._output_config_panel:
+            output_dict = self._output_config_panel.get_config()
+            # output_config_panel 使用自己的枚举，需要转换为 process_config 的枚举
+            from src.models.process_config import (
+                OutputConfig,
+                OutputFormat as ModelOutputFormat,
+                ResizeMode as ModelResizeMode,
+            )
+            
+            # 转换输出格式
+            ui_format = output_dict.get("format")
+            format_map = {
+                "JPEG": ModelOutputFormat.JPEG,
+                "PNG": ModelOutputFormat.PNG,
+                "WEBP": ModelOutputFormat.WEBP,
+                "WebP": ModelOutputFormat.WEBP,
+            }
+            model_format = format_map.get(
+                ui_format.value if hasattr(ui_format, 'value') else str(ui_format),
+                ModelOutputFormat.JPEG
+            )
+            
+            # 转换尺寸模式
+            ui_resize_mode = output_dict.get("resize_mode")
+            resize_map = {
+                "ORIGINAL": ModelResizeMode.NONE,
+                "FIT": ModelResizeMode.FIT,
+                "FILL": ModelResizeMode.FILL,
+                "STRETCH": ModelResizeMode.STRETCH,
+                "CUSTOM": ModelResizeMode.FIT,
+            }
+            resize_mode_name = ui_resize_mode.name if hasattr(ui_resize_mode, 'name') else str(ui_resize_mode)
+            model_resize_mode = resize_map.get(resize_mode_name, ModelResizeMode.NONE)
+            
+            output_size = output_dict.get("output_size", (1024, 1024))
+            output_config = OutputConfig(
+                format=model_format,
+                quality=output_dict.get("quality", 95),
+                resize_mode=model_resize_mode,
+                size=output_size,
+            )
+
+        # 组合所有配置
+        return ProcessConfig(
+            prompt=prompt_config,
+            background=process_config.background,
+            border=process_config.border,
+            text=process_config.text,
+            output=output_config,
+        )
 
     def _update_actions_state(self) -> None:
         """更新操作按钮状态."""
@@ -776,6 +835,11 @@ class MainWindow(QMainWindow):
         if not self._queue_controller:
             logger.error("队列控制器未初始化")
             return
+
+        # 从右侧面板收集当前配置并应用到任务
+        current_config = self._collect_current_config()
+        for task in self._tasks.values():
+            task.config = current_config
 
         # 传递任务给控制器
         self._queue_controller.set_tasks(self._tasks)
@@ -975,10 +1039,15 @@ class MainWindow(QMainWindow):
             task_id: 任务 ID
             output_path: 输出文件路径
         """
+        logger.info(f"_on_queue_task_completed called: task_id={task_id}, output_path={output_path}")
+        
         # 更新任务状态
         if task_id in self._tasks:
             self._tasks[task_id].status = TaskStatus.COMPLETED
             self._tasks[task_id].output_path = output_path
+            logger.info(f"Updated task {task_id} status to COMPLETED")
+        else:
+            logger.warning(f"Task {task_id} not found in self._tasks")
 
         # 更新任务列表显示
         if self._task_list_widget:
@@ -987,6 +1056,10 @@ class MainWindow(QMainWindow):
         # 更新进度面板
         if self._queue_progress_panel:
             self._queue_progress_panel.increment_completed()
+
+        # 如果是当前选中的任务，更新预览显示结果图
+        if self._selected_task_id == task_id and self._image_preview and output_path:
+            self._image_preview.set_result_image(output_path)
 
         logger.info(f"任务完成: {task_id} -> {output_path}")
 
@@ -1017,6 +1090,7 @@ class MainWindow(QMainWindow):
         Args:
             stats: 队列统计信息
         """
+        logger.info(f"_on_queue_completed called: stats={stats}")
         self.set_processing_state(False)
         
         # 显示完成消息
@@ -1054,6 +1128,7 @@ class MainWindow(QMainWindow):
         
         dialog = SettingsDialog(self)
         dialog.settings_changed.connect(self._on_settings_changed)
+        dialog.ai_config_changed.connect(self._on_ai_config_changed)
         dialog.exec()
         logger.debug("设置对话框已关闭")
 
@@ -1061,6 +1136,17 @@ class MainWindow(QMainWindow):
         """设置变更处理."""
         self.show_status_message("设置已更新")
         logger.info("应用设置已变更")
+
+    def _on_ai_config_changed(self, config: APIConfig) -> None:
+        """AI 配置变更处理.
+
+        Args:
+            config: 新的 API 配置
+        """
+        # 更新 AI 服务单例的配置
+        ai_service = get_ai_service(config=config)
+        self.show_status_message("AI 配置已更新")
+        logger.info("AI 服务配置已更新")
 
     def _on_about(self) -> None:
         """显示关于对话框."""

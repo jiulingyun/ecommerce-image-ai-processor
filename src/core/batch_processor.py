@@ -232,10 +232,13 @@ class BatchProcessor:
             task_id = batch_task.id
 
             logger.info(f"开始处理任务 {batch_task.queue_position}: {task.product_filename}")
+            logger.info(f"DEBUG: task object id={id(task)}, batch_task.task id={id(batch_task.task)}, same={task is batch_task.task}")
 
             def task_progress(progress: int, message: str) -> None:
                 """任务进度回调."""
-                task.update_status(TaskStatus.PROCESSING, progress=progress)
+                # 只在任务未完成时更新进度，避免覆盖已完成/失败的状态
+                if not task.is_finished:
+                    task.update_status(TaskStatus.PROCESSING, progress=progress)
                 if on_progress:
                     stats = self._queue.get_stats()
                     on_progress(task_id, progress, message, stats)
@@ -243,17 +246,17 @@ class BatchProcessor:
             try:
                 task.mark_processing()
 
-                # 调用图片处理服务执行合成
-                output_path = await self.image_service.composite_product(
-                    background_path=task.background_path,
-                    product_path=task.product_path,
-                    output_path=task.output_path,
+                # 调用图片处理服务执行完整处理流程
+                result_task = await self.image_service.process_task(
+                    task=task,
                     config=task.config,
                     on_progress=task_progress,
                 )
 
-                task.mark_completed(str(output_path))
-                logger.info(f"任务 {batch_task.queue_position} 完成: {output_path}")
+                # process_task 已经更新了任务状态
+                logger.info(f"任务 {batch_task.queue_position} 完成: {result_task.output_path}")
+                logger.info(f"DEBUG after process_task: result_task.status={result_task.status}, task.status={task.status}, batch_task.task.status={batch_task.task.status}")
+                logger.info(f"DEBUG: result_task is task: {result_task is task}, result_task is batch_task.task: {result_task is batch_task.task}")
 
             except Exception as e:
                 error_msg = str(e)

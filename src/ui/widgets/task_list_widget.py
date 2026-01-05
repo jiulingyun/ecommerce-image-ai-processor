@@ -454,10 +454,17 @@ class TaskListWidget(QFrame):
             task_id: 任务 ID
             status: 新状态
         """
+        logger.info(f"update_task_status called: task_id={task_id}, status={status}")
         if task_id in self._tasks:
             self._tasks[task_id].status = status
+            logger.info(f"Task {task_id} status updated to {status}")
             if task_id in self._items:
                 self._items[task_id].update_task(self._tasks[task_id])
+                logger.info(f"Task {task_id} UI updated")
+            else:
+                logger.warning(f"Task {task_id} not found in self._items")
+        else:
+            logger.warning(f"Task {task_id} not found in self._tasks")
 
     def clear_all(self) -> None:
         """清空所有任务."""

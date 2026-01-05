@@ -114,15 +114,10 @@ class QueueWorker(QObject):
             concurrent_limit=3,
         )
 
-        # 将任务添加到处理器队列
+        # 将任务添加到处理器队列（使用已存在的 ImageTask 以保持引用）
         for task_id, task in self._tasks.items():
             try:
-                self._processor.add_task(
-                    background_path=task.background_path,
-                    product_path=task.product_path,
-                    output_path=task.output_path,
-                    config=task.config,
-                )
+                self._processor.queue.add_existing_task(task)
             except Exception as e:
                 logger.error(f"添加任务失败: {task_id}, {e}")
 
@@ -155,10 +150,14 @@ class QueueWorker(QObject):
         def on_task_complete(batch_task: BatchTask) -> None:
             """任务完成回调."""
             task = batch_task.task
+            # 使用 ImageTask.id 而不是 BatchTask.id，因为 MainWindow 使用的是 ImageTask.id
+            logger.info(f"on_task_complete: task.id={task.id}, status={task.status}, output={task.output_path}")
             if task.is_completed:
-                self.task_completed.emit(batch_task.id, task.output_path or "")
+                logger.info(f"Emitting task_completed signal for {task.id}")
+                self.task_completed.emit(task.id, task.output_path or "")
             elif task.is_failed:
-                self.task_failed.emit(batch_task.id, task.error_message or "未知错误")
+                logger.info(f"Emitting task_failed signal for {task.id}")
+                self.task_failed.emit(task.id, task.error_message or "未知错误")
 
         def on_queue_complete(stats: QueueStats) -> None:
             """队列完成回调."""

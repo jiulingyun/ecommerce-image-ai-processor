@@ -299,6 +299,36 @@ class BatchQueue(BaseModel):
         self.tasks.append(batch_task)
         return batch_task
 
+    def add_existing_task(
+        self,
+        task: ImageTask,
+        priority: TaskPriority = TaskPriority.NORMAL,
+    ) -> BatchTask:
+        """添加已存在的 ImageTask 到队列.
+
+        Args:
+            task: 已存在的图片任务
+            priority: 任务优先级
+
+        Returns:
+            添加的 BatchTask
+
+        Raises:
+            ValueError: 队列已满
+        """
+        if self.is_full:
+            raise ValueError(f"队列已满，最多支持 {MAX_QUEUE_SIZE} 个任务")
+
+        # 创建批量任务，使用已存在的 ImageTask
+        batch_task = BatchTask(
+            queue_position=len(self.tasks) + 1,
+            task=task,
+            priority=priority,
+        )
+
+        self.tasks.append(batch_task)
+        return batch_task
+
     def remove_task(self, task_id: str) -> Optional[BatchTask]:
         """从队列移除任务.
 
