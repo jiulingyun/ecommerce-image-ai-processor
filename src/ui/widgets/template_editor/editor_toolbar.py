@@ -99,6 +99,8 @@ class EditorToolbar(QToolBar):
     copy_requested = pyqtSignal()
     paste_requested = pyqtSignal()
     delete_requested = pyqtSignal()
+    undo_requested = pyqtSignal()
+    redo_requested = pyqtSignal()
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         """初始化工具栏.
@@ -116,6 +118,12 @@ class EditorToolbar(QToolBar):
 
     def _setup_ui(self) -> None:
         """设置UI."""
+        # ==================
+        # 撤销/重做工具组
+        # ==================
+        self._add_undo_redo_actions()
+        self.addSeparator()
+
         # ==================
         # 添加图层工具组
         # ==================
@@ -138,6 +146,62 @@ class EditorToolbar(QToolBar):
         # 编辑操作组
         # ==================
         self._add_edit_actions()
+
+    def _add_undo_redo_actions(self) -> None:
+        """添加撤销/重做动作."""
+        # 撤销
+        self._action_undo = QAction("撤销", self)
+        self._action_undo.setToolTip("撤销 (Ctrl+Z)")
+        self._action_undo.setShortcut(QKeySequence.StandardKey.Undo)
+        self._action_undo.setEnabled(False)
+        self._action_undo.triggered.connect(self.undo_requested.emit)
+        self.addAction(self._action_undo)
+
+        # 重做
+        self._action_redo = QAction("重做", self)
+        self._action_redo.setToolTip("重做 (Ctrl+Y / Ctrl+Shift+Z)")
+        self._action_redo.setShortcut(QKeySequence.StandardKey.Redo)
+        self._action_redo.setEnabled(False)
+        self._action_redo.triggered.connect(self.redo_requested.emit)
+        self.addAction(self._action_redo)
+
+    def set_undo_enabled(self, enabled: bool) -> None:
+        """设置撤销按钮启用状态.
+
+        Args:
+            enabled: 是否启用
+        """
+        self._action_undo.setEnabled(enabled)
+
+    def set_redo_enabled(self, enabled: bool) -> None:
+        """设置重做按钮启用状态.
+
+        Args:
+            enabled: 是否启用
+        """
+        self._action_redo.setEnabled(enabled)
+
+    def set_undo_tooltip(self, description: str) -> None:
+        """设置撤销按钮提示.
+
+        Args:
+            description: 操作描述
+        """
+        if description:
+            self._action_undo.setToolTip(f"撤销: {description} (Ctrl+Z)")
+        else:
+            self._action_undo.setToolTip("撤销 (Ctrl+Z)")
+
+    def set_redo_tooltip(self, description: str) -> None:
+        """设置重做按钮提示.
+
+        Args:
+            description: 操作描述
+        """
+        if description:
+            self._action_redo.setToolTip(f"重做: {description} (Ctrl+Y)")
+        else:
+            self._action_redo.setToolTip("重做 (Ctrl+Y / Ctrl+Shift+Z)")
 
     def _add_layer_actions(self) -> None:
         """添加图层相关的动作."""

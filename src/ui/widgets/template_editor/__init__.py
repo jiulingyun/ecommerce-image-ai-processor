@@ -11,6 +11,8 @@ Components:
     - TextEditOverlay: 文字编辑覆盖层
     - LayerPanel: 图层管理面板
     - EditorToolbar: 编辑器工具栏
+    - UndoRedoManager: 撤销/重做管理器
+    - CommandStack: 命令栈
 """
 
 from src.ui.widgets.template_editor.canvas import TemplateCanvas
@@ -53,6 +55,18 @@ from src.ui.widgets.template_editor.editor_toolbar import (
     ClipboardManager,
     ContextMenuManager,
 )
+from src.ui.widgets.template_editor.undo_redo import (
+    Command,
+    CommandStack,
+    AddLayerCommand,
+    RemoveLayerCommand,
+    ModifyLayerCommand,
+    MoveLayerCommand,
+    ResizeLayerCommand,
+    BatchCommand,
+    ModifyCanvasCommand,
+    UndoRedoManager,
+)
 
 __all__ = [
     "TemplateCanvas",
@@ -83,4 +97,14 @@ __all__ = [
     "AlignmentManager",
     "ClipboardManager",
     "ContextMenuManager",
+    "Command",
+    "CommandStack",
+    "AddLayerCommand",
+    "RemoveLayerCommand",
+    "ModifyLayerCommand",
+    "MoveLayerCommand",
+    "ResizeLayerCommand",
+    "BatchCommand",
+    "ModifyCanvasCommand",
+    "UndoRedoManager",
 ]
