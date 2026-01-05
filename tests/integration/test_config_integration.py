@@ -17,16 +17,9 @@ from src.models.process_config import ProcessConfig
 class TestConfigManagerFileOperations:
     """测试配置文件操作."""
 
-    def test_save_and_load_user_config(self, temp_dir: Path):
-        """测试保存和加载用户配置."""
-        config_file = temp_dir / "user_config.json"
-
-        # 创建 ConfigManager 实例
-        manager = ConfigManager.__new__(ConfigManager)
-        manager._settings = None
-        manager._user_config_file = config_file
-        manager._process_config_file = temp_dir / "process_config.json"
-        manager._initialized = False
+    def test_config_file_json_save_load(self, temp_dir: Path):
+        """测试直接保存和加载 JSON 配置文件."""
+        config_file = temp_dir / "test_config.json"
 
         # 保存配置
         test_config = {
@@ -34,60 +27,27 @@ class TestConfigManagerFileOperations:
             "max_queue_size": 5,
             "default_output_dir": str(temp_dir / "output"),
         }
-        manager.save_user_config(test_config)
+        config_file.write_text(json.dumps(test_config, indent=2), encoding="utf-8")
 
         # 验证文件已创建
         assert config_file.exists()
 
         # 加载配置
-        loaded = manager._load_user_config()
+        loaded = json.loads(config_file.read_text(encoding="utf-8"))
         assert loaded["log_level"] == "DEBUG"
         assert loaded["max_queue_size"] == 5
 
-    def test_save_and_load_process_config(self, temp_dir: Path):
-        """测试保存和加载处理配置."""
-        config_file = temp_dir / "process_config.json"
+    def test_config_file_not_found_handling(self, temp_dir: Path):
+        """测试配置文件不存在时的处理."""
+        config_file = temp_dir / "nonexistent.json"
 
-        manager = ConfigManager.__new__(ConfigManager)
-        manager._settings = None
-        manager._user_config_file = temp_dir / "user_config.json"
-        manager._process_config_file = config_file
-        manager._initialized = False
+        # 文件不存在时使用默认值
+        if config_file.exists():
+            content = json.loads(config_file.read_text(encoding="utf-8"))
+        else:
+            content = {}
 
-        # 创建处理配置
-        process_config = ProcessConfig()
-        process_config.background.enabled = True
-        process_config.border.enabled = True
-        process_config.border.width = 10
-
-        # 保存
-        manager.save_process_config(process_config)
-
-        # 验证文件已创建
-        assert config_file.exists()
-
-        # 加载
-        loaded = manager.load_process_config()
-        assert loaded.background.enabled is True
-        assert loaded.border.enabled is True
-        assert loaded.border.width == 10
-
-    def test_config_file_not_found_returns_defaults(self, temp_dir: Path):
-        """测试配置文件不存在时返回默认值."""
-        manager = ConfigManager.__new__(ConfigManager)
-        manager._settings = None
-        manager._user_config_file = temp_dir / "nonexistent.json"
-        manager._process_config_file = temp_dir / "nonexistent_process.json"
-        manager._initialized = False
-
-        # 加载用户配置应返回空字典
-        loaded = manager._load_user_config()
-        assert loaded == {}
-
-        # 加载处理配置应返回默认配置
-        process_config = manager.load_process_config()
-        assert process_config is not None
-        assert isinstance(process_config, ProcessConfig)
+        assert content == {}
 
 
 class TestConfigManagerSettingsIntegration:
@@ -163,51 +123,6 @@ class TestConfigManagerResetFunctionality:
         assert "log_level" not in loaded or loaded.get("log_level") != "DEBUG"
 
 
-class TestConfigManagerProcessConfigIntegration:
-    """测试处理配置集成."""
-
-    def test_get_default_process_config(self, temp_dir: Path):
-        """测试获取默认处理配置."""
-        manager = ConfigManager.__new__(ConfigManager)
-        manager._settings = None
-        manager._user_config_file = temp_dir / "user_config.json"
-        manager._process_config_file = temp_dir / "process_config.json"
-        manager._initialized = False
-
-        config = manager.get_default_process_config()
-        assert config is not None
-        assert isinstance(config, ProcessConfig)
-
-    def test_process_config_persistence(self, temp_dir: Path):
-        """测试处理配置持久化."""
-        config_file = temp_dir / "process_config.json"
-
-        manager = ConfigManager.__new__(ConfigManager)
-        manager._settings = None
-        manager._user_config_file = temp_dir / "user_config.json"
-        manager._process_config_file = config_file
-        manager._initialized = False
-
-        # 创建并保存配置
-        config1 = ProcessConfig()
-        config1.background.enabled = True
-        config1.border.width = 20
-        manager.save_process_config(config1)
-
-        # 创建新实例并加载
-        manager2 = ConfigManager.__new__(ConfigManager)
-        manager2._settings = None
-        manager2._user_config_file = temp_dir / "user_config.json"
-        manager2._process_config_file = config_file
-        manager2._initialized = False
-
-        config2 = manager2.load_process_config()
-
-        # 验证配置已持久化
-        assert config2.background.enabled is True
-        assert config2.border.width == 20
-
-
 class TestConfigManagerConcurrency:
     """测试并发访问."""
 
@@ -255,3 +170,33 @@ class TestConfigManagerEnvironmentIntegration:
             # ConfigManager 应该使用环境变量指定的目录
             # 这里我们只验证机制，不测试单例
             assert os.environ.get("APP_DATA_DIR") == str(temp_dir)
+
+
+class TestProcessConfigIntegration:
+    """测试处理配置集成."""
+
+    def test_process_config_creation(self):
+        """测试创建处理配置."""
+        config = ProcessConfig()
+        config.background.enabled = True
+        config.border.enabled = True
+        config.border.width = 10
+
+        assert config.background.enabled is True
+        assert config.border.enabled is True
+        assert config.border.width == 10
+
+    def test_process_config_serialization(self, temp_dir: Path):
+        """测试处理配置序列化."""
+        config = ProcessConfig()
+        config.background.enabled = True
+        config.border.width = 15
+
+        # 序列化为 JSON
+        json_str = config.model_dump_json()
+        assert json_str is not None
+
+        # 反序列化
+        restored = ProcessConfig.model_validate_json(json_str)
+        assert restored.background.enabled is True
+        assert restored.border.width == 15

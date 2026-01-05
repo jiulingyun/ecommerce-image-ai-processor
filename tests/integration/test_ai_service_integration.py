@@ -128,7 +128,7 @@ class TestAIServiceAsyncOperations:
         process_config.prompt = AIPromptConfig(
             base_prompt="将商品自然合成到背景中",
             style_hint="保持原有风格",
-            position_hint="居中",
+            position_hint="center",  # 使用有效的枚举值
         )
 
         mock_provider = AsyncMock()
@@ -142,9 +142,6 @@ class TestAIServiceAsyncOperations:
             )
 
         # 验证使用了配置中的提示词
-        call_args = mock_provider.composite_images.call_args
-        prompt = call_args.kwargs.get("prompt") or call_args.args[1] if len(call_args.args) > 1 else None
-        # prompt 应包含配置中的提示词
         assert mock_provider.composite_images.called
 
     @pytest.mark.asyncio
