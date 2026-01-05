@@ -466,9 +466,11 @@ class ImageService:
         if on_progress:
             on_progress(50, "添加背景色")
 
-        # 添加背景色
+        # 添加背景色（使用 get_effective_color 获取实际生效的颜色）
+        effective_bg_color = config.background.get_effective_color()
+        logger.debug(f"应用背景色: {effective_bg_color}")
         image = await loop.run_in_executor(
-            None, self._add_background_color, image, config.background.color
+            None, self._add_background_color, image, effective_bg_color
         )
 
         # 转换回bytes
@@ -579,11 +581,18 @@ class ImageService:
                 config.text.color,
             )
 
-        # 调整尺寸
+        # 调整尺寸（根据配置的resize_mode）
         if on_progress:
             on_progress(80, "调整尺寸")
+        # 使用 get_effective_color 获取实际生效的背景色
+        effective_bg_color = config.background.get_effective_color()
         image = await loop.run_in_executor(
-            None, fit_to_size, image, config.output.size, config.background.color
+            None,
+            resize_with_mode,
+            image,
+            config.output.size,
+            config.output.resize_mode.value,
+            effective_bg_color,
         )
 
         if on_progress:
@@ -742,11 +751,35 @@ class ImageService:
 
         draw = ImageDraw.Draw(image)
 
-        # 尝试加载字体
-        try:
-            font = ImageFont.truetype("arial.ttf", font_size)
-        except OSError:
-            # 使用默认字体
+        # 尝试加载字体（按优先级尝试多个字体路径）
+        font = None
+        font_paths = [
+            # macOS 系统字体
+            "/System/Library/Fonts/PingFang.ttc",
+            "/System/Library/Fonts/STHeiti Light.ttc",
+            "/System/Library/Fonts/Helvetica.ttc",
+            "/Library/Fonts/Arial.ttf",
+            # Windows 字体
+            "C:/Windows/Fonts/msyh.ttc",  # 微软雅黑
+            "C:/Windows/Fonts/arial.ttf",
+            # Linux 字体
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+            "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
+            # 通用尝试
+            "arial.ttf",
+        ]
+        
+        for font_path in font_paths:
+            try:
+                font = ImageFont.truetype(font_path, font_size)
+                logger.debug(f"加载字体成功: {font_path}, 大小: {font_size}")
+                break
+            except (OSError, IOError):
+                continue
+        
+        if font is None:
+            # 所有字体都加载失败，使用默认字体（但不支持自定义大小）
+            logger.warning(f"无法加载任何字体，使用默认字体（字体大小 {font_size} 可能不生效）")
             font = ImageFont.load_default()
 
         draw.text(position, text, font=font, fill=color)
