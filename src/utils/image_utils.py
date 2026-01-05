@@ -1384,3 +1384,174 @@ def calculate_text_position(
         y = (img_h - text_h) // 2
 
     return (x, y)
+
+
+# ===================
+# 图片输出工具函数
+# ===================
+
+def resize_with_mode(
+    image: Image.Image,
+    size: Tuple[int, int],
+    mode: str = "fit",
+    background_color: Tuple[int, int, int] = (255, 255, 255),
+) -> Image.Image:
+    """根据指定模式调整图片尺寸.
+
+    Args:
+        image: PIL Image 对象
+        size: 目标尺寸 (宽, 高)
+        mode: 调整模式
+            - "fit": 适应尺寸（保持比例，填充空白）
+            - "fill": 填充尺寸（保持比例，裁剪超出）
+            - "stretch": 拉伸（不保持比例）
+            - "none": 不调整
+        background_color: 背景填充颜色（用于 fit 模式）
+
+    Returns:
+        调整后的图片
+    """
+    if mode == "none":
+        return image
+
+    target_w, target_h = size
+    img_w, img_h = image.size
+
+    if mode == "stretch":
+        return image.resize(size, Image.Resampling.LANCZOS)
+
+    if mode == "fill":
+        # 计算缩放比例（覆盖目标区域）
+        scale = max(target_w / img_w, target_h / img_h)
+        new_w = int(img_w * scale)
+        new_h = int(img_h * scale)
+        resized = image.resize((new_w, new_h), Image.Resampling.LANCZOS)
+
+        # 居中裁剪
+        left = (new_w - target_w) // 2
+        top = (new_h - target_h) // 2
+        return resized.crop((left, top, left + target_w, top + target_h))
+
+    # mode == "fit"
+    return fit_to_size(image, size, background_color)
+
+
+def export_image(
+    image: Image.Image,
+    output_path: Path | str,
+    format: str = "jpeg",
+    quality: int = 85,
+    size: Optional[Tuple[int, int]] = None,
+    resize_mode: str = "fit",
+    background_color: Tuple[int, int, int] = (255, 255, 255),
+    optimize: bool = True,
+) -> Path:
+    """导出图片.
+
+    支持尺寸调整、格式转换和质量压缩。
+
+    Args:
+        image: PIL Image 对象
+        output_path: 输出文件路径
+        format: 输出格式 ("jpeg", "png", "webp")
+        quality: 输出质量 (1-100)
+        size: 目标尺寸，None 表示不调整
+        resize_mode: 尺寸调整模式
+        background_color: 背景填充颜色
+        optimize: 是否优化输出
+
+    Returns:
+        输出文件路径
+
+    Example:
+        >>> from PIL import Image
+        >>> img = Image.new("RGB", (1000, 1000), (255, 255, 255))
+        >>> output = export_image(
+        ...     img,
+        ...     "output.jpg",
+        ...     format="jpeg",
+        ...     quality=85,
+        ...     size=(800, 800),
+        ... )
+    """
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # 调整尺寸
+    if size is not None:
+        image = resize_with_mode(image, size, resize_mode, background_color)
+
+    # 确保正确的颜色模式
+    format_lower = format.lower()
+    if format_lower in ("jpeg", "jpg"):
+        if image.mode in ("RGBA", "P"):
+            image = image.convert("RGB")
+    elif format_lower == "png":
+        if image.mode not in ("RGB", "RGBA", "L", "LA", "P"):
+            image = image.convert("RGB")
+
+    # 保存参数
+    save_kwargs: dict = {}
+    if optimize:
+        save_kwargs["optimize"] = True
+
+    if format_lower in ("jpeg", "jpg", "webp"):
+        save_kwargs["quality"] = quality
+
+    if format_lower == "png":
+        save_kwargs["compress_level"] = 6  # 0-9，9 最大压缩
+
+    # 保存
+    image.save(output_path, **save_kwargs)
+    logger.debug(f"图片已导出: {output_path}")
+
+    return output_path
+
+
+def estimate_file_size(
+    image: Image.Image,
+    format: str = "jpeg",
+    quality: int = 85,
+) -> int:
+    """估算导出文件大小.
+
+    Args:
+        image: PIL Image 对象
+        format: 输出格式
+        quality: 输出质量
+
+    Returns:
+        估算的文件大小（字节）
+    """
+    buffer = io.BytesIO()
+
+    format_lower = format.lower()
+    if format_lower in ("jpeg", "jpg"):
+        if image.mode in ("RGBA", "P"):
+            image = image.convert("RGB")
+        image.save(buffer, format="JPEG", quality=quality)
+    elif format_lower == "png":
+        image.save(buffer, format="PNG")
+    elif format_lower == "webp":
+        image.save(buffer, format="WEBP", quality=quality)
+    else:
+        image.save(buffer, format=format.upper())
+
+    return len(buffer.getvalue())
+
+
+def format_file_size(size_bytes: int) -> str:
+    """格式化文件大小.
+
+    Args:
+        size_bytes: 文件大小（字节）
+
+    Returns:
+        格式化的字符串（如 "1.5 MB"）
+    """
+    if size_bytes < 1024:
+        return f"{size_bytes} B"
+    elif size_bytes < 1024 * 1024:
+        return f"{size_bytes / 1024:.1f} KB"
+    else:
+        return f"{size_bytes / (1024 * 1024):.1f} MB"

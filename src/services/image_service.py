@@ -25,8 +25,12 @@ from src.models.process_config import (
     BackgroundConfig,
     BorderConfig,
     BorderStyle,
+    OutputConfig,
+    OutputFormat,
     PresetColor,
     ProcessConfig,
+    QualityPreset,
+    ResizeMode,
     TextConfig,
     TextPosition,
     TextAlign,
@@ -58,11 +62,15 @@ from src.utils.image_utils import (
     create_text_preview,
     create_thumbnail,
     ensure_rgba,
+    estimate_file_size,
+    export_image,
     fit_to_size,
+    format_file_size,
     get_available_fonts,
     get_text_size,
     image_to_bytes,
     load_image,
+    resize_with_mode,
     save_image,
     validate_image_file,
 )
@@ -1252,6 +1260,205 @@ class ImageService:
             字体信息列表，每项包含 name, path 字段
         """
         return get_available_fonts()
+
+    # ==========================================
+    # 图片输出功能
+    # ==========================================
+
+    async def export_image(
+        self,
+        input_path: Union[str, Path],
+        output_path: Optional[Union[str, Path]] = None,
+        config: Optional[OutputConfig] = None,
+        format: Optional[str] = None,
+        quality: Optional[int] = None,
+        size: Optional[Tuple[int, int]] = None,
+        on_progress: Optional[ProgressCallback] = None,
+    ) -> Path:
+        """导出图片.
+
+        支持 JPG/PNG/WebP 格式输出，尺寸调整和质量压缩。
+
+        Args:
+            input_path: 输入图片路径
+            output_path: 输出图片路径，如果为 None 则自动生成
+            config: 输出配置对象
+            format: 输出格式，优先级低于 config
+            quality: 输出质量，优先级低于 config
+            size: 输出尺寸，优先级低于 config
+            on_progress: 进度回调函数
+
+        Returns:
+            输出文件路径
+
+        Raises:
+            ImageNotFoundError: 输入文件不存在
+            ImageProcessError: 图片处理失败
+
+        Example:
+            >>> service = ImageService()
+            >>> # 使用配置对象
+            >>> config = OutputConfig.for_ecommerce()
+            >>> result = await service.export_image("input.png", config=config)
+            >>>
+            >>> # 直接指定参数
+            >>> result = await service.export_image(
+            ...     "input.png",
+            ...     format="jpeg",
+            ...     quality=85,
+            ...     size=(800, 800)
+            ... )
+        """
+        input_path = Path(input_path)
+        logger.info(f"开始导出图片: {input_path}")
+
+        def report_progress(progress: int, message: str) -> None:
+            if on_progress:
+                on_progress(progress, message)
+            logger.debug(f"进度 {progress}%: {message}")
+
+        try:
+            # Step 1: 确定输出参数 (5%)
+            report_progress(5, "准备输出配置")
+
+            if config is not None:
+                out_format = config.format.value
+                out_quality = config.get_effective_quality()
+                out_size = config.size if config.resize_mode != ResizeMode.NONE else None
+                out_resize_mode = config.resize_mode.value
+                out_bg_color = config.background_color
+                out_optimize = config.optimize
+                out_extension = config.get_file_extension()
+            else:
+                out_format = format if format is not None else "jpeg"
+                out_quality = quality if quality is not None else DEFAULT_OUTPUT_QUALITY
+                out_size = size
+                out_resize_mode = "fit"
+                out_bg_color = (255, 255, 255)
+                out_optimize = True
+                out_extension = ".jpg" if out_format in ("jpeg", "jpg") else f".{out_format}"
+
+            # Step 2: 验证输入文件 (10%)
+            report_progress(10, "验证输入文件")
+            validate_image_file(input_path)
+
+            # Step 3: 加载图片 (30%)
+            report_progress(30, "加载图片")
+            loop = asyncio.get_event_loop()
+            image = await loop.run_in_executor(None, load_image, input_path)
+
+            # Step 4: 调整尺寸 (50%)
+            if out_size is not None:
+                report_progress(50, "调整尺寸")
+                image = await loop.run_in_executor(
+                    None, resize_with_mode, image, out_size, out_resize_mode, out_bg_color
+                )
+            else:
+                report_progress(50, "保持原始尺寸")
+
+            # Step 5: 导出图片 (90%)
+            report_progress(70, "导出图片")
+            output_path = self._get_output_path(
+                input_path, output_path, f"_export{out_extension}"
+            )
+            await loop.run_in_executor(
+                None,
+                export_image,
+                image,
+                output_path,
+                out_format,
+                out_quality,
+                None,  # size already applied
+                out_resize_mode,
+                out_bg_color,
+                out_optimize,
+            )
+
+            # 完成 (100%)
+            report_progress(100, "完成")
+            logger.info(f"图片导出完成: {output_path}")
+
+            return output_path
+
+        except Exception as e:
+            logger.exception(f"图片导出失败: {input_path}")
+            raise ImageProcessError(f"图片导出失败: {e}") from e
+
+    def estimate_export_size(
+        self,
+        input_path: Union[str, Path],
+        config: Optional[OutputConfig] = None,
+        format: str = "jpeg",
+        quality: int = 85,
+    ) -> dict:
+        """估算导出文件大小.
+
+        用于 UI 中显示预估的文件大小。
+
+        Args:
+            input_path: 输入图片路径
+            config: 输出配置对象
+            format: 输出格式
+            quality: 输出质量
+
+        Returns:
+            包含 size_bytes 和 size_formatted 的字典
+
+        Example:
+            >>> service = ImageService()
+            >>> info = service.estimate_export_size("input.png")
+            >>> print(f"预估大小: {info['size_formatted']}")
+        """
+        image = load_image(input_path)
+
+        # 确定参数
+        if config is not None:
+            out_format = config.format.value
+            out_quality = config.get_effective_quality()
+            if config.resize_mode != ResizeMode.NONE:
+                image = resize_with_mode(
+                    image, config.size, config.resize_mode.value, config.background_color
+                )
+        else:
+            out_format = format
+            out_quality = quality
+
+        size_bytes = estimate_file_size(image, out_format, out_quality)
+
+        return {
+            "size_bytes": size_bytes,
+            "size_formatted": format_file_size(size_bytes),
+        }
+
+    def get_output_formats(self) -> list[dict]:
+        """获取所有可用的输出格式.
+
+        供 UI 格式选择器使用。
+
+        Returns:
+            输出格式信息列表
+        """
+        return OutputConfig.get_available_formats()
+
+    def get_quality_presets(self) -> list[dict]:
+        """获取所有质量预设.
+
+        供 UI 质量选择器使用。
+
+        Returns:
+            质量预设信息列表
+        """
+        return OutputConfig.get_quality_presets()
+
+    def get_resize_modes(self) -> list[dict]:
+        """获取所有尺寸调整模式.
+
+        供 UI 尺寸模式选择器使用。
+
+        Returns:
+            尺寸模式信息列表
+        """
+        return OutputConfig.get_resize_modes()
 
 
 # 单例实例

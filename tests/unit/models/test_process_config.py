@@ -9,8 +9,13 @@ from src.models.process_config import (
     BorderConfig,
     BorderStyle,
     BORDER_STYLE_NAMES,
+    OutputConfig,
+    OutputFormat,
     PresetColor,
     PRESET_COLOR_VALUES,
+    QualityPreset,
+    QUALITY_PRESET_VALUES,
+    ResizeMode,
     TextAlign,
     TextConfig,
     TextPosition,
@@ -578,3 +583,180 @@ class TestTextConfig:
 
         config = TextConfig()
         assert config.layer_name is None
+
+
+# ===================
+# OutputFormat 测试
+# ===================
+class TestOutputFormat:
+    """测试 OutputFormat 枚举."""
+
+    def test_output_format_values(self) -> None:
+        """测试输出格式枚举值."""
+        assert OutputFormat.JPEG.value == "jpeg"
+        assert OutputFormat.PNG.value == "png"
+        assert OutputFormat.WEBP.value == "webp"
+
+
+class TestQualityPreset:
+    """测试 QualityPreset 枚举."""
+
+    def test_quality_preset_values(self) -> None:
+        """测试质量预设枚举值."""
+        assert QualityPreset.LOW.value == "low"
+        assert QualityPreset.MEDIUM.value == "medium"
+        assert QualityPreset.HIGH.value == "high"
+        assert QualityPreset.BEST.value == "best"
+        assert QualityPreset.CUSTOM.value == "custom"
+
+    def test_quality_preset_values_mapping(self) -> None:
+        """测试质量预设对应的数值."""
+        assert QUALITY_PRESET_VALUES[QualityPreset.LOW] == 60
+        assert QUALITY_PRESET_VALUES[QualityPreset.MEDIUM] == 75
+        assert QUALITY_PRESET_VALUES[QualityPreset.HIGH] == 85
+        assert QUALITY_PRESET_VALUES[QualityPreset.BEST] == 95
+
+
+class TestResizeMode:
+    """测试 ResizeMode 枚举."""
+
+    def test_resize_mode_values(self) -> None:
+        """测试尺寸模式枚举值."""
+        assert ResizeMode.FIT.value == "fit"
+        assert ResizeMode.FILL.value == "fill"
+        assert ResizeMode.STRETCH.value == "stretch"
+        assert ResizeMode.NONE.value == "none"
+
+
+# ===================
+# OutputConfig 测试
+# ===================
+class TestOutputConfig:
+    """测试 OutputConfig 模型."""
+
+    def test_default_values(self) -> None:
+        """测试默认值."""
+        config = OutputConfig()
+        assert config.format == OutputFormat.JPEG
+        assert config.size == (800, 800)
+        assert config.resize_mode == ResizeMode.FIT
+        assert config.quality_preset == QualityPreset.HIGH
+        assert config.optimize is True
+
+    def test_get_effective_quality_preset(self) -> None:
+        """测试从预设获取质量."""
+        config = OutputConfig(quality_preset=QualityPreset.MEDIUM)
+        assert config.get_effective_quality() == 75
+
+        config = OutputConfig(quality_preset=QualityPreset.BEST)
+        assert config.get_effective_quality() == 95
+
+    def test_get_effective_quality_custom(self) -> None:
+        """测试自定义质量."""
+        config = OutputConfig(
+            quality_preset=QualityPreset.CUSTOM,
+            quality=70,
+        )
+        assert config.get_effective_quality() == 70
+
+    def test_get_file_extension(self) -> None:
+        """测试获取文件扩展名."""
+        config = OutputConfig(format=OutputFormat.JPEG)
+        assert config.get_file_extension() == ".jpg"
+
+        config = OutputConfig(format=OutputFormat.PNG)
+        assert config.get_file_extension() == ".png"
+
+        config = OutputConfig(format=OutputFormat.WEBP)
+        assert config.get_file_extension() == ".webp"
+
+    def test_supports_quality(self) -> None:
+        """测试格式是否支持质量设置."""
+        config = OutputConfig(format=OutputFormat.JPEG)
+        assert config.supports_quality() is True
+
+        config = OutputConfig(format=OutputFormat.PNG)
+        assert config.supports_quality() is False
+
+        config = OutputConfig(format=OutputFormat.WEBP)
+        assert config.supports_quality() is True
+
+    def test_supports_transparency(self) -> None:
+        """测试格式是否支持透明度."""
+        config = OutputConfig(format=OutputFormat.JPEG)
+        assert config.supports_transparency() is False
+
+        config = OutputConfig(format=OutputFormat.PNG)
+        assert config.supports_transparency() is True
+
+        config = OutputConfig(format=OutputFormat.WEBP)
+        assert config.supports_transparency() is True
+
+    def test_size_validation(self) -> None:
+        """测试尺寸验证."""
+        # 有效尺寸
+        config = OutputConfig(size=(800, 800))
+        assert config.size == (800, 800)
+
+        # 无效尺寸
+        with pytest.raises(ValueError):
+            OutputConfig(size=(50, 50))  # 太小
+        with pytest.raises(ValueError):
+            OutputConfig(size=(5000, 5000))  # 太大
+
+    def test_for_ecommerce(self) -> None:
+        """测试电商配置工厂方法."""
+        config = OutputConfig.for_ecommerce()
+        assert config.format == OutputFormat.JPEG
+        assert config.size == (800, 800)
+        assert config.resize_mode == ResizeMode.FIT
+        assert config.get_effective_quality() == 85
+        assert config.background_color == (255, 255, 255)
+
+    def test_for_web(self) -> None:
+        """测试网页配置工厂方法."""
+        config = OutputConfig.for_web()
+        assert config.format == OutputFormat.WEBP
+        assert config.size == (1200, 1200)
+        assert config.quality_preset == QualityPreset.HIGH
+
+    def test_for_print(self) -> None:
+        """测试打印配置工厂方法."""
+        config = OutputConfig.for_print()
+        assert config.format == OutputFormat.PNG
+        assert config.size == (2400, 2400)
+        assert config.quality_preset == QualityPreset.BEST
+        assert config.optimize is False
+
+    def test_get_available_formats(self) -> None:
+        """测试获取可用格式列表."""
+        formats = OutputConfig.get_available_formats()
+        assert len(formats) == 3
+
+        for fmt_info in formats:
+            assert "value" in fmt_info
+            assert "format" in fmt_info
+            assert "name" in fmt_info
+            assert isinstance(fmt_info["format"], OutputFormat)
+
+    def test_get_quality_presets(self) -> None:
+        """测试获取质量预设列表."""
+        presets = OutputConfig.get_quality_presets()
+        # 不包含 CUSTOM
+        assert len(presets) == len(QualityPreset) - 1
+
+        for preset_info in presets:
+            assert "value" in preset_info
+            assert "preset" in preset_info
+            assert "name" in preset_info
+            assert "quality" in preset_info
+
+    def test_get_resize_modes(self) -> None:
+        """测试获取尺寸模式列表."""
+        modes = OutputConfig.get_resize_modes()
+        assert len(modes) == len(ResizeMode)
+
+        for mode_info in modes:
+            assert "value" in mode_info
+            assert "mode" in mode_info
+            assert "name" in mode_info

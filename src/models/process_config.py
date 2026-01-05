@@ -808,18 +808,118 @@ class TextConfig(BaseModel):
         ]
 
 
-class OutputConfig(BaseModel):
-    """输出配置."""
+class OutputFormat(str, Enum):
+    """输出格式枚举."""
 
+    JPEG = "jpeg"  # JPEG 格式，最广泛支持
+    PNG = "png"  # PNG 格式，支持透明
+    WEBP = "webp"  # WebP 格式，更好的压缩比
+
+
+class QualityPreset(str, Enum):
+    """质量预设枚举."""
+
+    LOW = "low"  # 低质量 (60)
+    MEDIUM = "medium"  # 中等质量 (75)
+    HIGH = "high"  # 高质量 (85)
+    BEST = "best"  # 最佳质量 (95)
+    CUSTOM = "custom"  # 自定义
+
+
+# 质量预设值
+QUALITY_PRESET_VALUES: dict[QualityPreset, int] = {
+    QualityPreset.LOW: 60,
+    QualityPreset.MEDIUM: 75,
+    QualityPreset.HIGH: 85,
+    QualityPreset.BEST: 95,
+    QualityPreset.CUSTOM: DEFAULT_OUTPUT_QUALITY,
+}
+
+# 输出格式中文名称
+OUTPUT_FORMAT_NAMES: dict[OutputFormat, str] = {
+    OutputFormat.JPEG: "JPEG 格式",
+    OutputFormat.PNG: "PNG 格式",
+    OutputFormat.WEBP: "WebP 格式",
+}
+
+# 质量预设中文名称
+QUALITY_PRESET_NAMES: dict[QualityPreset, str] = {
+    QualityPreset.LOW: "低质量 (60)",
+    QualityPreset.MEDIUM: "中等质量 (75)",
+    QualityPreset.HIGH: "高质量 (85)",
+    QualityPreset.BEST: "最佳质量 (95)",
+    QualityPreset.CUSTOM: "自定义",
+}
+
+
+class ResizeMode(str, Enum):
+    """尺寸调整模式."""
+
+    FIT = "fit"  # 适应尺寸（保持比例，填充空白）
+    FILL = "fill"  # 填充尺寸（保持比例，裁剪超出）
+    STRETCH = "stretch"  # 拉伸（不保持比例）
+    NONE = "none"  # 不调整尺寸
+
+
+class OutputConfig(BaseModel):
+    """输出配置.
+
+    支持 JPG/PNG/WebP 格式输出，尺寸调整和质量压缩。
+
+    Attributes:
+        format: 输出格式
+        size: 输出尺寸 (宽, 高)
+        resize_mode: 尺寸调整模式
+        quality_preset: 质量预设
+        quality: 自定义质量值
+        optimize: 是否优化输出
+        preserve_metadata: 是否保留元数据
+
+    Example:
+        >>> config = OutputConfig.for_ecommerce()
+        >>> print(f"尺寸: {config.size}, 质量: {config.get_effective_quality()}")
+    """
+
+    # 格式配置
+    format: OutputFormat = Field(
+        default=OutputFormat.JPEG,
+        description="输出格式",
+    )
+
+    # 尺寸配置
     size: Size = Field(
         default=DEFAULT_OUTPUT_SIZE,
         description="输出尺寸 (宽, 高)",
+    )
+    resize_mode: ResizeMode = Field(
+        default=ResizeMode.FIT,
+        description="尺寸调整模式",
+    )
+
+    # 质量配置
+    quality_preset: QualityPreset = Field(
+        default=QualityPreset.HIGH,
+        description="质量预设",
     )
     quality: int = Field(
         default=DEFAULT_OUTPUT_QUALITY,
         ge=1,
         le=100,
-        description="输出质量 (1-100)",
+        description="自定义输出质量 (1-100)",
+    )
+
+    # 其他选项
+    optimize: bool = Field(
+        default=True,
+        description="是否优化输出",
+    )
+    preserve_metadata: bool = Field(
+        default=False,
+        description="是否保留元数据",
+    )
+    background_color: RGBColor = Field(
+        default=(255, 255, 255),
+        description="背景填充颜色（用于 FIT 模式）",
     )
 
     @field_validator("size")
@@ -832,6 +932,148 @@ class OutputConfig(BaseModel):
             if not 100 <= s <= 4096:
                 raise ValueError(f"尺寸必须在 100-4096 范围内: {s}")
         return v
+
+    @field_validator("background_color")
+    @classmethod
+    def validate_background_color(cls, v: RGBColor) -> RGBColor:
+        """验证背景颜色."""
+        return validate_rgb_color(v)
+
+    def get_effective_quality(self) -> int:
+        """获取实际生效的质量值."""
+        if self.quality_preset == QualityPreset.CUSTOM:
+            return self.quality
+        return QUALITY_PRESET_VALUES[self.quality_preset]
+
+    def get_file_extension(self) -> str:
+        """获取文件扩展名."""
+        ext_map = {
+            OutputFormat.JPEG: ".jpg",
+            OutputFormat.PNG: ".png",
+            OutputFormat.WEBP: ".webp",
+        }
+        return ext_map[self.format]
+
+    def supports_quality(self) -> bool:
+        """当前格式是否支持质量设置."""
+        return self.format in (OutputFormat.JPEG, OutputFormat.WEBP)
+
+    def supports_transparency(self) -> bool:
+        """当前格式是否支持透明度."""
+        return self.format in (OutputFormat.PNG, OutputFormat.WEBP)
+
+    @classmethod
+    def for_ecommerce(
+        cls,
+        size: Size = (800, 800),
+        quality: int = 85,
+    ) -> "OutputConfig":
+        """创建电商平台标准配置.
+
+        Args:
+            size: 输出尺寸，默认 800x800
+            quality: 质量，默认 85
+
+        Returns:
+            OutputConfig 实例
+        """
+        return cls(
+            format=OutputFormat.JPEG,
+            size=size,
+            resize_mode=ResizeMode.FIT,
+            quality_preset=QualityPreset.CUSTOM,
+            quality=quality,
+            optimize=True,
+            background_color=(255, 255, 255),
+        )
+
+    @classmethod
+    def for_web(
+        cls,
+        size: Size = (1200, 1200),
+        format: OutputFormat = OutputFormat.WEBP,
+    ) -> "OutputConfig":
+        """创建网页优化配置.
+
+        Args:
+            size: 输出尺寸
+            format: 输出格式
+
+        Returns:
+            OutputConfig 实例
+        """
+        return cls(
+            format=format,
+            size=size,
+            resize_mode=ResizeMode.FIT,
+            quality_preset=QualityPreset.HIGH,
+            optimize=True,
+        )
+
+    @classmethod
+    def for_print(
+        cls,
+        size: Size = (2400, 2400),
+    ) -> "OutputConfig":
+        """创建打印用高质量配置.
+
+        Args:
+            size: 输出尺寸
+
+        Returns:
+            OutputConfig 实例
+        """
+        return cls(
+            format=OutputFormat.PNG,
+            size=size,
+            resize_mode=ResizeMode.FIT,
+            quality_preset=QualityPreset.BEST,
+            optimize=False,  # 保持最高质量
+        )
+
+    @classmethod
+    def get_available_formats(cls) -> list[dict]:
+        """获取所有可用的输出格式（供 UI 使用）."""
+        return [
+            {
+                "value": fmt.value,
+                "format": fmt,
+                "name": OUTPUT_FORMAT_NAMES[fmt],
+            }
+            for fmt in OutputFormat
+        ]
+
+    @classmethod
+    def get_quality_presets(cls) -> list[dict]:
+        """获取所有质量预设（供 UI 使用）."""
+        return [
+            {
+                "value": preset.value,
+                "preset": preset,
+                "name": QUALITY_PRESET_NAMES[preset],
+                "quality": QUALITY_PRESET_VALUES[preset],
+            }
+            for preset in QualityPreset
+            if preset != QualityPreset.CUSTOM
+        ]
+
+    @classmethod
+    def get_resize_modes(cls) -> list[dict]:
+        """获取所有尺寸调整模式（供 UI 使用）."""
+        mode_names = {
+            ResizeMode.FIT: "适应尺寸",
+            ResizeMode.FILL: "填充尺寸",
+            ResizeMode.STRETCH: "拉伸",
+            ResizeMode.NONE: "不调整",
+        }
+        return [
+            {
+                "value": mode.value,
+                "mode": mode,
+                "name": mode_names[mode],
+            }
+            for mode in ResizeMode
+        ]
 
 
 class ProcessConfig(BaseModel):
