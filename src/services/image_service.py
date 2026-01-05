@@ -306,7 +306,12 @@ class ImageService:
     ) -> ImageTask:
         """处理完整的图片任务.
 
-        执行新的处理流程：抠图 -> 后期处理（背景/边框/文字）-> AI合成 -> 保存
+        执行新的处理流程：
+        1. 场景图抠背景（去除场景背景，保留场景主体）
+        2. 对场景添加自定义背景色
+        3. AI合成商品到处理后的场景
+        4. 后期处理（边框/文字）- 在AI合成之后应用
+        5. 保存输出
 
         Args:
             task: 图片任务
@@ -327,35 +332,41 @@ class ImageService:
                 on_progress(progress, message)
 
         try:
-            # Step 1: 抠图 (0-25%)
-            report_progress(5, "抠图处理中")
-            product_nobg = await self._remove_product_background(
-                task.product_path,
-                config,
-                lambda p, m: report_progress(int(5 + p * 0.20), m),
-            )
-
-            # Step 2: 后期处理 - 对抠图结果添加背景/边框/文字 (25-50%)
-            report_progress(30, "后期处理")
-            processed_product = await self._apply_post_processing(
-                product_nobg,
-                config,
-                lambda p, m: report_progress(int(30 + p * 0.20), m),
-            )
-
-            # Step 3: AI合成 - 将处理后的商品合成到场景 (50-90%)
-            report_progress(55, "AI合成商品到场景")
-            composite_result = await self._composite_to_scene(
+            # Step 1: 对场景图抠背景 (0-20%)
+            report_progress(5, "场景图抠背景处理中")
+            scene_nobg = await self._remove_scene_background(
                 task.background_path,
-                processed_product,
-                lambda p, m: report_progress(int(55 + p * 0.35), m),
+                config,
+                lambda p, m: report_progress(int(5 + p * 0.15), m),
+            )
+
+            # Step 2: 对场景添加自定义背景色 (20-30%)
+            report_progress(25, "添加自定义背景")
+            scene_with_bg = await self._apply_background_to_scene(
+                scene_nobg,
+                config,
+                lambda p, m: report_progress(int(25 + p * 0.05), m),
+            )
+
+            # Step 3: AI合成 - 将商品合成到处理后的场景 (30-70%)
+            report_progress(35, "AI合成商品到场景")
+            composite_result = await self._composite_to_scene(
+                scene_with_bg,  # 传入处理后的场景图（bytes）
+                task.product_path,  # 商品图路径
+                lambda p, m: report_progress(int(35 + p * 0.35), m),
                 config=config,
             )
 
-            # Step 4: 保存输出 (90-100%)
+            # Step 4: 后期处理 - 对合成结果添加边框/文字 (70-90%)
+            report_progress(75, "添加边框和文字")
+            final_image = await self._apply_final_effects(
+                composite_result,
+                config,
+                lambda p, m: report_progress(int(75 + p * 0.15), m),
+            )
+
+            # Step 5: 保存输出 (90-100%)
             report_progress(95, "保存输出")
-            # composite_result 是 bytes，需要转换为 Image
-            final_image = bytes_to_image(composite_result)
             output_path = await self._save_final_output(
                 final_image,
                 task,
@@ -374,25 +385,26 @@ class ImageService:
             task.mark_failed(str(e))
             return task
 
-    async def _remove_product_background(
+    async def _remove_scene_background(
         self,
-        product_path: str,
+        scene_path: str,
         config: ProcessConfig,
         on_progress: Optional[ProgressCallback] = None,
     ) -> bytes:
-        """去除商品背景（内部方法）.
+        """去除场景图背景（内部方法）.
         
-        使用配置中指定的抠图服务（外部API或AI）进行背景去除。
+        使用配置中指定的抠图服务（外部API或AI）对场景图进行背景去除，
+        保留场景主体。
         
         Args:
-            product_path: 商品图片路径
+            scene_path: 场景图片路径
             config: 处理配置
             on_progress: 进度回调
             
         Returns:
             透明背景的PNG图片字节数据
         """
-        image = load_image(product_path)
+        image = load_image(scene_path)
         image = ensure_rgba(image)
         image_bytes = image_to_bytes(image, format="PNG")
 
@@ -428,37 +440,81 @@ class ImageService:
         result = await remover.remove_background(image_bytes)
 
         if on_progress:
-            on_progress(100, "抠图完成")
+            on_progress(100, "场景抠图完成")
 
         return result
 
+    async def _apply_background_to_scene(
+        self,
+        scene_bytes: bytes,
+        config: ProcessConfig,
+        on_progress: Optional[ProgressCallback] = None,
+    ) -> bytes:
+        """对场景图添加自定义背景色（内部方法）.
+        
+        Args:
+            scene_bytes: 场景图字节数据（透明背景）
+            config: 处理配置
+            on_progress: 进度回调
+            
+        Returns:
+            添加背景后的图片字节数据
+        """
+        image = bytes_to_image(scene_bytes)
+        loop = asyncio.get_event_loop()
+
+        if on_progress:
+            on_progress(50, "添加背景色")
+
+        # 添加背景色
+        image = await loop.run_in_executor(
+            None, self._add_background_color, image, config.background.color
+        )
+
+        # 转换回bytes
+        result_bytes = image_to_bytes(image, format="PNG")
+
+        if on_progress:
+            on_progress(100, "背景添加完成")
+
+        return result_bytes
+
     async def _composite_to_scene(
         self,
-        background_path: str,
-        product: Image.Image | bytes,
+        background: str | bytes,
+        product: str | Image.Image | bytes,
         on_progress: Optional[ProgressCallback] = None,
         config: Optional[ProcessConfig] = None,
     ) -> bytes:
         """合成商品到场景（内部方法）.
         
         Args:
-            background_path: 背景图片路径
-            product: 商品图片（PIL Image 或 bytes）
+            background: 背景图片（路径字符串或bytes）
+            product: 商品图片（路径字符串、PIL Image 或 bytes）
             on_progress: 进度回调
             config: 处理配置
             
         Returns:
             合成后的图片字节数据
         """
-        bg_image = load_image(background_path)
-        bg_image = ensure_rgba(bg_image)
-        bg_bytes = image_to_bytes(bg_image, format="PNG")
+        # 处理背景图
+        if isinstance(background, bytes):
+            bg_bytes = background
+        else:
+            bg_image = load_image(background)
+            bg_image = ensure_rgba(bg_image)
+            bg_bytes = image_to_bytes(bg_image, format="PNG")
 
-        # 将 product 转换为 bytes
-        if isinstance(product, Image.Image):
+        # 处理商品图
+        if isinstance(product, bytes):
+            product_bytes = product
+        elif isinstance(product, Image.Image):
             product_bytes = image_to_bytes(product, format="PNG")
         else:
-            product_bytes = product
+            # 是路径字符串
+            prod_image = load_image(product)
+            prod_image = ensure_rgba(prod_image)
+            product_bytes = image_to_bytes(prod_image, format="PNG")
 
         if on_progress:
             on_progress(50, "调用 AI 服务")
@@ -473,6 +529,67 @@ class ImageService:
             on_progress(100, "合成完成")
 
         return result
+
+    async def _apply_final_effects(
+        self,
+        image_bytes: bytes,
+        config: ProcessConfig,
+        on_progress: Optional[ProgressCallback] = None,
+    ) -> Image.Image:
+        """应用最终效果（边框和文字）（内部方法）.
+        
+        在AI合成之后应用边框和文字效果。
+        
+        Args:
+            image_bytes: 合成后的图片字节数据
+            config: 处理配置
+            on_progress: 进度回调
+            
+        Returns:
+            处理后的PIL Image对象
+        """
+        image = bytes_to_image(image_bytes)
+        loop = asyncio.get_event_loop()
+
+        # 添加边框
+        if config.border.enabled:
+            if on_progress:
+                on_progress(30, "添加边框")
+            image = await loop.run_in_executor(
+                None,
+                self._add_border,
+                image,
+                config.border.width,
+                config.border.color,
+            )
+
+        # 添加文字
+        if config.text.enabled and config.text.content:
+            if on_progress:
+                on_progress(60, "添加文字")
+            # 计算文字位置
+            text_position = config.text.get_effective_position(image.size)
+            image = await loop.run_in_executor(
+                None,
+                self._add_text,
+                image,
+                config.text.content,
+                text_position,
+                config.text.font_size,
+                config.text.color,
+            )
+
+        # 调整尺寸
+        if on_progress:
+            on_progress(80, "调整尺寸")
+        image = await loop.run_in_executor(
+            None, fit_to_size, image, config.output.size, config.background.color
+        )
+
+        if on_progress:
+            on_progress(100, "后期处理完成")
+
+        return image
 
     async def _apply_post_processing(
         self,

@@ -381,8 +381,8 @@ class BackgroundRemovalSettingsWidget(QWidget):
         layout.addWidget(provider_group)
 
         # 外部API配置容器 (不使用 GroupBox 避免边框挤压布局)
-        self._api_container = QWidget()
-        api_layout = QVBoxLayout(self._api_container)
+        self._api_group = QWidget()
+        api_layout = QVBoxLayout(self._api_group)
         api_layout.setSpacing(10)
         api_layout.setContentsMargins(10, 0, 10, 0)
 
@@ -472,8 +472,6 @@ class BackgroundRemovalSettingsWidget(QWidget):
         btn_row.setContentsMargins(100, 5, 0, 0) # 左边距对齐输入框
         btn_row.addWidget(self._test_btn)
         api_layout.addLayout(btn_row)
-
-        layout.addWidget(self._api_container)
 
         layout.addWidget(self._api_group)
 
