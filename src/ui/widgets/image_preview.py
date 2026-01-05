@@ -347,6 +347,14 @@ class ImagePreview(QFrame):
         container_size = self._preview_container.size()
         available_width = container_size.width() - 20
         available_height = container_size.height() - 20
+        
+        # 调试信息
+        orig_w, orig_h = self._original_pixmap.width(), self._original_pixmap.height()
+        logger.debug(
+            f"预览尺寸计算: 容器={container_size.width()}x{container_size.height()}, "
+            f"可用={available_width}x{available_height}, "
+            f"原图={orig_w}x{orig_h}"
+        )
 
         if available_width <= 0 or available_height <= 0:
             return
@@ -358,6 +366,8 @@ class ImagePreview(QFrame):
             Qt.AspectRatioMode.KeepAspectRatio,
             Qt.TransformationMode.SmoothTransformation,
         )
+        
+        logger.debug(f"缩放后尺寸: {scaled.width()}x{scaled.height()}")
         self._image_label.setPixmap(scaled)
 
     # ========================

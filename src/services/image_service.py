@@ -541,6 +541,8 @@ class ImageService:
         """应用最终效果（边框和文字）（内部方法）.
         
         在AI合成之后应用边框和文字效果。
+        处理顺序：先调整尺寸 -> 再添加边框 -> 最后添加文字
+        这样可以确保边框和文字不会被裁剪。
         
         Args:
             image_bytes: 合成后的图片字节数据
@@ -552,39 +554,15 @@ class ImageService:
         """
         image = bytes_to_image(image_bytes)
         loop = asyncio.get_event_loop()
+        
+        logger.info(f"原始图片尺寸: {image.size}, 模式: {image.mode}")
+        logger.info(f"目标输出尺寸: {config.output.size}, resize_mode: {config.output.resize_mode.value}")
+        logger.info(f"边框配置: enabled={config.border.enabled}, width={config.border.width}, color={config.border.color}")
+        logger.info(f"文字配置: enabled={config.text.enabled}, content='{config.text.content}', font_size={config.text.font_size}")
 
-        # 添加边框
-        if config.border.enabled:
-            if on_progress:
-                on_progress(30, "添加边框")
-            image = await loop.run_in_executor(
-                None,
-                self._add_border,
-                image,
-                config.border.width,
-                config.border.color,
-            )
-
-        # 添加文字
-        if config.text.enabled and config.text.content:
-            if on_progress:
-                on_progress(60, "添加文字")
-            # 计算文字位置
-            text_position = config.text.get_effective_position(image.size)
-            image = await loop.run_in_executor(
-                None,
-                self._add_text,
-                image,
-                config.text.content,
-                text_position,
-                config.text.font_size,
-                config.text.color,
-            )
-
-        # 调整尺寸（根据配置的resize_mode）
+        # Step 1: 先调整尺寸（根据配置的resize_mode）
         if on_progress:
-            on_progress(80, "调整尺寸")
-        # 使用 get_effective_color 获取实际生效的背景色
+            on_progress(20, "调整尺寸")
         effective_bg_color = config.background.get_effective_color()
         image = await loop.run_in_executor(
             None,
@@ -594,6 +572,47 @@ class ImageService:
             config.output.resize_mode.value,
             effective_bg_color,
         )
+        logger.info(f"调整尺寸后: {image.size}")
+
+        # Step 2: 再添加边框（在最终尺寸上绘制，不会被裁剪）
+        if config.border.enabled:
+            if on_progress:
+                on_progress(50, "添加边框")
+            logger.info(f"添加边框: 宽度={config.border.width}, 颜色={config.border.color}")
+            image = await loop.run_in_executor(
+                None,
+                self._add_border,
+                image,
+                config.border.width,
+                config.border.color,
+            )
+            logger.info(f"添加边框后图片尺寸: {image.size}")
+        else:
+            logger.info("边框未启用，跳过")
+
+        # Step 3: 最后添加文字（在最终尺寸上绘制，位置更准确）
+        if config.text.enabled and config.text.content:
+            if on_progress:
+                on_progress(80, "添加文字")
+            # 先获取文字尺寸，然后计算位置（基于最终图片尺寸）
+            text_size = get_text_size(
+                config.text.content,
+                config.text.font_family,
+                config.text.font_size,
+            )
+            text_position = config.text.get_effective_position(image.size, text_size)
+            logger.info(f"添加文字: 内容='{config.text.content}', 文字尺寸={text_size}, 位置={text_position}, 字体大小={config.text.font_size}")
+            image = await loop.run_in_executor(
+                None,
+                self._add_text,
+                image,
+                config.text.content,
+                text_position,
+                config.text.font_size,
+                config.text.color,
+            )
+        else:
+            logger.info("文字未启用或内容为空，跳过")
 
         if on_progress:
             on_progress(100, "后期处理完成")
@@ -725,13 +744,20 @@ class ImageService:
 
         draw = ImageDraw.Draw(image)
         w, h = image.size
+        
+        logger.debug(f"_add_border: 图片尺寸=({w}, {h}), 边框宽度={width}, 颜色={color}")
 
-        # 绘制边框
-        for i in range(width):
-            draw.rectangle(
-                [i, i, w - 1 - i, h - 1 - i],
-                outline=color,
-            )
+        # 绘制边框 - 四条边分别绘制，确保完整
+        # 上边
+        draw.rectangle([0, 0, w - 1, width - 1], fill=color)
+        # 下边
+        draw.rectangle([0, h - width, w - 1, h - 1], fill=color)
+        # 左边
+        draw.rectangle([0, 0, width - 1, h - 1], fill=color)
+        # 右边
+        draw.rectangle([w - width, 0, w - 1, h - 1], fill=color)
+        
+        logger.debug(f"_add_border: 边框绘制完成")
 
         return image
 
