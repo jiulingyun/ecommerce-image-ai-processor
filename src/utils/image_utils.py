@@ -66,11 +66,15 @@ def validate_image_file(path: Path | str) -> None:
         raise ImageCorruptedError(str(path))
 
 
-def load_image(path: Path | str) -> Image.Image:
+def load_image(
+    path: Path | str,
+    use_cache: bool = False,
+) -> Image.Image:
     """加载图片.
 
     Args:
         path: 图片文件路径
+        use_cache: 是否使用缓存（默认 False）
 
     Returns:
         PIL Image 对象
@@ -80,13 +84,36 @@ def load_image(path: Path | str) -> Image.Image:
         ImageCorruptedError: 文件损坏
     """
     path = Path(path)
+    cache_key = str(path.absolute())
 
     if not path.exists():
         raise ImageNotFoundError(str(path))
 
+    # 尝试从缓存获取
+    if use_cache:
+        try:
+            from src.utils.performance import get_image_cache
+            cache = get_image_cache()
+            cached = cache.get(cache_key)
+            if cached is not None:
+                logger.debug(f"缓存命中: {path}")
+                return cached
+        except ImportError:
+            pass
+
     try:
         img = Image.open(path)
         img.load()  # 强制加载到内存
+
+        # 存入缓存
+        if use_cache:
+            try:
+                from src.utils.performance import get_image_cache
+                cache = get_image_cache()
+                cache.put(cache_key, img)
+            except ImportError:
+                pass
+
         return img
     except Exception as e:
         logger.error(f"加载图片失败: {path}, {e}")

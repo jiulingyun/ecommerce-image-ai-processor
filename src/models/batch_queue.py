@@ -6,6 +6,8 @@ Features:
     - 队列任务管理
     - 处理进度追踪
     - 结果统计
+    - 任务优先级支持
+    - 并发控制
 """
 
 from __future__ import annotations
@@ -24,6 +26,15 @@ from src.models.process_config import ProcessConfig
 # 常量
 MAX_QUEUE_SIZE = 10  # 最大队列大小
 DEFAULT_CONCURRENT_LIMIT = 3  # 默认并发数
+
+
+class TaskPriority(int, Enum):
+    """任务优先级枚举."""
+
+    LOW = 1  # 低优先级
+    NORMAL = 2  # 普通优先级
+    HIGH = 3  # 高优先级
+    URGENT = 4  # 紧急
 
 
 class QueueStatus(str, Enum):
@@ -47,6 +58,8 @@ class BatchTask(BaseModel):
         task: 底层图片处理任务
         retry_count: 重试次数
         max_retries: 最大重试次数
+        priority: 任务优先级
+        estimated_duration: 预估处理时间（秒）
     """
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -54,7 +67,15 @@ class BatchTask(BaseModel):
     task: ImageTask = Field(..., description="图片处理任务")
     retry_count: int = Field(default=0, ge=0, description="已重试次数")
     max_retries: int = Field(default=3, ge=0, le=5, description="最大重试次数")
+    priority: TaskPriority = Field(
+        default=TaskPriority.NORMAL, description="任务优先级"
+    )
+    estimated_duration: float = Field(
+        default=30.0, ge=0, description="预估处理时间（秒）"
+    )
     added_at: datetime = Field(default_factory=datetime.utcnow)
+    started_at: Optional[datetime] = Field(default=None, description="开始处理时间")
+    completed_at: Optional[datetime] = Field(default=None, description="完成时间")
 
     @property
     def status(self) -> TaskStatus:
@@ -71,10 +92,27 @@ class BatchTask(BaseModel):
         """是否可以重试."""
         return self.task.is_failed and self.retry_count < self.max_retries
 
+    @property
+    def actual_duration(self) -> Optional[float]:
+        """实际处理时间（秒）."""
+        if self.started_at and self.completed_at:
+            return (self.completed_at - self.started_at).total_seconds()
+        return None
+
     def increment_retry(self) -> None:
         """增加重试计数."""
         self.retry_count += 1
         self.task.update_status(TaskStatus.PENDING, progress=0)
+
+    def mark_started(self) -> None:
+        """标记开始处理."""
+        self.started_at = datetime.utcnow()
+        self.task.mark_processing()
+
+    def mark_completed(self, output_path: str) -> None:
+        """标记处理完成."""
+        self.completed_at = datetime.utcnow()
+        self.task.mark_completed(output_path)
 
 
 class QueueStats(BaseModel):
@@ -223,6 +261,7 @@ class BatchQueue(BaseModel):
         product_path: str,
         output_path: Optional[str] = None,
         config: Optional[ProcessConfig] = None,
+        priority: TaskPriority = TaskPriority.NORMAL,
     ) -> BatchTask:
         """添加任务到队列.
 
@@ -231,6 +270,7 @@ class BatchQueue(BaseModel):
             product_path: 商品图路径
             output_path: 输出路径
             config: 任务配置（优先于全局配置）
+            priority: 任务优先级
 
         Returns:
             添加的 BatchTask
@@ -253,6 +293,7 @@ class BatchQueue(BaseModel):
         batch_task = BatchTask(
             queue_position=len(self.tasks) + 1,
             task=task,
+            priority=priority,
         )
 
         self.tasks.append(batch_task)
@@ -309,9 +350,132 @@ class BatchQueue(BaseModel):
         """获取可重试的任务列表."""
         return [t for t in self.tasks if t.can_retry]
 
+    def get_next_task(self) -> Optional[BatchTask]:
+        """获取下一个应处理的任务.
+
+        按优先级排序，返回优先级最高的待处理任务。
+
+        Returns:
+            下一个任务，如果没有待处理任务则返回 None
+        """
+        pending = self.get_pending_tasks()
+        if not pending:
+            return None
+
+        # 按优先级排序（高优先级在前），相同优先级按队列位置排序
+        sorted_pending = sorted(
+            pending,
+            key=lambda t: (-t.priority.value, t.queue_position),
+        )
+        return sorted_pending[0]
+
+    def get_next_tasks(self, count: int) -> list[BatchTask]:
+        """获取多个待处理任务.
+
+        按优先级排序，返回指定数量的待处理任务。
+
+        Args:
+            count: 要获取的任务数量
+
+        Returns:
+            任务列表
+        """
+        pending = self.get_pending_tasks()
+        if not pending:
+            return []
+
+        # 按优先级排序
+        sorted_pending = sorted(
+            pending,
+            key=lambda t: (-t.priority.value, t.queue_position),
+        )
+        return sorted_pending[:count]
+
+    def can_start_more_tasks(self) -> bool:
+        """是否可以启动更多任务.
+
+        Returns:
+            是否有空闲并发槽位
+        """
+        processing_count = len(self.get_processing_tasks())
+        pending_count = len(self.get_pending_tasks())
+        return processing_count < self.concurrent_limit and pending_count > 0
+
+    def get_available_slots(self) -> int:
+        """获取可用的并发槽位数.
+
+        Returns:
+            可用槽位数
+        """
+        processing_count = len(self.get_processing_tasks())
+        return max(0, self.concurrent_limit - processing_count)
+
+    def sort_by_priority(self) -> None:
+        """按优先级重新排序队列.
+
+        将已完成的任务排在最后，未完成的按优先级排序。
+        """
+        # 分离已完成和未完成的任务
+        finished = [
+            t for t in self.tasks
+            if t.status in (TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.CANCELLED)
+        ]
+        unfinished = [
+            t for t in self.tasks
+            if t.status not in (TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.CANCELLED)
+        ]
+
+        # 未完成的按优先级排序
+        unfinished.sort(key=lambda t: (-t.priority.value, t.queue_position))
+
+        # 重新组合
+        self.tasks = unfinished + finished
+        self._reassign_positions()
+
+    def update_priority(self, task_id: str, priority: TaskPriority) -> bool:
+        """更新任务优先级.
+
+        Args:
+            task_id: 任务 ID
+            priority: 新优先级
+
+        Returns:
+            是否更新成功
+        """
+        task = self.get_task(task_id)
+        if task and task.status == TaskStatus.PENDING:
+            task.priority = priority
+            return True
+        return False
+
     def get_stats(self) -> QueueStats:
         """获取队列统计信息."""
         return QueueStats.from_tasks(self.tasks)
+
+    def get_estimated_completion_time(self) -> float:
+        """估算队列完成时间.
+
+        Returns:
+            预估剩余时间（秒）
+        """
+        pending = self.get_pending_tasks()
+        processing = self.get_processing_tasks()
+
+        # 计算待处理任务的总时间
+        pending_time = sum(t.estimated_duration for t in pending)
+
+        # 计算处理中任务的剩余时间（假设已完成的进度比例）
+        processing_time = sum(
+            t.estimated_duration * (100 - t.progress) / 100
+            for t in processing
+        )
+
+        # 考虑并发
+        total_time = pending_time + processing_time
+        if self.concurrent_limit > 1:
+            total_time = total_time / min(self.concurrent_limit, len(pending) + len(processing) or 1)
+
+        return total_time
 
     def clear(self) -> None:
         """清空队列."""

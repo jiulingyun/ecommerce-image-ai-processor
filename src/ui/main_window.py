@@ -71,6 +71,12 @@ from src.ui.widgets import (
     PromptConfigPanel,
     QueueProgressPanel,
     TaskListWidget,
+    ToastManager,
+    get_toast_manager,
+)
+from src.utils.error_messages import (
+    get_user_friendly_error,
+    UserFriendlyError,
 )
 from src.utils.constants import (
     APP_NAME,
@@ -169,6 +175,9 @@ class MainWindow(QMainWindow):
         self._action_clear: Optional[QAction] = None
         self._action_settings: Optional[QAction] = None
 
+        # Toast 通知管理器
+        self._toast_manager: Optional[ToastManager] = None
+
         # 初始化
         self._setup_window()
         self._apply_stylesheet()
@@ -176,6 +185,7 @@ class MainWindow(QMainWindow):
         self._setup_toolbar()
         self._setup_central_widget()
         self._setup_statusbar()
+        self._setup_toast_manager()
         self._connect_signals()
         self._update_actions_state()
 
@@ -540,6 +550,10 @@ class MainWindow(QMainWindow):
         self._progress_bar.setVisible(False)
         self._statusbar.addPermanentWidget(self._progress_bar)
 
+    def _setup_toast_manager(self) -> None:
+        """设置 Toast 通知管理器."""
+        self._toast_manager = get_toast_manager(self)
+
     def _connect_signals(self) -> None:
         """连接信号槽."""
         # 图片配对面板信号
@@ -647,6 +661,90 @@ class MainWindow(QMainWindow):
         """
         if self._statusbar:
             self._statusbar.showMessage(message, timeout)
+
+    def show_success(self, title: str, message: str = "") -> None:
+        """显示成功通知.
+
+        Args:
+            title: 标题
+            message: 消息内容
+        """
+        if self._toast_manager:
+            self._toast_manager.show_success(title, message)
+
+    def show_warning(self, title: str, message: str = "") -> None:
+        """显示警告通知.
+
+        Args:
+            title: 标题
+            message: 消息内容
+        """
+        if self._toast_manager:
+            self._toast_manager.show_warning(title, message)
+
+    def show_error_toast(self, title: str, message: str = "") -> None:
+        """显示错误通知.
+
+        Args:
+            title: 标题
+            message: 消息内容
+        """
+        if self._toast_manager:
+            self._toast_manager.show_error(title, message)
+
+    def show_info(self, title: str, message: str = "") -> None:
+        """显示信息通知.
+
+        Args:
+            title: 标题
+            message: 消息内容
+        """
+        if self._toast_manager:
+            self._toast_manager.show_info(title, message)
+
+    def handle_exception(self, exception: Exception, show_dialog: bool = False) -> None:
+        """统一处理异常.
+
+        将异常转换为用户友好的错误消息并显示。
+
+        Args:
+            exception: 异常对象
+            show_dialog: 是否显示对话框（严重错误时使用）
+        """
+        # 记录日志
+        logger.exception(f"发生异常: {exception}")
+
+        # 转换为用户友好的错误
+        user_error = get_user_friendly_error(exception, include_details=True)
+
+        if show_dialog:
+            # 显示错误对话框
+            QMessageBox.critical(
+                self,
+                user_error.title,
+                f"{user_error.message}\n\n💡 建议: {user_error.suggestion}",
+            )
+        else:
+            # 显示 Toast 通知
+            if self._toast_manager:
+                self._toast_manager.show_user_error(user_error)
+
+    def handle_user_error(self, error: UserFriendlyError, show_dialog: bool = False) -> None:
+        """显示用户友好的错误.
+
+        Args:
+            error: UserFriendlyError 对象
+            show_dialog: 是否显示对话框
+        """
+        if show_dialog:
+            QMessageBox.critical(
+                self,
+                error.title,
+                f"{error.message}\n\n💡 建议: {error.suggestion}",
+            )
+        else:
+            if self._toast_manager:
+                self._toast_manager.show_user_error(error)
 
     # ========================
     # 槽函数
