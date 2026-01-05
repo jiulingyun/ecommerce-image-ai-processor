@@ -10,6 +10,7 @@ Components:
     - ImageLayerItem: 图片图层图形项
     - TextEditOverlay: 文字编辑覆盖层
     - LayerPanel: 图层管理面板
+    - EditorToolbar: 编辑器工具栏
 """
 
 from src.ui.widgets.template_editor.canvas import TemplateCanvas
@@ -44,6 +45,14 @@ from src.ui.widgets.template_editor.template_list import (
     TemplateListWidget,
     TemplateListItem,
 )
+from src.ui.widgets.template_editor.editor_toolbar import (
+    EditorToolbar,
+    AlignmentType,
+    DistributeType,
+    AlignmentManager,
+    ClipboardManager,
+    ContextMenuManager,
+)
 
 __all__ = [
     "TemplateCanvas",
@@ -68,4 +77,10 @@ __all__ = [
     "CanvasPropertyEditor",
     "TemplateListWidget",
     "TemplateListItem",
+    "EditorToolbar",
+    "AlignmentType",
+    "DistributeType",
+    "AlignmentManager",
+    "ClipboardManager",
+    "ContextMenuManager",
 ]
