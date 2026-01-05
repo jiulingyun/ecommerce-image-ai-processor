@@ -373,3 +373,184 @@ def ensure_rgba(image: Image.Image) -> Image.Image:
     if image.mode != "RGBA":
         return image.convert("RGBA")
     return image
+
+
+def add_solid_background(
+    image: Image.Image,
+    color: Tuple[int, int, int],
+    maintain_size: bool = True,
+) -> Image.Image:
+    """为图片添加纯色背景.
+
+    将透明背景的图片合成到纯色背景上。
+
+    Args:
+        image: PIL Image 对象（通常是 RGBA 模式）
+        color: RGB 背景颜色元组
+        maintain_size: 是否保持原始尺寸
+
+    Returns:
+        添加背景后的 RGB 模式图片
+    """
+    # 确保是 RGBA 模式以处理透明度
+    if image.mode != "RGBA":
+        image = image.convert("RGBA")
+
+    # 创建背景
+    background = Image.new("RGB", image.size, color)
+
+    # 使用 alpha 通道作为蒙版合成
+    background.paste(image, (0, 0), image.split()[3])
+
+    return background
+
+
+def create_background_preview(
+    color: Tuple[int, int, int],
+    size: Tuple[int, int] = (100, 100),
+    with_checkerboard: bool = False,
+) -> Image.Image:
+    """创建背景颜色预览图.
+
+    生成一个小型预览图，用于 UI 颜色选择器显示。
+
+    Args:
+        color: RGB 背景颜色元组
+        size: 预览图尺寸
+        with_checkerboard: 是否在背景下显示棋盘格（用于透明色预览）
+
+    Returns:
+        预览图片
+    """
+    if with_checkerboard:
+        # 创建棋盘格背景
+        preview = _create_checkerboard(size)
+        # 叠加半透明颜色层
+        color_layer = Image.new("RGBA", size, (*color, 200))
+        preview.paste(color_layer, (0, 0), color_layer)
+        return preview.convert("RGB")
+    else:
+        return Image.new("RGB", size, color)
+
+
+def _create_checkerboard(
+    size: Tuple[int, int],
+    cell_size: int = 10,
+    color1: Tuple[int, int, int] = (200, 200, 200),
+    color2: Tuple[int, int, int] = (255, 255, 255),
+) -> Image.Image:
+    """创建棋盘格背景.
+
+    Args:
+        size: 图片尺寸
+        cell_size: 格子大小
+        color1: 颜色1
+        color2: 颜色2
+
+    Returns:
+        棋盘格图片
+    """
+    w, h = size
+    img = Image.new("RGB", size, color1)
+
+    for y in range(0, h, cell_size):
+        for x in range(0, w, cell_size):
+            if (x // cell_size + y // cell_size) % 2 == 0:
+                for dy in range(min(cell_size, h - y)):
+                    for dx in range(min(cell_size, w - x)):
+                        img.putpixel((x + dx, y + dy), color2)
+
+    return img
+
+
+def composite_with_background(
+    foreground: Image.Image,
+    background_color: Tuple[int, int, int],
+    target_size: Optional[Tuple[int, int]] = None,
+    position: str = "center",
+) -> Image.Image:
+    """将前景图合成到纯色背景上.
+
+    支持自动调整尺寸和位置。
+
+    Args:
+        foreground: 前景图片（应为 RGBA 模式）
+        background_color: 背景颜色
+        target_size: 目标尺寸，为 None 则使用前景图尺寸
+        position: 位置 ("center", "top-left", "top-right", "bottom-left", "bottom-right")
+
+    Returns:
+        合成后的图片
+    """
+    foreground = ensure_rgba(foreground)
+
+    if target_size is None:
+        target_size = foreground.size
+
+    # 创建背景
+    result = Image.new("RGB", target_size, background_color)
+
+    # 如果前景尺寸与目标不同，需要计算位置
+    fg_w, fg_h = foreground.size
+    bg_w, bg_h = target_size
+
+    # 计算位置
+    if position == "center":
+        x = (bg_w - fg_w) // 2
+        y = (bg_h - fg_h) // 2
+    elif position == "top-left":
+        x, y = 0, 0
+    elif position == "top-right":
+        x = bg_w - fg_w
+        y = 0
+    elif position == "bottom-left":
+        x = 0
+        y = bg_h - fg_h
+    elif position == "bottom-right":
+        x = bg_w - fg_w
+        y = bg_h - fg_h
+    else:
+        x = (bg_w - fg_w) // 2
+        y = (bg_h - fg_h) // 2
+
+    # 合成
+    result.paste(foreground, (x, y), foreground.split()[3])
+
+    return result
+
+
+def apply_background_with_padding(
+    image: Image.Image,
+    background_color: Tuple[int, int, int],
+    padding: Union[int, Tuple[int, int, int, int]],
+) -> Image.Image:
+    """为图片添加带边距的纯色背景.
+
+    Args:
+        image: PIL Image 对象
+        background_color: 背景颜色
+        padding: 边距，可以是单个整数（四边相同）或元组 (上, 右, 下, 左)
+
+    Returns:
+        添加背景和边距后的图片
+    """
+    image = ensure_rgba(image)
+
+    # 解析边距
+    if isinstance(padding, int):
+        top = right = bottom = left = padding
+    else:
+        top, right, bottom, left = padding
+
+    # 计算新尺寸
+    orig_w, orig_h = image.size
+    new_w = orig_w + left + right
+    new_h = orig_h + top + bottom
+
+    # 创建背景
+    result = Image.new("RGB", (new_w, new_h), background_color)
+
+    # 粘贴原图
+    result.paste(image, (left, top), image.split()[3])
+
+    return result

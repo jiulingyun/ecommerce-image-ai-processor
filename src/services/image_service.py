@@ -6,6 +6,7 @@ Features:
     - 背景去除完整流程
     - 商品合成完整流程
     - 图片后期处理
+    - 纯色背景添加
     - 进度回调支持
 """
 
@@ -13,25 +14,35 @@ from __future__ import annotations
 
 import asyncio
 from pathlib import Path
-from typing import Callable, Optional, Tuple
+from typing import Callable, Optional, Tuple, Union
 
 from PIL import Image
 
 from src.models.api_config import APIConfig
 from src.models.image_task import ImageTask, TaskStatus
-from src.models.process_config import ProcessConfig
+from src.models.process_config import (
+    BackgroundConfig,
+    PresetColor,
+    ProcessConfig,
+)
 from src.services.ai_service import AIService, get_ai_service
 from src.utils.constants import (
     DEFAULT_BACKGROUND_COLOR,
     DEFAULT_OUTPUT_QUALITY,
     DEFAULT_OUTPUT_SIZE,
+    PREVIEW_SIZE,
 )
 from src.utils.exceptions import (
     AIServiceError,
     ImageProcessError,
 )
 from src.utils.image_utils import (
+    add_solid_background,
+    apply_background_with_padding,
     bytes_to_image,
+    composite_with_background,
+    create_background_preview,
+    create_thumbnail,
     ensure_rgba,
     fit_to_size,
     image_to_bytes,
@@ -50,7 +61,7 @@ ProgressCallback = Callable[[int, str], None]
 class ImageService:
     """图片处理服务.
 
-    封装图片处理的完整业务逻辑，包括背景去除、商品合成等功能。
+    封装图片处理的完整业务逻辑，包括背景去除、商品合成、背景添加等功能。
 
     Attributes:
         ai_service: AI 服务实例
@@ -58,6 +69,13 @@ class ImageService:
     Example:
         >>> service = ImageService()
         >>> result = await service.remove_background("input.jpg", "output.png")
+        >>>
+        >>> # 添加纯色背景
+        >>> result = await service.add_background(
+        ...     "transparent.png",
+        ...     "output.jpg",
+        ...     color=(255, 255, 255)
+        ... )
     """
 
     def __init__(self, ai_service: Optional[AIService] = None) -> None:
@@ -525,6 +543,247 @@ class ImageService:
 
         draw.text(position, text, font=font, fill=color)
         return image
+
+    # ==========================================
+    # 背景添加功能
+    # ==========================================
+
+    async def add_background(
+        self,
+        input_path: Union[str, Path],
+        output_path: Optional[Union[str, Path]] = None,
+        config: Optional[BackgroundConfig] = None,
+        color: Optional[Tuple[int, int, int]] = None,
+        on_progress: Optional[ProgressCallback] = None,
+    ) -> Path:
+        """为图片添加纯色背景.
+
+        将透明背景的图片处理为纯色背景。支持通过配置对象或直接指定 RGB 颜色。
+
+        Args:
+            input_path: 输入图片路径
+            output_path: 输出图片路径，如果为 None 则自动生成
+            config: 背景配置对象
+            color: 直接指定 RGB 颜色（优先级低于 config）
+            on_progress: 进度回调函数
+
+        Returns:
+            输出文件路径
+
+        Raises:
+            ImageNotFoundError: 输入文件不存在
+            ImageProcessError: 图片处理失败
+
+        Example:
+            >>> service = ImageService()
+            >>> # 使用配置对象
+            >>> config = BackgroundConfig.from_hex("#F5F5F5")
+            >>> result = await service.add_background("input.png", config=config)
+            >>>
+            >>> # 直接指定颜色
+            >>> result = await service.add_background("input.png", color=(255, 255, 255))
+        """
+        input_path = Path(input_path)
+        logger.info(f"开始添加背景: {input_path}")
+
+        def report_progress(progress: int, message: str) -> None:
+            if on_progress:
+                on_progress(progress, message)
+            logger.debug(f"进度 {progress}%: {message}")
+
+        try:
+            # Step 1: 确定背景颜色 (5%)
+            report_progress(5, "准备背景配置")
+            if config is not None:
+                if not config.enabled:
+                    # 背景添加未启用，直接复制原文件
+                    output_path = self._get_output_path(input_path, output_path, "_bg.png")
+                    import shutil
+                    shutil.copy(input_path, output_path)
+                    report_progress(100, "完成（背景添加未启用）")
+                    return output_path
+                if config.is_transparent():
+                    # 透明背景，不处理
+                    output_path = self._get_output_path(input_path, output_path, "_bg.png")
+                    import shutil
+                    shutil.copy(input_path, output_path)
+                    report_progress(100, "完成（保持透明背景）")
+                    return output_path
+                bg_color = config.get_effective_color()
+            elif color is not None:
+                bg_color = color
+            else:
+                bg_color = DEFAULT_BACKGROUND_COLOR
+
+            # Step 2: 验证输入文件 (10%)
+            report_progress(10, "验证输入文件")
+            validate_image_file(input_path)
+
+            # Step 3: 加载图片 (30%)
+            report_progress(30, "加载图片")
+            loop = asyncio.get_event_loop()
+            image = await loop.run_in_executor(None, load_image, input_path)
+            image = ensure_rgba(image)
+
+            # Step 4: 添加背景 (60%)
+            report_progress(60, "添加背景")
+            result_image = await loop.run_in_executor(
+                None, add_solid_background, image, bg_color
+            )
+
+            # Step 5: 保存结果 (90%)
+            report_progress(90, "保存结果")
+            output_path = self._get_output_path(input_path, output_path, "_bg.jpg")
+            await loop.run_in_executor(
+                None, save_image, result_image, output_path, DEFAULT_OUTPUT_QUALITY
+            )
+
+            # 完成 (100%)
+            report_progress(100, "完成")
+            logger.info(f"背景添加完成: {output_path}")
+
+            return output_path
+
+        except Exception as e:
+            logger.exception(f"背景添加失败: {input_path}")
+            raise ImageProcessError(f"背景添加失败: {e}") from e
+
+    async def add_background_with_resize(
+        self,
+        input_path: Union[str, Path],
+        output_path: Optional[Union[str, Path]] = None,
+        config: Optional[BackgroundConfig] = None,
+        color: Optional[Tuple[int, int, int]] = None,
+        target_size: Tuple[int, int] = DEFAULT_OUTPUT_SIZE,
+        on_progress: Optional[ProgressCallback] = None,
+    ) -> Path:
+        """添加背景并调整尺寸.
+
+        将图片适配到目标尺寸，用背景色填充空白区域。
+
+        Args:
+            input_path: 输入图片路径
+            output_path: 输出图片路径
+            config: 背景配置对象
+            color: RGB 颜色
+            target_size: 目标尺寸
+            on_progress: 进度回调
+
+        Returns:
+            输出文件路径
+        """
+        input_path = Path(input_path)
+        logger.info(f"开始添加背景并调整尺寸: {input_path}")
+
+        def report_progress(progress: int, message: str) -> None:
+            if on_progress:
+                on_progress(progress, message)
+
+        try:
+            # 确定背景颜色
+            if config is not None:
+                bg_color = config.get_effective_color()
+            elif color is not None:
+                bg_color = color
+            else:
+                bg_color = DEFAULT_BACKGROUND_COLOR
+
+            report_progress(10, "验证输入文件")
+            validate_image_file(input_path)
+
+            report_progress(30, "加载图片")
+            loop = asyncio.get_event_loop()
+            image = await loop.run_in_executor(None, load_image, input_path)
+
+            report_progress(60, "调整尺寸并添加背景")
+            result_image = await loop.run_in_executor(
+                None, fit_to_size, image, target_size, bg_color
+            )
+
+            report_progress(90, "保存结果")
+            output_path = self._get_output_path(input_path, output_path, "_bg.jpg")
+            await loop.run_in_executor(
+                None, save_image, result_image, output_path, DEFAULT_OUTPUT_QUALITY
+            )
+
+            report_progress(100, "完成")
+            logger.info(f"背景添加完成: {output_path}")
+
+            return output_path
+
+        except Exception as e:
+            logger.exception(f"背景添加失败: {input_path}")
+            raise ImageProcessError(f"背景添加失败: {e}") from e
+
+    def generate_background_preview(
+        self,
+        color: Optional[Tuple[int, int, int]] = None,
+        config: Optional[BackgroundConfig] = None,
+        size: Tuple[int, int] = PREVIEW_SIZE,
+        sample_image: Optional[Union[str, Path, Image.Image]] = None,
+    ) -> Image.Image:
+        """生成背景颜色预览图.
+
+        用于 UI 中显示选中的背景颜色效果。
+
+        Args:
+            color: RGB 颜色
+            config: 背景配置对象
+            size: 预览图尺寸
+            sample_image: 可选的样本图片，用于显示背景效果
+
+        Returns:
+            预览图片
+
+        Example:
+            >>> service = ImageService()
+            >>> preview = service.generate_background_preview(color=(245, 245, 245))
+            >>> preview.show()
+        """
+        # 确定颜色
+        if config is not None:
+            if config.is_transparent():
+                # 透明背景显示棋盘格
+                return create_background_preview(
+                    (200, 200, 200), size=size, with_checkerboard=True
+                )
+            bg_color = config.get_effective_color()
+        elif color is not None:
+            bg_color = color
+        else:
+            bg_color = DEFAULT_BACKGROUND_COLOR
+
+        # 如果有样本图片，生成合成效果预览
+        if sample_image is not None:
+            if isinstance(sample_image, (str, Path)):
+                sample_image = load_image(sample_image)
+
+            # 缩小样本图片
+            sample_thumb = create_thumbnail(sample_image, size)
+
+            # 合成到背景
+            return composite_with_background(
+                sample_thumb, bg_color, target_size=size, position="center"
+            )
+
+        # 纯色预览
+        return create_background_preview(bg_color, size=size)
+
+    def get_preset_colors(self) -> list[dict]:
+        """获取预设背景颜色列表.
+
+        供 UI 颜色选择器使用。
+
+        Returns:
+            预设颜色信息列表，每项包含 name, preset, rgb, hex 字段
+
+        Example:
+            >>> service = ImageService()
+            >>> colors = service.get_preset_colors()
+            >>> for c in colors:
+            ...     print(f"{c['name']}: {c['hex']}")
+        """
+        return BackgroundConfig.get_preset_colors()
 
 
 # 单例实例

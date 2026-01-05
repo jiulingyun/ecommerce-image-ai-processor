@@ -13,7 +13,11 @@ from pydantic import SecretStr
 
 from src.models.api_config import APIConfig
 from src.models.image_task import ImageTask, TaskStatus
-from src.models.process_config import ProcessConfig
+from src.models.process_config import (
+    BackgroundConfig,
+    PresetColor,
+    ProcessConfig,
+)
 from src.services.ai_service import AIService
 from src.services.image_service import (
     ImageService,
@@ -423,3 +427,270 @@ class TestHelperMethods:
         result = image_service._get_output_path(input_path, None, "_nobg.png")
 
         assert result == Path("/path/to/input_nobg.png")
+
+
+# ===================
+# 背景添加功能测试
+# ===================
+class TestAddBackground:
+    """测试背景添加功能."""
+
+    @pytest.fixture
+    def transparent_image_path(self, temp_dir: Path) -> Path:
+        """创建带透明背景的测试图片."""
+        img = Image.new("RGBA", (100, 100), (255, 0, 0, 0))
+        # 在中间画一个不透明的圆
+        from PIL import ImageDraw
+        draw = ImageDraw.Draw(img)
+        draw.ellipse([25, 25, 75, 75], fill=(255, 0, 0, 255))
+        path = temp_dir / "transparent.png"
+        img.save(path)
+        return path
+
+    @pytest.mark.asyncio
+    async def test_add_background_with_color(
+        self,
+        image_service: ImageService,
+        transparent_image_path: Path,
+        temp_dir: Path,
+    ) -> None:
+        """测试使用 RGB 颜色添加背景."""
+        output_path = temp_dir / "output_bg.jpg"
+
+        result = await image_service.add_background(
+            transparent_image_path,
+            output_path,
+            color=(255, 255, 255),
+        )
+
+        assert result == output_path
+        assert output_path.exists()
+
+        # 验证输出图片
+        output_img = Image.open(output_path)
+        assert output_img.mode == "RGB"
+
+    @pytest.mark.asyncio
+    async def test_add_background_with_config(
+        self,
+        image_service: ImageService,
+        transparent_image_path: Path,
+        temp_dir: Path,
+    ) -> None:
+        """测试使用配置对象添加背景."""
+        config = BackgroundConfig.from_preset(PresetColor.LIGHT_GRAY)
+        output_path = temp_dir / "output_config.jpg"
+
+        result = await image_service.add_background(
+            transparent_image_path,
+            output_path,
+            config=config,
+        )
+
+        assert result == output_path
+        assert output_path.exists()
+
+    @pytest.mark.asyncio
+    async def test_add_background_with_hex_color(
+        self,
+        image_service: ImageService,
+        transparent_image_path: Path,
+        temp_dir: Path,
+    ) -> None:
+        """测试使用 HEX 颜色添加背景."""
+        config = BackgroundConfig.from_hex("#F5F5F5")
+        output_path = temp_dir / "output_hex.jpg"
+
+        result = await image_service.add_background(
+            transparent_image_path,
+            output_path,
+            config=config,
+        )
+
+        assert result == output_path
+        assert output_path.exists()
+
+    @pytest.mark.asyncio
+    async def test_add_background_disabled(
+        self,
+        image_service: ImageService,
+        transparent_image_path: Path,
+        temp_dir: Path,
+    ) -> None:
+        """测试背景添加未启用时直接复制文件."""
+        config = BackgroundConfig(enabled=False)
+        output_path = temp_dir / "output_disabled.png"
+
+        result = await image_service.add_background(
+            transparent_image_path,
+            output_path,
+            config=config,
+        )
+
+        assert result.exists()
+        # 应该是直接复制，文件大小应该相同
+        assert result.stat().st_size == transparent_image_path.stat().st_size
+
+    @pytest.mark.asyncio
+    async def test_add_background_with_progress(
+        self,
+        image_service: ImageService,
+        transparent_image_path: Path,
+        temp_dir: Path,
+    ) -> None:
+        """测试带进度回调."""
+        progress_updates = []
+
+        def on_progress(progress: int, message: str) -> None:
+            progress_updates.append((progress, message))
+
+        await image_service.add_background(
+            transparent_image_path,
+            color=(255, 255, 255),
+            on_progress=on_progress,
+        )
+
+        # 验证进度更新
+        assert len(progress_updates) > 0
+        assert progress_updates[-1][0] == 100
+
+    @pytest.mark.asyncio
+    async def test_add_background_auto_output_path(
+        self,
+        image_service: ImageService,
+        transparent_image_path: Path,
+    ) -> None:
+        """测试自动生成输出路径."""
+        result = await image_service.add_background(
+            transparent_image_path,
+            color=(255, 255, 255),
+        )
+
+        assert result.exists()
+        assert "_bg" in result.name
+
+    @pytest.mark.asyncio
+    async def test_add_background_file_not_found(
+        self,
+        image_service: ImageService,
+    ) -> None:
+        """测试文件不存在错误."""
+        with pytest.raises(ImageProcessError):
+            await image_service.add_background("/nonexistent/path.png")
+
+
+class TestAddBackgroundWithResize:
+    """测试背景添加并调整尺寸功能."""
+
+    @pytest.fixture
+    def small_image_path(self, temp_dir: Path) -> Path:
+        """创建小尺寸测试图片."""
+        img = Image.new("RGBA", (50, 50), (255, 0, 0, 255))
+        path = temp_dir / "small.png"
+        img.save(path)
+        return path
+
+    @pytest.mark.asyncio
+    async def test_add_background_with_resize(
+        self,
+        image_service: ImageService,
+        small_image_path: Path,
+        temp_dir: Path,
+    ) -> None:
+        """测试添加背景并调整尺寸."""
+        output_path = temp_dir / "resized_bg.jpg"
+        target_size = (200, 200)
+
+        result = await image_service.add_background_with_resize(
+            small_image_path,
+            output_path,
+            color=(255, 255, 255),
+            target_size=target_size,
+        )
+
+        assert result == output_path
+        assert output_path.exists()
+
+        # 验证输出尺寸
+        output_img = Image.open(output_path)
+        assert output_img.size == target_size
+
+
+class TestGenerateBackgroundPreview:
+    """测试背景预览生成."""
+
+    def test_generate_preview_with_color(
+        self, image_service: ImageService
+    ) -> None:
+        """测试使用颜色生成预览."""
+        preview = image_service.generate_background_preview(
+            color=(245, 245, 245),
+            size=(100, 100),
+        )
+
+        assert preview.size == (100, 100)
+        assert preview.mode == "RGB"
+        # 检查颜色
+        assert preview.getpixel((50, 50)) == (245, 245, 245)
+
+    def test_generate_preview_with_config(
+        self, image_service: ImageService
+    ) -> None:
+        """测试使用配置生成预览."""
+        config = BackgroundConfig.from_preset(PresetColor.LIGHT_BLUE)
+        preview = image_service.generate_background_preview(
+            config=config,
+            size=(100, 100),
+        )
+
+        assert preview.size == (100, 100)
+        # 浅蓝色
+        assert preview.getpixel((50, 50)) == (227, 242, 253)
+
+    def test_generate_preview_transparent(
+        self, image_service: ImageService
+    ) -> None:
+        """测试透明背景预览（棋盘格）."""
+        config = BackgroundConfig.from_preset(PresetColor.TRANSPARENT)
+        preview = image_service.generate_background_preview(
+            config=config,
+            size=(100, 100),
+        )
+
+        assert preview.size == (100, 100)
+
+    def test_generate_preview_with_sample_image(
+        self,
+        image_service: ImageService,
+        sample_image_path: Path,
+    ) -> None:
+        """测试使用样本图片生成预览."""
+        preview = image_service.generate_background_preview(
+            color=(255, 255, 255),
+            size=(150, 150),
+            sample_image=sample_image_path,
+        )
+
+        assert preview.size == (150, 150)
+
+
+class TestGetPresetColors:
+    """测试获取预设颜色."""
+
+    def test_get_preset_colors(self, image_service: ImageService) -> None:
+        """测试获取预设颜色列表."""
+        colors = image_service.get_preset_colors()
+
+        assert len(colors) > 0
+        # 验证结构
+        for color in colors:
+            assert "name" in color
+            assert "preset" in color
+            assert "rgb" in color
+            assert "hex" in color
+
+        # 验证包含白色
+        white = next((c for c in colors if c["name"] == "white"), None)
+        assert white is not None
+        assert white["rgb"] == (255, 255, 255)
+        assert white["hex"] == "#FFFFFF"
