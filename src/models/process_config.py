@@ -1418,23 +1418,88 @@ class OutputConfig(BaseModel):
         ]
 
 
+class ProcessingMode(str, Enum):
+    """处理模式枚举.
+
+    简单模式：使用传统的文字配置 (TextConfig)
+    模板模式：使用模板系统 (TemplateConfig) 进行图层渲染
+    """
+
+    SIMPLE = "simple"  # 简单模式（传统文字配置）
+    TEMPLATE = "template"  # 模板模式（图层渲染）
+
+
+class TemplateRenderConfig(BaseModel):
+    """模板渲染配置.
+
+    用于在图片处理流程中应用模板系统。
+
+    Attributes:
+        enabled: 是否启用模板渲染
+        template_id: 模板 ID（从模板管理器加载）
+        template_path: 模板文件路径（直接加载）
+        template_data: 内联的模板配置数据
+        use_canvas_size: 是否使用模板画布尺寸作为输出尺寸
+        skip_invisible_layers: 是否跳过不可见图层
+
+    Example:
+        >>> config = TemplateRenderConfig(enabled=True, template_id="promo_banner")
+        >>> # 或者使用内联模板数据
+        >>> config = TemplateRenderConfig(enabled=True, template_data={...})
+    """
+
+    enabled: bool = Field(default=False, description="是否启用模板渲染")
+    template_id: Optional[str] = Field(default=None, description="模板 ID")
+    template_path: Optional[str] = Field(default=None, description="模板文件路径")
+    template_data: Optional[dict] = Field(default=None, description="内联模板配置数据")
+    use_canvas_size: bool = Field(default=True, description="是否使用模板画布尺寸")
+    skip_invisible_layers: bool = Field(default=True, description="是否跳过不可见图层")
+
+    @model_validator(mode="after")
+    def validate_template_source(self) -> "TemplateRenderConfig":
+        """验证模板来源."""
+        if self.enabled:
+            sources = [self.template_id, self.template_path, self.template_data]
+            active_sources = sum(1 for s in sources if s is not None)
+            if active_sources == 0:
+                # 允许启用但不指定来源（可后续设置）
+                pass
+            elif active_sources > 1:
+                raise ValueError("只能指定一个模板来源：template_id、template_path 或 template_data")
+        return self
+
+
 class ProcessConfig(BaseModel):
     """图片处理配置.
 
-    包含 AI 提示词、抠图、背景、边框、文字和输出的完整配置。
+    包含 AI 提示词、抠图、背景、边框、文字、模板和输出的完整配置。
+
+    支持两种处理模式：
+    - 简单模式 (SIMPLE)：使用传统的 text 配置添加文字水印
+    - 模板模式 (TEMPLATE)：使用模板系统渲染多图层内容
 
     Example:
+        >>> # 简单模式
         >>> config = ProcessConfig()
-        >>> config.prompt.template = PromptTemplate.LOGO_OVERLAY
-        >>> config.border.enabled = True
-        >>> json_str = config.to_json()
+        >>> config.text.enabled = True
+        >>> config.text.content = "水印文字"
+        >>>
+        >>> # 模板模式
+        >>> config = ProcessConfig(mode=ProcessingMode.TEMPLATE)
+        >>> config.template.enabled = True
+        >>> config.template.template_id = "promo_banner"
     """
 
+    mode: ProcessingMode = Field(
+        default=ProcessingMode.SIMPLE,
+        description="处理模式：简单模式或模板模式",
+    )
     prompt: AIPromptConfig = Field(default_factory=AIPromptConfig)
     background_removal: BackgroundRemovalConfig = Field(default_factory=BackgroundRemovalConfig)
     background: BackgroundConfig = Field(default_factory=BackgroundConfig)
     border: BorderConfig = Field(default_factory=BorderConfig)
     text: TextConfig = Field(default_factory=TextConfig)
+    template: TemplateRenderConfig = Field(default_factory=TemplateRenderConfig)
     output: OutputConfig = Field(default_factory=OutputConfig)
 
     def to_json(self) -> str:

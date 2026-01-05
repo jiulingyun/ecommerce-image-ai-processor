@@ -29,12 +29,15 @@ from src.models.process_config import (
     OutputFormat,
     PresetColor,
     ProcessConfig,
+    ProcessingMode,
     QualityPreset,
     ResizeMode,
+    TemplateRenderConfig,
     TextConfig,
     TextPosition,
     TextAlign,
 )
+from src.models.template_config import TemplateConfig
 from src.services.ai_service import AIService, get_ai_service
 from src.services.background_removal import (
     BackgroundRemoverType,
@@ -538,11 +541,13 @@ class ImageService:
         config: ProcessConfig,
         on_progress: Optional[ProgressCallback] = None,
     ) -> Image.Image:
-        """应用最终效果（边框和文字）（内部方法）.
+        """应用最终效果（边框、文字或模板渲染）（内部方法）.
         
-        在AI合成之后应用边框和文字效果。
-        处理顺序：先调整尺寸 -> 再添加边框 -> 最后添加文字
-        这样可以确保边框和文字不会被裁剪。
+        在AI合成之后应用边框和文字效果，或渲染模板图层。
+        
+        处理模式：
+        - 简单模式 (SIMPLE)：调整尺寸 -> 添加边框 -> 添加文字
+        - 模板模式 (TEMPLATE)：调整尺寸 -> 渲染模板图层
         
         Args:
             image_bytes: 合成后的图片字节数据
@@ -556,7 +561,14 @@ class ImageService:
         loop = asyncio.get_event_loop()
         
         logger.info(f"原始图片尺寸: {image.size}, 模式: {image.mode}")
+        logger.info(f"处理模式: {config.mode.value}")
         logger.info(f"目标输出尺寸: {config.output.size}, resize_mode: {config.output.resize_mode.value}")
+
+        # 检查是否使用模板模式
+        if config.mode == ProcessingMode.TEMPLATE and config.template.enabled:
+            return await self._apply_template_effects(image, config, on_progress)
+
+        # 简单模式：边框 + 文字
         logger.info(f"边框配置: enabled={config.border.enabled}, width={config.border.width}, color={config.border.color}")
         logger.info(f"文字配置: enabled={config.text.enabled}, content='{config.text.content}', font_size={config.text.font_size}")
 
@@ -617,6 +629,165 @@ class ImageService:
         if on_progress:
             on_progress(100, "后期处理完成")
 
+        return image
+
+    async def _apply_template_effects(
+        self,
+        image: Image.Image,
+        config: ProcessConfig,
+        on_progress: Optional[ProgressCallback] = None,
+    ) -> Image.Image:
+        """应用模板效果（内部方法）.
+        
+        使用模板系统渲染多图层内容到图片上。
+        
+        Args:
+            image: 原始图片
+            config: 处理配置
+            on_progress: 进度回调
+            
+        Returns:
+            处理后的PIL Image对象
+        """
+        from src.services.template_renderer import TemplateRenderer
+        from src.services.template_manager import TemplateManager
+        
+        loop = asyncio.get_event_loop()
+        template_config = config.template
+        
+        logger.info("使用模板模式渲染")
+        
+        # Step 1: 加载模板
+        if on_progress:
+            on_progress(20, "加载模板")
+        
+        template: Optional[TemplateConfig] = None
+        
+        # 从内联数据加载
+        if template_config.template_data:
+            logger.info("从内联数据加载模板")
+            template = TemplateConfig.from_json(template_config.template_data)
+        
+        # 从模板文件加载
+        elif template_config.template_path:
+            logger.info(f"从文件加载模板: {template_config.template_path}")
+            import json
+            with open(template_config.template_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            template = TemplateConfig.from_json(data.get("template", data))
+        
+        # 从模板管理器加载
+        elif template_config.template_id:
+            logger.info(f"从模板管理器加载: {template_config.template_id}")
+            manager = TemplateManager()
+            template = manager.load_template(template_config.template_id)
+        
+        if template is None:
+            logger.warning("未找到模板配置，回退到简单模式")
+            # 回退到简单模式
+            config.mode = ProcessingMode.SIMPLE
+            return await self._apply_simple_effects(image, config, on_progress)
+        
+        # Step 2: 创建渲染器
+        if on_progress:
+            on_progress(40, "准备渲染")
+        renderer = TemplateRenderer()
+        
+        # Step 3: 确定目标尺寸
+        if template_config.use_canvas_size:
+            target_size = (template.canvas_width, template.canvas_height)
+        else:
+            target_size = config.output.size
+        
+        logger.info(f"模板画布尺寸: {template.canvas_width}x{template.canvas_height}")
+        logger.info(f"目标输出尺寸: {target_size}")
+        logger.info(f"模板图层数: {len(template.layers)}")
+        
+        # Step 4: 渲染模板
+        if on_progress:
+            on_progress(60, "渲染模板图层")
+        
+        result = await loop.run_in_executor(
+            None,
+            renderer.render_to_size,
+            image,
+            template,
+            target_size,
+        )
+        
+        logger.info(f"模板渲染完成: {result.size}")
+        
+        if on_progress:
+            on_progress(100, "模板渲染完成")
+        
+        return result
+
+    async def _apply_simple_effects(
+        self,
+        image: Image.Image,
+        config: ProcessConfig,
+        on_progress: Optional[ProgressCallback] = None,
+    ) -> Image.Image:
+        """应用简单效果（边框和文字）（内部方法）.
+        
+        Args:
+            image: 原始图片
+            config: 处理配置
+            on_progress: 进度回调
+            
+        Returns:
+            处理后的PIL Image对象
+        """
+        loop = asyncio.get_event_loop()
+        
+        # 调整尺寸
+        if on_progress:
+            on_progress(20, "调整尺寸")
+        effective_bg_color = config.background.get_effective_color()
+        image = await loop.run_in_executor(
+            None,
+            resize_with_mode,
+            image,
+            config.output.size,
+            config.output.resize_mode.value,
+            effective_bg_color,
+        )
+        
+        # 添加边框
+        if config.border.enabled:
+            if on_progress:
+                on_progress(50, "添加边框")
+            image = await loop.run_in_executor(
+                None,
+                self._add_border,
+                image,
+                config.border.width,
+                config.border.color,
+            )
+        
+        # 添加文字
+        if config.text.enabled and config.text.content:
+            if on_progress:
+                on_progress(80, "添加文字")
+            text_size = get_text_size(
+                config.text.content,
+                config.text.font_family,
+                config.text.font_size,
+            )
+            text_position = config.text.get_effective_position(image.size, text_size)
+            image = await loop.run_in_executor(
+                None,
+                self._add_text,
+                image,
+                config.text.content,
+                text_position,
+                config.text.font_size,
+                config.text.color,
+            )
+        
+        if on_progress:
+            on_progress(100, "处理完成")
+        
         return image
 
     async def _apply_post_processing(

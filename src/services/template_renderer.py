@@ -1,0 +1,593 @@
+"""模板渲染引擎.
+
+将模板中的图层元素渲染到图片上。
+
+Features:
+    - 按 z_index 顺序渲染图层
+    - 文字渲染支持背景和描边
+    - 形状渲染支持填充和边框
+    - 图片图层合成
+"""
+
+from __future__ import annotations
+
+import os
+from typing import Optional, TYPE_CHECKING
+
+from PIL import Image, ImageDraw, ImageFont
+
+from src.models.template_config import (
+    TemplateConfig,
+    AnyLayer,
+    TextLayer,
+    ShapeLayer,
+    ImageLayer,
+    LayerType,
+    TextAlign,
+    ImageFitMode,
+)
+from src.utils.logger import setup_logger
+
+if TYPE_CHECKING:
+    pass
+
+logger = setup_logger(__name__)
+
+
+# ===================
+# 常量定义
+# ===================
+
+# 默认字体
+DEFAULT_FONT_NAME = "Arial"
+DEFAULT_FONT_SIZE = 24
+
+# 字体搜索路径
+FONT_SEARCH_PATHS = [
+    "/System/Library/Fonts/",
+    "/Library/Fonts/",
+    "~/Library/Fonts/",
+    "C:/Windows/Fonts/",
+    "/usr/share/fonts/",
+]
+
+
+# ===================
+# 字体管理
+# ===================
+
+
+def find_font(font_family: Optional[str], font_size: int, bold: bool = False, italic: bool = False) -> ImageFont.FreeTypeFont:
+    """查找字体.
+
+    Args:
+        font_family: 字体名称
+        font_size: 字体大小
+        bold: 是否粗体
+        italic: 是否斜体
+
+    Returns:
+        ImageFont 对象
+    """
+    # 如果没有指定字体，使用默认
+    if not font_family:
+        try:
+            return ImageFont.truetype("Arial", font_size)
+        except (OSError, IOError):
+            return ImageFont.load_default()
+
+    # 尝试直接加载
+    try:
+        return ImageFont.truetype(font_family, font_size)
+    except (OSError, IOError):
+        pass
+
+    # 尝试在常用路径中查找
+    font_variants = [
+        font_family,
+        f"{font_family}.ttf",
+        f"{font_family}.otf",
+    ]
+
+    # 添加粗体/斜体变体
+    if bold and italic:
+        font_variants.extend([
+            f"{font_family}-BoldItalic.ttf",
+            f"{font_family} Bold Italic.ttf",
+        ])
+    elif bold:
+        font_variants.extend([
+            f"{font_family}-Bold.ttf",
+            f"{font_family} Bold.ttf",
+        ])
+    elif italic:
+        font_variants.extend([
+            f"{font_family}-Italic.ttf",
+            f"{font_family} Italic.ttf",
+        ])
+
+    for search_path in FONT_SEARCH_PATHS:
+        expanded_path = os.path.expanduser(search_path)
+        if not os.path.exists(expanded_path):
+            continue
+
+        for variant in font_variants:
+            font_path = os.path.join(expanded_path, variant)
+            if os.path.exists(font_path):
+                try:
+                    return ImageFont.truetype(font_path, font_size)
+                except (OSError, IOError):
+                    continue
+
+    # 回退到默认字体
+    try:
+        return ImageFont.truetype("Arial", font_size)
+    except (OSError, IOError):
+        return ImageFont.load_default()
+
+
+# ===================
+# 模板渲染器
+# ===================
+
+
+class TemplateRenderer:
+    """模板渲染器.
+
+    将模板中的图层元素渲染到图片上。
+
+    Example:
+        >>> renderer = TemplateRenderer()
+        >>> template = TemplateConfig.create("测试")
+        >>> template.add_layer(TextLayer.create("Hello"))
+        >>> result = renderer.render(image, template)
+    """
+
+    def __init__(self) -> None:
+        """初始化渲染器."""
+        pass
+
+    def render(
+        self,
+        image: Image.Image,
+        template: TemplateConfig,
+        skip_invisible: bool = True,
+    ) -> Image.Image:
+        """渲染模板到图片.
+
+        Args:
+            image: 原始图片
+            template: 模板配置
+            skip_invisible: 是否跳过不可见图层
+
+        Returns:
+            渲染后的图片
+        """
+        # 确保图片是 RGBA 模式
+        if image.mode != "RGBA":
+            image = image.convert("RGBA")
+
+        # 创建工作副本
+        result = image.copy()
+
+        # 获取按 z_index 排序的图层
+        layers = template.get_layers_sorted()
+
+        # 渲染每个图层
+        for layer in layers:
+            if skip_invisible and not layer.visible:
+                continue
+
+            try:
+                result = self._render_layer(result, layer)
+            except Exception as e:
+                logger.error(f"渲染图层失败: {layer.id}, 错误: {e}")
+
+        return result
+
+    def render_to_size(
+        self,
+        image: Image.Image,
+        template: TemplateConfig,
+        target_size: Optional[tuple[int, int]] = None,
+    ) -> Image.Image:
+        """渲染模板到指定尺寸.
+
+        Args:
+            image: 原始图片
+            template: 模板配置
+            target_size: 目标尺寸，默认使用模板画布尺寸
+
+        Returns:
+            渲染后的图片
+        """
+        # 确定目标尺寸
+        if target_size is None:
+            target_size = (template.canvas_width, template.canvas_height)
+
+        # 创建画布
+        canvas = Image.new("RGBA", target_size, (*template.background_color, 255))
+
+        # 缩放原图适应画布
+        img_ratio = image.width / image.height
+        canvas_ratio = target_size[0] / target_size[1]
+
+        if img_ratio > canvas_ratio:
+            # 图片更宽，按宽度缩放
+            new_width = target_size[0]
+            new_height = int(new_width / img_ratio)
+        else:
+            # 图片更高，按高度缩放
+            new_height = target_size[1]
+            new_width = int(new_height * img_ratio)
+
+        # 缩放图片
+        resized = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+
+        # 居中放置
+        x = (target_size[0] - new_width) // 2
+        y = (target_size[1] - new_height) // 2
+
+        # 确保 resized 是 RGBA
+        if resized.mode != "RGBA":
+            resized = resized.convert("RGBA")
+
+        canvas.paste(resized, (x, y), resized)
+
+        # 渲染模板图层
+        return self.render(canvas, template)
+
+    def _render_layer(self, image: Image.Image, layer: AnyLayer) -> Image.Image:
+        """渲染单个图层.
+
+        Args:
+            image: 当前图片
+            layer: 图层数据
+
+        Returns:
+            渲染后的图片
+        """
+        if isinstance(layer, TextLayer):
+            return self._render_text_layer(image, layer)
+        elif isinstance(layer, ShapeLayer):
+            return self._render_shape_layer(image, layer)
+        elif isinstance(layer, ImageLayer):
+            return self._render_image_layer(image, layer)
+        else:
+            logger.warning(f"未知图层类型: {type(layer)}")
+            return image
+
+    def _render_text_layer(self, image: Image.Image, layer: TextLayer) -> Image.Image:
+        """渲染文字图层.
+
+        Args:
+            image: 当前图片
+            layer: 文字图层
+
+        Returns:
+            渲染后的图片
+        """
+        if not layer.content:
+            return image
+
+        # 获取字体
+        font = find_font(
+            layer.font_family,
+            layer.font_size,
+            layer.bold,
+            layer.italic,
+        )
+
+        # 创建临时图像绘制文字
+        temp = Image.new("RGBA", image.size, (0, 0, 0, 0))
+        draw = ImageDraw.Draw(temp)
+
+        # 计算文字边界
+        bbox = draw.textbbox((0, 0), layer.content, font=font)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+
+        # 位置
+        x, y = layer.x, layer.y
+
+        # 绘制背景
+        if layer.background_enabled:
+            padding = layer.background_padding
+            bg_color = (*layer.background_color, int(layer.background_opacity * 2.55))
+            draw.rectangle(
+                [
+                    x - padding,
+                    y - padding,
+                    x + text_width + padding,
+                    y + text_height + padding,
+                ],
+                fill=bg_color,
+            )
+
+        # 绘制描边
+        if layer.stroke_enabled:
+            stroke_color = (*layer.stroke_color, 255)
+            for dx in range(-layer.stroke_width, layer.stroke_width + 1):
+                for dy in range(-layer.stroke_width, layer.stroke_width + 1):
+                    if dx != 0 or dy != 0:
+                        draw.text(
+                            (x + dx, y + dy),
+                            layer.content,
+                            font=font,
+                            fill=stroke_color,
+                        )
+
+        # 绘制文字
+        text_color = (*layer.font_color, int(layer.opacity * 2.55))
+        draw.text((x, y), layer.content, font=font, fill=text_color)
+
+        # 合成
+        image = Image.alpha_composite(image, temp)
+
+        return image
+
+    def _render_shape_layer(self, image: Image.Image, layer: ShapeLayer) -> Image.Image:
+        """渲染形状图层.
+
+        Args:
+            image: 当前图片
+            layer: 形状图层
+
+        Returns:
+            渲染后的图片
+        """
+        # 创建临时图像
+        temp = Image.new("RGBA", image.size, (0, 0, 0, 0))
+        draw = ImageDraw.Draw(temp)
+
+        # 位置和尺寸
+        x1, y1 = layer.x, layer.y
+        x2, y2 = x1 + layer.width, y1 + layer.height
+
+        # 准备颜色
+        fill_color = None
+        if layer.fill_enabled:
+            fill_color = (*layer.fill_color, int(layer.fill_opacity * 2.55))
+
+        outline_color = None
+        outline_width = 0
+        if layer.stroke_enabled:
+            outline_color = (*layer.stroke_color, 255)
+            outline_width = layer.stroke_width
+
+        # 绘制形状
+        if layer.is_rectangle:
+            if layer.corner_radius > 0:
+                # 圆角矩形
+                self._draw_rounded_rectangle(
+                    draw,
+                    (x1, y1, x2, y2),
+                    layer.corner_radius,
+                    fill_color,
+                    outline_color,
+                    outline_width,
+                )
+            else:
+                draw.rectangle(
+                    (x1, y1, x2, y2),
+                    fill=fill_color,
+                    outline=outline_color,
+                    width=outline_width,
+                )
+        elif layer.is_ellipse:
+            draw.ellipse(
+                (x1, y1, x2, y2),
+                fill=fill_color,
+                outline=outline_color,
+                width=outline_width,
+            )
+
+        # 应用透明度
+        if layer.opacity < 100:
+            alpha = temp.split()[3]
+            alpha = alpha.point(lambda p: int(p * layer.opacity / 100))
+            temp.putalpha(alpha)
+
+        # 合成
+        image = Image.alpha_composite(image, temp)
+
+        return image
+
+    def _draw_rounded_rectangle(
+        self,
+        draw: ImageDraw.ImageDraw,
+        bbox: tuple,
+        radius: int,
+        fill: Optional[tuple],
+        outline: Optional[tuple],
+        width: int,
+    ) -> None:
+        """绘制圆角矩形.
+
+        Args:
+            draw: ImageDraw 对象
+            bbox: 边界框 (x1, y1, x2, y2)
+            radius: 圆角半径
+            fill: 填充颜色
+            outline: 边框颜色
+            width: 边框宽度
+        """
+        x1, y1, x2, y2 = bbox
+
+        # 限制圆角半径
+        max_radius = min((x2 - x1) // 2, (y2 - y1) // 2)
+        radius = min(radius, max_radius)
+
+        # 使用 rounded_rectangle（PIL 9.0+）
+        try:
+            draw.rounded_rectangle(bbox, radius, fill=fill, outline=outline, width=width)
+        except AttributeError:
+            # 兼容旧版本 PIL
+            if fill:
+                draw.rectangle((x1 + radius, y1, x2 - radius, y2), fill=fill)
+                draw.rectangle((x1, y1 + radius, x2, y2 - radius), fill=fill)
+                draw.pieslice((x1, y1, x1 + 2 * radius, y1 + 2 * radius), 180, 270, fill=fill)
+                draw.pieslice((x2 - 2 * radius, y1, x2, y1 + 2 * radius), 270, 360, fill=fill)
+                draw.pieslice((x1, y2 - 2 * radius, x1 + 2 * radius, y2), 90, 180, fill=fill)
+                draw.pieslice((x2 - 2 * radius, y2 - 2 * radius, x2, y2), 0, 90, fill=fill)
+
+            if outline and width > 0:
+                draw.arc((x1, y1, x1 + 2 * radius, y1 + 2 * radius), 180, 270, fill=outline, width=width)
+                draw.arc((x2 - 2 * radius, y1, x2, y1 + 2 * radius), 270, 360, fill=outline, width=width)
+                draw.arc((x1, y2 - 2 * radius, x1 + 2 * radius, y2), 90, 180, fill=outline, width=width)
+                draw.arc((x2 - 2 * radius, y2 - 2 * radius, x2, y2), 0, 90, fill=outline, width=width)
+                draw.line((x1 + radius, y1, x2 - radius, y1), fill=outline, width=width)
+                draw.line((x1 + radius, y2, x2 - radius, y2), fill=outline, width=width)
+                draw.line((x1, y1 + radius, x1, y2 - radius), fill=outline, width=width)
+                draw.line((x2, y1 + radius, x2, y2 - radius), fill=outline, width=width)
+
+    def _render_image_layer(self, image: Image.Image, layer: ImageLayer) -> Image.Image:
+        """渲染图片图层.
+
+        Args:
+            image: 当前图片
+            layer: 图片图层
+
+        Returns:
+            渲染后的图片
+        """
+        if not layer.image_path or not os.path.exists(layer.image_path):
+            return image
+
+        try:
+            # 加载图片
+            overlay = Image.open(layer.image_path)
+            if overlay.mode != "RGBA":
+                overlay = overlay.convert("RGBA")
+
+            # 根据适应模式调整大小
+            target_size = (layer.width, layer.height)
+            overlay = self._fit_image(overlay, target_size, layer.fit_mode, layer.preserve_aspect_ratio)
+
+            # 应用透明度
+            if layer.opacity < 100:
+                alpha = overlay.split()[3]
+                alpha = alpha.point(lambda p: int(p * layer.opacity / 100))
+                overlay.putalpha(alpha)
+
+            # 创建临时画布
+            temp = Image.new("RGBA", image.size, (0, 0, 0, 0))
+
+            # 计算粘贴位置（确保在画布范围内）
+            paste_x = max(0, min(layer.x, image.width - 1))
+            paste_y = max(0, min(layer.y, image.height - 1))
+
+            temp.paste(overlay, (paste_x, paste_y), overlay)
+
+            # 合成
+            image = Image.alpha_composite(image, temp)
+
+        except Exception as e:
+            logger.error(f"渲染图片图层失败: {e}")
+
+        return image
+
+    def _fit_image(
+        self,
+        image: Image.Image,
+        target_size: tuple[int, int],
+        fit_mode: ImageFitMode,
+        preserve_ratio: bool,
+    ) -> Image.Image:
+        """根据适应模式调整图片大小.
+
+        Args:
+            image: 原图片
+            target_size: 目标尺寸
+            fit_mode: 适应模式
+            preserve_ratio: 是否保持比例
+
+        Returns:
+            调整后的图片
+        """
+        target_w, target_h = target_size
+
+        if fit_mode == ImageFitMode.STRETCH or not preserve_ratio:
+            # 拉伸
+            return image.resize((target_w, target_h), Image.Resampling.LANCZOS)
+
+        img_w, img_h = image.size
+        img_ratio = img_w / img_h
+        target_ratio = target_w / target_h
+
+        if fit_mode == ImageFitMode.CONTAIN:
+            # 包含：图片完全显示在目标区域内
+            if img_ratio > target_ratio:
+                new_w = target_w
+                new_h = int(new_w / img_ratio)
+            else:
+                new_h = target_h
+                new_w = int(new_h * img_ratio)
+
+            resized = image.resize((new_w, new_h), Image.Resampling.LANCZOS)
+
+            # 居中放置
+            result = Image.new("RGBA", target_size, (0, 0, 0, 0))
+            x = (target_w - new_w) // 2
+            y = (target_h - new_h) // 2
+            result.paste(resized, (x, y), resized)
+            return result
+
+        elif fit_mode == ImageFitMode.COVER:
+            # 覆盖：填满目标区域，可能裁剪
+            if img_ratio > target_ratio:
+                new_h = target_h
+                new_w = int(new_h * img_ratio)
+            else:
+                new_w = target_w
+                new_h = int(new_w / img_ratio)
+
+            resized = image.resize((new_w, new_h), Image.Resampling.LANCZOS)
+
+            # 居中裁剪
+            x = (new_w - target_w) // 2
+            y = (new_h - target_h) // 2
+            return resized.crop((x, y, x + target_w, y + target_h))
+
+        return image
+
+
+# ===================
+# 便捷函数
+# ===================
+
+
+def render_template(
+    image: Image.Image,
+    template: TemplateConfig,
+) -> Image.Image:
+    """渲染模板到图片（便捷函数）.
+
+    Args:
+        image: 原始图片
+        template: 模板配置
+
+    Returns:
+        渲染后的图片
+    """
+    renderer = TemplateRenderer()
+    return renderer.render(image, template)
+
+
+def render_template_to_canvas(
+    image: Image.Image,
+    template: TemplateConfig,
+    target_size: Optional[tuple[int, int]] = None,
+) -> Image.Image:
+    """渲染模板到画布（便捷函数）.
+
+    Args:
+        image: 原始图片
+        template: 模板配置
+        target_size: 目标尺寸
+
+    Returns:
+        渲染后的图片
+    """
+    renderer = TemplateRenderer()
+    return renderer.render_to_size(image, template, target_size)

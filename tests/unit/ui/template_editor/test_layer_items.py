@@ -182,15 +182,71 @@ class TestShapeLayerItem:
         """应识别矩形."""
         layer = ShapeLayer.create_rectangle()
         item = ShapeLayerItem(layer)
-        assert item.shape_layer.is_rectangle is True
-        assert item.shape_layer.is_ellipse is False
+        assert item.is_rectangle is True
+        assert item.is_ellipse is False
 
     def test_should_identify_ellipse(self, app):
         """应识别椭圆."""
         layer = ShapeLayer.create_ellipse()
         item = ShapeLayerItem(layer)
-        assert item.shape_layer.is_ellipse is True
-        assert item.shape_layer.is_rectangle is False
+        assert item.is_ellipse is True
+        assert item.is_rectangle is False
+
+    def test_should_set_fill_color(self, app):
+        """应能设置填充色."""
+        layer = ShapeLayer.create_rectangle()
+        item = ShapeLayerItem(layer)
+        item.set_fill_color((255, 0, 0), 80)
+        assert layer.fill_color == (255, 0, 0)
+        assert layer.fill_opacity == 80
+        assert layer.fill_enabled is True
+
+    def test_should_set_stroke(self, app):
+        """应能设置描边."""
+        layer = ShapeLayer.create_rectangle()
+        item = ShapeLayerItem(layer)
+        item.set_stroke((0, 0, 255), 3)
+        assert layer.stroke_color == (0, 0, 255)
+        assert layer.stroke_width == 3
+        assert layer.stroke_enabled is True
+
+    def test_should_set_corner_radius(self, app):
+        """应能设置圆角."""
+        layer = ShapeLayer.create_rectangle()
+        item = ShapeLayerItem(layer)
+        item.set_corner_radius(15)
+        assert layer.corner_radius == 15
+
+    def test_should_disable_fill(self, app):
+        """应能禁用填充."""
+        layer = ShapeLayer.create_rectangle()
+        layer.fill_enabled = True
+        item = ShapeLayerItem(layer)
+        item.disable_fill()
+        assert layer.fill_enabled is False
+
+    def test_should_disable_stroke(self, app):
+        """应能禁用描边."""
+        layer = ShapeLayer.create_rectangle()
+        layer.stroke_enabled = True
+        item = ShapeLayerItem(layer)
+        item.disable_stroke()
+        assert layer.stroke_enabled is False
+
+    def test_should_emit_layer_changed_on_style_change(self, app):
+        """样式变化时应发出信号."""
+        layer = ShapeLayer.create_rectangle()
+        item = ShapeLayerItem(layer)
+        signal_received = []
+
+        def on_changed(layer_id):
+            signal_received.append(layer_id)
+
+        item.signals.layer_changed.connect(on_changed)
+        item.set_fill_color((100, 100, 100))
+
+        assert len(signal_received) == 1
+        assert signal_received[0] == layer.id
 
 
 # ===================
@@ -213,12 +269,56 @@ class TestImageLayerItem:
         item = ImageLayerItem(layer)
         # 不应抛出异常
         assert item._pixmap is None
+        assert item.has_image is False
 
     def test_should_handle_empty_path(self, app):
         """应处理空路径."""
         layer = ImageLayer(image_path="")
         item = ImageLayerItem(layer)
         assert item._pixmap is None
+        assert item.has_image is False
+
+    def test_should_report_has_image_false_when_no_image(self, app):
+        """无图片时 has_image 应为 False."""
+        layer = ImageLayer(image_path="")
+        item = ImageLayerItem(layer)
+        assert item.has_image is False
+
+    def test_should_report_image_size_zero_when_no_image(self, app):
+        """无图片时 image_size 应为 (0, 0)."""
+        layer = ImageLayer(image_path="")
+        item = ImageLayerItem(layer)
+        assert item.image_size == (0, 0)
+
+    def test_should_set_fit_mode(self, app):
+        """应能设置适应模式."""
+        from src.models.template_config import ImageFitMode
+        layer = ImageLayer(image_path="")
+        item = ImageLayerItem(layer)
+
+        item.set_fit_mode('cover')
+        assert layer.fit_mode == ImageFitMode.COVER
+
+        item.set_fit_mode('stretch')
+        assert layer.fit_mode == ImageFitMode.STRETCH
+
+        item.set_fit_mode('contain')
+        assert layer.fit_mode == ImageFitMode.CONTAIN
+
+    def test_should_emit_layer_changed_on_set_fit_mode(self, app):
+        """设置适应模式时应发出信号."""
+        layer = ImageLayer(image_path="")
+        item = ImageLayerItem(layer)
+        signal_received = []
+
+        def on_changed(layer_id):
+            signal_received.append(layer_id)
+
+        item.signals.layer_changed.connect(on_changed)
+        item.set_fit_mode('cover')
+
+        assert len(signal_received) == 1
+        assert signal_received[0] == layer.id
 
 
 # ===================

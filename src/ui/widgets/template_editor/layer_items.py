@@ -630,6 +630,13 @@ class ShapeLayerItem(LayerGraphicsItem):
     """形状图层图形项.
 
     渲染矩形或椭圆，支持填充和描边效果。
+
+    Features:
+        - 矩形/椭圆绘制
+        - 填充色和透明度
+        - 描边（颜色、宽度）
+        - 圆角矩形
+        - 拖拽调整大小和位置
     """
 
     def __init__(
@@ -645,6 +652,64 @@ class ShapeLayerItem(LayerGraphicsItem):
     def shape_layer(self) -> ShapeLayer:
         """获取形状图层数据."""
         return self._shape_layer
+
+    @property
+    def is_rectangle(self) -> bool:
+        """是否为矩形."""
+        return self._shape_layer.type == LayerType.RECTANGLE
+
+    @property
+    def is_ellipse(self) -> bool:
+        """是否为椭圆."""
+        return self._shape_layer.type == LayerType.ELLIPSE
+
+    def set_fill_color(self, color: tuple, opacity: int = 100) -> None:
+        """设置填充色.
+
+        Args:
+            color: RGB 颜色元组
+            opacity: 透明度 (0-100)
+        """
+        self._shape_layer.fill_color = color
+        self._shape_layer.fill_opacity = opacity
+        self._shape_layer.fill_enabled = True
+        self.update()
+        self.signals.layer_changed.emit(self.layer_id)
+
+    def set_stroke(self, color: tuple, width: int = 1) -> None:
+        """设置描边.
+
+        Args:
+            color: RGB 颜色元组
+            width: 描边宽度
+        """
+        self._shape_layer.stroke_color = color
+        self._shape_layer.stroke_width = width
+        self._shape_layer.stroke_enabled = True
+        self.update()
+        self.signals.layer_changed.emit(self.layer_id)
+
+    def set_corner_radius(self, radius: int) -> None:
+        """设置圆角半径（仅矩形有效）.
+
+        Args:
+            radius: 圆角半径
+        """
+        self._shape_layer.corner_radius = radius
+        self.update()
+        self.signals.layer_changed.emit(self.layer_id)
+
+    def disable_fill(self) -> None:
+        """禁用填充."""
+        self._shape_layer.fill_enabled = False
+        self.update()
+        self.signals.layer_changed.emit(self.layer_id)
+
+    def disable_stroke(self) -> None:
+        """禁用描边."""
+        self._shape_layer.stroke_enabled = False
+        self.update()
+        self.signals.layer_changed.emit(self.layer_id)
 
     def paint(
         self,
@@ -698,6 +763,13 @@ class ImageLayerItem(LayerGraphicsItem):
     """图片图层图形项.
 
     加载并显示图片，支持多种适应模式。
+
+    Features:
+        - 从本地加载图片
+        - 支持 contain/cover/stretch 适应模式
+        - 透明度设置
+        - 拖拽调整大小和位置
+        - 图片预览
     """
 
     def __init__(
@@ -716,6 +788,65 @@ class ImageLayerItem(LayerGraphicsItem):
         """获取图片图层数据."""
         return self._image_layer
 
+    @property
+    def has_image(self) -> bool:
+        """是否已加载图片."""
+        return self._pixmap is not None and not self._pixmap.isNull()
+
+    @property
+    def image_size(self) -> tuple:
+        """获取原始图片尺寸.
+
+        Returns:
+            (width, height) 或 (0, 0) 如果无图片
+        """
+        if self._pixmap and not self._pixmap.isNull():
+            return (self._pixmap.width(), self._pixmap.height())
+        return (0, 0)
+
+    def set_image(self, path: str) -> bool:
+        """设置图片路径.
+
+        Args:
+            path: 图片文件路径
+
+        Returns:
+            是否加载成功
+        """
+        self._image_layer.image_path = path
+        self._load_image()
+        self.update()
+        self.signals.layer_changed.emit(self.layer_id)
+        return self.has_image
+
+    def set_fit_mode(self, mode: str) -> None:
+        """设置图片适应模式.
+
+        Args:
+            mode: 'contain', 'cover', or 'stretch'
+        """
+        from src.models.template_config import ImageFitMode
+        mode_map = {
+            'contain': ImageFitMode.CONTAIN,
+            'cover': ImageFitMode.COVER,
+            'stretch': ImageFitMode.STRETCH,
+        }
+        if mode in mode_map:
+            self._image_layer.fit_mode = mode_map[mode]
+            self.update()
+            self.signals.layer_changed.emit(self.layer_id)
+
+    def fit_to_image(self) -> None:
+        """调整图层尺寸以适应图片原始尺寸."""
+        if self.has_image:
+            w, h = self.image_size
+            self.prepareGeometryChange()
+            self._image_layer.width = w
+            self._image_layer.height = h
+            self.update()
+            self.signals.size_changed.emit(self.layer_id, w, h)
+            self.signals.layer_changed.emit(self.layer_id)
+
     def _load_image(self) -> None:
         """加载图片."""
         if self._image_layer.image_path:
@@ -725,6 +856,8 @@ class ImageLayerItem(LayerGraphicsItem):
             else:
                 self._pixmap = None
                 logger.warning(f"无法加载图片: {self._image_layer.image_path}")
+        else:
+            self._pixmap = None
 
     def paint(
         self,

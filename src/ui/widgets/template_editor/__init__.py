@@ -9,6 +9,7 @@ Components:
     - ShapeLayerItem: 形状图层图形项
     - ImageLayerItem: 图片图层图形项
     - TextEditOverlay: 文字编辑覆盖层
+    - LayerPanel: 图层管理面板
 """
 
 from src.ui.widgets.template_editor.canvas import TemplateCanvas
@@ -23,6 +24,26 @@ from src.ui.widgets.template_editor.text_edit_overlay import (
     TextEditOverlay,
     TextEditWidget,
 )
+from src.ui.widgets.template_editor.layer_panel import (
+    LayerPanel,
+    LayerListWidget,
+    LayerItemWidget,
+)
+from src.ui.widgets.template_editor.property_panel import (
+    PropertyPanel,
+    ColorButton,
+    LabeledSpinBox,
+    LabeledSlider,
+    TransformEditor,
+    TextPropertyEditor,
+    ShapePropertyEditor,
+    ImagePropertyEditor,
+    CanvasPropertyEditor,
+)
+from src.ui.widgets.template_editor.template_list import (
+    TemplateListWidget,
+    TemplateListItem,
+)
 
 __all__ = [
     "TemplateCanvas",
@@ -33,4 +54,18 @@ __all__ = [
     "create_layer_item",
     "TextEditOverlay",
     "TextEditWidget",
+    "LayerPanel",
+    "LayerListWidget",
+    "LayerItemWidget",
+    "PropertyPanel",
+    "ColorButton",
+    "LabeledSpinBox",
+    "LabeledSlider",
+    "TransformEditor",
+    "TextPropertyEditor",
+    "ShapePropertyEditor",
+    "ImagePropertyEditor",
+    "CanvasPropertyEditor",
+    "TemplateListWidget",
+    "TemplateListItem",
 ]

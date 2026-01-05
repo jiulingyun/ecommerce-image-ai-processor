@@ -64,6 +64,10 @@ class TemplateEditorPreview(QMainWindow):
         btn_add_ellipse.clicked.connect(self._add_ellipse)
         toolbar.addWidget(btn_add_ellipse)
 
+        btn_add_image = QPushButton("添加图片")
+        btn_add_image.clicked.connect(self._add_image_layer)
+        toolbar.addWidget(btn_add_image)
+
         toolbar.addSeparator()
 
         # 缩放控制
@@ -223,6 +227,24 @@ class TemplateEditorPreview(QMainWindow):
         layer.fill_color = (255, 200, 200)
         self._canvas.add_layer(layer)
         self._status_label.setText(f"已添加椭圆图层: {layer.id[:8]}")
+
+    def _add_image_layer(self):
+        """添加图片图层."""
+        from PyQt6.QtWidgets import QFileDialog
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "选择图片",
+            "",
+            "图片文件 (*.png *.jpg *.jpeg *.gif *.bmp *.webp)"
+        )
+        if file_path:
+            layer = ImageLayer.create(file_path)
+            layer.x = 200
+            layer.y = 200
+            layer.width = 200
+            layer.height = 150
+            self._canvas.add_layer(layer)
+            self._status_label.setText(f"已添加图片图层: {layer.id[:8]}")
 
     def _toggle_grid(self):
         """切换网格显示."""

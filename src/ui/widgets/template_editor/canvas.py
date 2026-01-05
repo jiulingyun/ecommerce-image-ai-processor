@@ -506,6 +506,62 @@ class TemplateCanvas(QGraphicsView):
         """取消所有选中."""
         self._scene.clearSelection()
 
+    def set_layer_visibility(self, layer_id: str, visible: bool) -> None:
+        """设置图层可见性.
+
+        Args:
+            layer_id: 图层ID
+            visible: 是否可见
+        """
+        if not self._template:
+            return
+
+        layer = self._template.get_layer_by_id(layer_id)
+        if layer:
+            layer.visible = visible
+            self._template.update_layer(layer)
+
+        if layer_id in self._layer_items:
+            self._layer_items[layer_id].update_from_layer()
+
+    def set_layer_locked(self, layer_id: str, locked: bool) -> None:
+        """设置图层锁定状态.
+
+        Args:
+            layer_id: 图层ID
+            locked: 是否锁定
+        """
+        if not self._template:
+            return
+
+        layer = self._template.get_layer_by_id(layer_id)
+        if layer:
+            layer.locked = locked
+            self._template.update_layer(layer)
+
+        if layer_id in self._layer_items:
+            self._layer_items[layer_id].update_from_layer()
+
+    def reorder_layers(self, layer_ids: list[str]) -> None:
+        """重新排序图层.
+
+        Args:
+            layer_ids: 图层ID列表（从上到下，z_index 递减）
+        """
+        if not self._template:
+            return
+
+        # 计算新的 z_index（最上面的最大）
+        total = len(layer_ids)
+        for i, layer_id in enumerate(layer_ids):
+            layer = self._template.get_layer_by_id(layer_id)
+            if layer:
+                layer.z_index = total - i
+                self._template.update_layer(layer)
+
+            if layer_id in self._layer_items:
+                self._layer_items[layer_id].setZValue(total - i)
+
     # ========================
     # 视图控制
     # ========================
