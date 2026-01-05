@@ -60,7 +60,9 @@ class ConstrainedScrollArea(QScrollArea):
             available_width = self.viewport().width()
             widget.setFixedWidth(available_width)
 
-from src.models.image_task import ImageTask
+from src.core.queue_worker import QueueController, get_queue_controller
+from src.models.batch_queue import QueueStats
+from src.models.image_task import ImageTask, TaskStatus
 from src.ui.dialogs import SettingsDialog
 from src.ui.widgets import (
     AIConfigPanel,
@@ -178,6 +180,9 @@ class MainWindow(QMainWindow):
         # Toast 通知管理器
         self._toast_manager: Optional[ToastManager] = None
 
+        # 队列控制器
+        self._queue_controller: Optional[QueueController] = None
+
         # 初始化
         self._setup_window()
         self._apply_stylesheet()
@@ -186,6 +191,7 @@ class MainWindow(QMainWindow):
         self._setup_central_widget()
         self._setup_statusbar()
         self._setup_toast_manager()
+        self._setup_queue_controller()
         self._connect_signals()
         self._update_actions_state()
 
@@ -554,6 +560,17 @@ class MainWindow(QMainWindow):
         """设置 Toast 通知管理器."""
         self._toast_manager = get_toast_manager(self)
 
+    def _setup_queue_controller(self) -> None:
+        """设置队列控制器."""
+        self._queue_controller = get_queue_controller(self)
+        
+        # 连接控制器信号
+        self._queue_controller.progress_updated.connect(self._on_queue_progress)
+        self._queue_controller.task_completed.connect(self._on_queue_task_completed)
+        self._queue_controller.task_failed.connect(self._on_queue_task_failed)
+        self._queue_controller.all_completed.connect(self._on_queue_completed)
+        self._queue_controller.error_occurred.connect(self._on_queue_error)
+
     def _connect_signals(self) -> None:
         """连接信号槽."""
         # 图片配对面板信号
@@ -756,6 +773,14 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "提示", "队列为空，请先导入图片。")
             return
 
+        if not self._queue_controller:
+            logger.error("队列控制器未初始化")
+            return
+
+        # 传递任务给控制器
+        self._queue_controller.set_tasks(self._tasks)
+        self._queue_controller.start()
+
         self.set_processing_state(True)
         self.process_started.emit()
         self.update_progress(0, "正在处理...")
@@ -763,14 +788,19 @@ class MainWindow(QMainWindow):
 
     def _on_pause_process(self) -> None:
         """暂停/继续处理."""
+        if not self._queue_controller:
+            return
+
         if self._is_paused:
             # 继续处理
+            self._queue_controller.resume()
             self.set_processing_state(True, False)
             self.process_started.emit()  # 复用开始信号
             self.update_progress(self._current_progress, "正在处理...")
             logger.info("继续处理")
         else:
             # 暂停处理
+            self._queue_controller.pause()
             self.set_processing_state(True, True)
             self.process_paused.emit()
             self.update_progress(self._current_progress, "已暂停")
@@ -787,6 +817,8 @@ class MainWindow(QMainWindow):
         )
 
         if reply == QMessageBox.StandardButton.Yes:
+            if self._queue_controller:
+                self._queue_controller.cancel()
             self.set_processing_state(False)
             self.process_cancelled.emit()
             self.update_progress(0, "已取消")
@@ -918,6 +950,104 @@ class MainWindow(QMainWindow):
 
         self.show_status_message("已删除任务")
 
+    # ========================
+    # 队列控制器回调
+    # ========================
+
+    def _on_queue_progress(self, progress: int, message: str) -> None:
+        """队列进度更新回调.
+
+        Args:
+            progress: 进度百分比 (0-100)
+            message: 状态消息
+        """
+        self._current_progress = progress
+        self.update_progress(progress, message)
+        
+        # 更新进度面板
+        if self._queue_progress_panel:
+            self._queue_progress_panel.set_progress(progress)
+
+    def _on_queue_task_completed(self, task_id: str, output_path: str) -> None:
+        """队列任务完成回调.
+
+        Args:
+            task_id: 任务 ID
+            output_path: 输出文件路径
+        """
+        # 更新任务状态
+        if task_id in self._tasks:
+            self._tasks[task_id].status = TaskStatus.COMPLETED
+            self._tasks[task_id].output_path = output_path
+
+        # 更新任务列表显示
+        if self._task_list_widget:
+            self._task_list_widget.update_task_status(task_id, TaskStatus.COMPLETED)
+
+        # 更新进度面板
+        if self._queue_progress_panel:
+            self._queue_progress_panel.increment_completed()
+
+        logger.info(f"任务完成: {task_id} -> {output_path}")
+
+    def _on_queue_task_failed(self, task_id: str, error: str) -> None:
+        """队列任务失败回调.
+
+        Args:
+            task_id: 任务 ID
+            error: 错误信息
+        """
+        # 更新任务状态
+        if task_id in self._tasks:
+            self._tasks[task_id].status = TaskStatus.FAILED
+            self._tasks[task_id].error_message = error
+
+        # 更新任务列表显示
+        if self._task_list_widget:
+            self._task_list_widget.update_task_status(task_id, TaskStatus.FAILED)
+
+        # 显示错误通知
+        self.show_error_toast("任务失败", error)
+
+        logger.error(f"任务失败: {task_id} - {error}")
+
+    def _on_queue_completed(self, stats: QueueStats) -> None:
+        """队列处理完成回调.
+
+        Args:
+            stats: 队列统计信息
+        """
+        self.set_processing_state(False)
+        
+        # 显示完成消息
+        success_count = stats.completed
+        failed_count = stats.failed
+        total = stats.total
+        
+        if failed_count == 0:
+            self.show_success(
+                "处理完成",
+                f"成功处理 {success_count}/{total} 个任务"
+            )
+        else:
+            self.show_warning(
+                "处理完成",
+                f"完成 {success_count}/{total} 个，失败 {failed_count} 个"
+            )
+
+        self.update_progress(100, f"已完成: {success_count}/{total}")
+        logger.info(f"队列处理完成: 成功 {success_count}, 失败 {failed_count}")
+
+    def _on_queue_error(self, exception: Exception) -> None:
+        """队列错误回调.
+
+        Args:
+            exception: 异常对象
+        """
+        self.set_processing_state(False)
+        self.handle_exception(exception, show_dialog=True)
+        logger.exception(f"队列处理错误: {exception}")
+
     def _on_settings(self) -> None:
         """打开设置对话框."""
         self.settings_requested.emit()
@@ -966,7 +1096,9 @@ class MainWindow(QMainWindow):
                 event.ignore()
                 return
 
-            # 发送取消信号
+            # 停止队列控制器
+            if self._queue_controller:
+                self._queue_controller.stop()
             self.process_cancelled.emit()
 
         logger.info("主窗口关闭")

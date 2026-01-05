@@ -352,6 +352,20 @@ class QueueProgressPanel(QFrame):
         self._timer.stop()
         self._update_display()
 
+    def set_progress(self, progress: int) -> None:
+        """设置进度.
+
+        Args:
+            progress: 进度值 (0-100)
+        """
+        self._progress_bar.setValue(progress)
+
+    def increment_completed(self) -> None:
+        """增加完成数."""
+        self._completed_tasks += 1
+        self._current_task_progress = 0
+        self._update_display()
+
     def get_stats(self) -> dict:
         """获取统计信息.
 
