@@ -7,6 +7,7 @@ Features:
     - 商品合成完整流程
     - 图片后期处理
     - 纯色背景添加
+    - 边框添加（多种样式）
     - 进度回调支持
 """
 
@@ -22,12 +23,16 @@ from src.models.api_config import APIConfig
 from src.models.image_task import ImageTask, TaskStatus
 from src.models.process_config import (
     BackgroundConfig,
+    BorderConfig,
+    BorderStyle,
     PresetColor,
     ProcessConfig,
 )
 from src.services.ai_service import AIService, get_ai_service
 from src.utils.constants import (
     DEFAULT_BACKGROUND_COLOR,
+    DEFAULT_BORDER_COLOR,
+    DEFAULT_BORDER_WIDTH,
     DEFAULT_OUTPUT_QUALITY,
     DEFAULT_OUTPUT_SIZE,
     PREVIEW_SIZE,
@@ -37,11 +42,14 @@ from src.utils.exceptions import (
     ImageProcessError,
 )
 from src.utils.image_utils import (
+    add_border,
+    add_border_expand,
     add_solid_background,
     apply_background_with_padding,
     bytes_to_image,
     composite_with_background,
     create_background_preview,
+    create_border_preview,
     create_thumbnail,
     ensure_rgba,
     fit_to_size,
@@ -784,6 +792,187 @@ class ImageService:
             ...     print(f"{c['name']}: {c['hex']}")
         """
         return BackgroundConfig.get_preset_colors()
+
+    # ==========================================
+    # 边框添加功能
+    # ==========================================
+
+    async def add_image_border(
+        self,
+        input_path: Union[str, Path],
+        output_path: Optional[Union[str, Path]] = None,
+        config: Optional[BorderConfig] = None,
+        width: Optional[int] = None,
+        color: Optional[Tuple[int, int, int]] = None,
+        style: Optional[str] = None,
+        expand: bool = False,
+        on_progress: Optional[ProgressCallback] = None,
+    ) -> Path:
+        """为图片添加边框.
+
+        支持多种边框样式，可通过配置对象或直接指定参数。
+
+        Args:
+            input_path: 输入图片路径
+            output_path: 输出图片路径，如果为 None 则自动生成
+            config: 边框配置对象
+            width: 边框宽度 (1-20 像素)，优先级低于 config
+            color: 边框颜色 RGB，优先级低于 config
+            style: 边框样式，优先级低于 config
+            expand: 是否扩展图片尺寸以容纳边框
+            on_progress: 进度回调函数
+
+        Returns:
+            输出文件路径
+
+        Raises:
+            ImageNotFoundError: 输入文件不存在
+            ImageProcessError: 图片处理失败
+
+        Example:
+            >>> service = ImageService()
+            >>> # 使用配置对象
+            >>> config = BorderConfig.from_hex("#000000", width=5, style=BorderStyle.SOLID)
+            >>> result = await service.add_image_border("input.jpg", config=config)
+            >>>
+            >>> # 直接指定参数
+            >>> result = await service.add_image_border(
+            ...     "input.jpg",
+            ...     width=3,
+            ...     color=(255, 0, 0),
+            ...     style="dashed"
+            ... )
+        """
+        input_path = Path(input_path)
+        logger.info(f"开始添加边框: {input_path}")
+
+        def report_progress(progress: int, message: str) -> None:
+            if on_progress:
+                on_progress(progress, message)
+            logger.debug(f"进度 {progress}%: {message}")
+
+        try:
+            # Step 1: 确定边框参数 (5%)
+            report_progress(5, "准备边框配置")
+            if config is not None:
+                if not config.enabled:
+                    # 边框未启用，直接复制原文件
+                    output_path = self._get_output_path(input_path, output_path, "_border.jpg")
+                    import shutil
+                    shutil.copy(input_path, output_path)
+                    report_progress(100, "完成（边框未启用）")
+                    return output_path
+                border_width = config.width
+                border_color = config.get_effective_color()
+                border_style = config.style.value
+            else:
+                border_width = width if width is not None else DEFAULT_BORDER_WIDTH
+                border_color = color if color is not None else DEFAULT_BORDER_COLOR
+                border_style = style if style is not None else "solid"
+
+            # Step 2: 验证输入文件 (10%)
+            report_progress(10, "验证输入文件")
+            validate_image_file(input_path)
+
+            # Step 3: 加载图片 (30%)
+            report_progress(30, "加载图片")
+            loop = asyncio.get_event_loop()
+            image = await loop.run_in_executor(None, load_image, input_path)
+
+            # Step 4: 添加边框 (60%)
+            report_progress(60, "添加边框")
+            if expand:
+                result_image = await loop.run_in_executor(
+                    None, add_border_expand, image, border_width, border_color, border_style
+                )
+            else:
+                result_image = await loop.run_in_executor(
+                    None, add_border, image, border_width, border_color, border_style
+                )
+
+            # Step 5: 保存结果 (90%)
+            report_progress(90, "保存结果")
+            output_path = self._get_output_path(input_path, output_path, "_border.jpg")
+            await loop.run_in_executor(
+                None, save_image, result_image, output_path, DEFAULT_OUTPUT_QUALITY
+            )
+
+            # 完成 (100%)
+            report_progress(100, "完成")
+            logger.info(f"边框添加完成: {output_path}")
+
+            return output_path
+
+        except Exception as e:
+            logger.exception(f"边框添加失败: {input_path}")
+            raise ImageProcessError(f"边框添加失败: {e}") from e
+
+    def generate_border_preview(
+        self,
+        width: int = DEFAULT_BORDER_WIDTH,
+        color: Optional[Tuple[int, int, int]] = None,
+        config: Optional[BorderConfig] = None,
+        style: Optional[str] = None,
+        size: Tuple[int, int] = PREVIEW_SIZE,
+        background_color: Tuple[int, int, int] = (255, 255, 255),
+    ) -> Image.Image:
+        """生成边框样式预览图.
+
+        用于 UI 中显示选中的边框效果。
+
+        Args:
+            width: 边框宽度
+            color: 边框颜色 RGB
+            config: 边框配置对象
+            style: 边框样式
+            size: 预览图尺寸
+            background_color: 背景颜色
+
+        Returns:
+            预览图片
+
+        Example:
+            >>> service = ImageService()
+            >>> preview = service.generate_border_preview(
+            ...     width=5,
+            ...     color=(0, 0, 0),
+            ...     style="dashed"
+            ... )
+            >>> preview.show()
+        """
+        # 确定参数
+        if config is not None:
+            border_width = config.width
+            border_color = config.get_effective_color()
+            border_style = config.style.value
+        else:
+            border_width = width
+            border_color = color if color is not None else DEFAULT_BORDER_COLOR
+            border_style = style if style is not None else "solid"
+
+        return create_border_preview(
+            width=border_width,
+            color=border_color,
+            style=border_style,
+            size=size,
+            background_color=background_color,
+        )
+
+    def get_border_styles(self) -> list[dict]:
+        """获取所有可用的边框样式.
+
+        供 UI 边框样式选择器使用。
+
+        Returns:
+            边框样式信息列表，每项包含 value, style, name 字段
+
+        Example:
+            >>> service = ImageService()
+            >>> styles = service.get_border_styles()
+            >>> for s in styles:
+            ...     print(f"{s['name']}: {s['value']}")
+        """
+        return BorderConfig.get_available_styles()
 
 
 # 单例实例

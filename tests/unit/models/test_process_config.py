@@ -6,6 +6,9 @@ import pytest
 
 from src.models.process_config import (
     BackgroundConfig,
+    BorderConfig,
+    BorderStyle,
+    BORDER_STYLE_NAMES,
     PresetColor,
     PRESET_COLOR_VALUES,
     hex_to_rgb,
@@ -231,3 +234,116 @@ class TestPresetColor:
         """测试所有预设颜色都有对应的 RGB 值."""
         for preset in PresetColor:
             assert preset in PRESET_COLOR_VALUES
+
+
+# ===================
+# BorderStyle 测试
+# ===================
+class TestBorderStyle:
+    """测试 BorderStyle 枚举."""
+
+    def test_border_style_values(self) -> None:
+        """测试边框样式枚举值."""
+        assert BorderStyle.SOLID.value == "solid"
+        assert BorderStyle.DASHED.value == "dashed"
+        assert BorderStyle.DOTTED.value == "dotted"
+        assert BorderStyle.DOUBLE.value == "double"
+        assert BorderStyle.GROOVE.value == "groove"
+        assert BorderStyle.RIDGE.value == "ridge"
+        assert BorderStyle.INSET.value == "inset"
+        assert BorderStyle.OUTSET.value == "outset"
+
+    def test_all_styles_have_names(self) -> None:
+        """测试所有边框样式都有中文名称."""
+        for style in BorderStyle:
+            assert style in BORDER_STYLE_NAMES
+            assert isinstance(BORDER_STYLE_NAMES[style], str)
+
+
+# ===================
+# BorderConfig 测试
+# ===================
+class TestBorderConfig:
+    """测试 BorderConfig 模型."""
+
+    def test_default_values(self) -> None:
+        """测试默认值."""
+        config = BorderConfig()
+        assert config.enabled is False
+        assert config.width == 2  # DEFAULT_BORDER_WIDTH
+        assert config.color == (0, 0, 0)  # DEFAULT_BORDER_COLOR
+        assert config.style == BorderStyle.SOLID
+
+    def test_enabled_config(self) -> None:
+        """测试启用边框."""
+        config = BorderConfig(enabled=True, width=5)
+        assert config.enabled is True
+        assert config.width == 5
+
+    def test_width_validation(self) -> None:
+        """测试宽度验证."""
+        # 有效宽度
+        config = BorderConfig(width=1)
+        assert config.width == 1
+        config = BorderConfig(width=20)
+        assert config.width == 20
+
+        # 无效宽度
+        with pytest.raises(ValueError):
+            BorderConfig(width=0)
+        with pytest.raises(ValueError):
+            BorderConfig(width=21)
+
+    def test_from_hex(self) -> None:
+        """测试从 HEX 颜色创建."""
+        config = BorderConfig.from_hex("#FF0000", width=5, style=BorderStyle.DASHED)
+        assert config.enabled is True
+        assert config.width == 5
+        assert config.get_effective_color() == (255, 0, 0)
+        assert config.style == BorderStyle.DASHED
+
+    def test_from_rgb(self) -> None:
+        """测试从 RGB 值创建."""
+        config = BorderConfig.from_rgb(0, 128, 255, width=10, style=BorderStyle.DOTTED)
+        assert config.enabled is True
+        assert config.width == 10
+        assert config.get_effective_color() == (0, 128, 255)
+        assert config.style == BorderStyle.DOTTED
+
+    def test_get_hex_color(self) -> None:
+        """测试获取 HEX 格式颜色."""
+        config = BorderConfig.from_rgb(255, 128, 64)
+        assert config.get_hex_color() == "#FF8040"
+
+    def test_style_selection(self) -> None:
+        """测试边框样式选择."""
+        for style in BorderStyle:
+            config = BorderConfig(style=style)
+            assert config.style == style
+
+    def test_get_available_styles(self) -> None:
+        """测试获取可用样式列表."""
+        styles = BorderConfig.get_available_styles()
+        assert len(styles) == len(BorderStyle)
+
+        for style_info in styles:
+            assert "value" in style_info
+            assert "style" in style_info
+            assert "name" in style_info
+            assert isinstance(style_info["style"], BorderStyle)
+
+    def test_serialization(self) -> None:
+        """测试序列化."""
+        config = BorderConfig.from_hex("#00FF00", width=8, style=BorderStyle.DOUBLE)
+        data = config.model_dump()
+
+        assert "enabled" in data
+        assert "width" in data
+        assert "color" in data
+        assert "style" in data
+
+        # 反序列化
+        restored = BorderConfig.model_validate(data)
+        assert restored.width == config.width
+        assert restored.get_effective_color() == config.get_effective_color()
+        assert restored.style == config.style

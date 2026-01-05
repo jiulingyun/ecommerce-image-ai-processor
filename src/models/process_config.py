@@ -278,8 +278,53 @@ class BackgroundConfig(BaseModel):
         ]
 
 
+class BorderStyle(str, Enum):
+    """边框样式枚举."""
+
+    SOLID = "solid"  # 实线边框
+    DASHED = "dashed"  # 虚线边框
+    DOTTED = "dotted"  # 点线边框
+    DOUBLE = "double"  # 双线边框
+    GROOVE = "groove"  # 凹槽边框
+    RIDGE = "ridge"  # 垂脊边框
+    INSET = "inset"  # 内嵌边框
+    OUTSET = "outset"  # 外凸边框
+
+
+# 边框样式中文名称映射
+BORDER_STYLE_NAMES: dict[BorderStyle, str] = {
+    BorderStyle.SOLID: "实线",
+    BorderStyle.DASHED: "虚线",
+    BorderStyle.DOTTED: "点线",
+    BorderStyle.DOUBLE: "双线",
+    BorderStyle.GROOVE: "凹槽",
+    BorderStyle.RIDGE: "垂脊",
+    BorderStyle.INSET: "内嵌",
+    BorderStyle.OUTSET: "外凸",
+}
+
+
 class BorderConfig(BaseModel):
-    """边框配置."""
+    """边框配置.
+
+    支持 1-20px 边框宽度调节，提供多种边框样式选择。
+
+    Attributes:
+        enabled: 是否启用边框
+        width: 边框宽度 (1-20 像素)
+        color: 边框颜色 RGB
+        style: 边框样式
+        hex_color: HEX 颜色字符串（可选）
+
+    Example:
+        >>> config = BorderConfig(enabled=True, width=5, style=BorderStyle.SOLID)
+        >>> config.get_effective_color()
+        (0, 0, 0)
+        >>>
+        >>> config = BorderConfig.from_hex("#FF0000", width=3)
+        >>> config.get_effective_color()
+        (255, 0, 0)
+    """
 
     enabled: bool = Field(default=False, description="是否启用边框")
     width: int = Field(
@@ -292,17 +337,127 @@ class BorderConfig(BaseModel):
         default=DEFAULT_BORDER_COLOR,
         description="边框颜色 RGB",
     )
+    style: BorderStyle = Field(
+        default=BorderStyle.SOLID,
+        description="边框样式",
+    )
+    hex_color: Optional[str] = Field(
+        default=None,
+        description="HEX 颜色字符串（可选）",
+    )
 
     @field_validator("color")
     @classmethod
     def validate_color(cls, v: RGBColor) -> RGBColor:
         """验证颜色值."""
-        if len(v) != 3:
-            raise ValueError("颜色必须是 RGB 三元组")
-        for c in v:
-            if not 0 <= c <= 255:
-                raise ValueError(f"颜色值必须在 0-255 范围内: {c}")
+        return validate_rgb_color(v)
+
+    @field_validator("hex_color")
+    @classmethod
+    def validate_hex_color(cls, v: Optional[str]) -> Optional[str]:
+        """验证 HEX 颜色格式."""
+        if v is not None:
+            hex_to_rgb(v)
         return v
+
+    @model_validator(mode="after")
+    def sync_hex_and_rgb(self) -> "BorderConfig":
+        """同步 HEX 和 RGB 颜色值."""
+        if self.hex_color is not None:
+            object.__setattr__(self, "color", hex_to_rgb(self.hex_color))
+        return self
+
+    def get_effective_color(self) -> RGBColor:
+        """获取实际生效的颜色值.
+
+        Returns:
+            RGB 颜色元组
+        """
+        return self.color
+
+    def get_hex_color(self) -> str:
+        """获取 HEX 格式的颜色值.
+
+        Returns:
+            HEX 颜色字符串
+        """
+        return rgb_to_hex(self.color)
+
+    @classmethod
+    def from_hex(
+        cls,
+        hex_color: str,
+        width: int = DEFAULT_BORDER_WIDTH,
+        style: BorderStyle = BorderStyle.SOLID,
+        enabled: bool = True,
+    ) -> "BorderConfig":
+        """从 HEX 颜色创建配置.
+
+        Args:
+            hex_color: HEX 颜色字符串
+            width: 边框宽度
+            style: 边框样式
+            enabled: 是否启用
+
+        Returns:
+            BorderConfig 实例
+        """
+        rgb = hex_to_rgb(hex_color)
+        return cls(
+            enabled=enabled,
+            width=width,
+            color=rgb,
+            style=style,
+            hex_color=hex_color,
+        )
+
+    @classmethod
+    def from_rgb(
+        cls,
+        r: int,
+        g: int,
+        b: int,
+        width: int = DEFAULT_BORDER_WIDTH,
+        style: BorderStyle = BorderStyle.SOLID,
+        enabled: bool = True,
+    ) -> "BorderConfig":
+        """从 RGB 值创建配置.
+
+        Args:
+            r: 红色值 (0-255)
+            g: 绿色值 (0-255)
+            b: 蓝色值 (0-255)
+            width: 边框宽度
+            style: 边框样式
+            enabled: 是否启用
+
+        Returns:
+            BorderConfig 实例
+        """
+        color = (r, g, b)
+        validate_rgb_color(color)
+        return cls(
+            enabled=enabled,
+            width=width,
+            color=color,
+            style=style,
+        )
+
+    @classmethod
+    def get_available_styles(cls) -> list[dict]:
+        """获取所有可用的边框样式（供 UI 使用）.
+
+        Returns:
+            边框样式信息列表
+        """
+        return [
+            {
+                "value": style.value,
+                "style": style,
+                "name": BORDER_STYLE_NAMES[style],
+            }
+            for style in BorderStyle
+        ]
 
 
 class TextConfig(BaseModel):

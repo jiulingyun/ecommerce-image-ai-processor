@@ -554,3 +554,365 @@ def apply_background_with_padding(
     result.paste(image, (left, top), image.split()[3])
 
     return result
+
+
+# ===================
+# 边框绘制工具函数
+# ===================
+
+def add_solid_border(
+    image: Image.Image,
+    width: int,
+    color: Tuple[int, int, int],
+) -> Image.Image:
+    """添加实线边框.
+
+    在图片周围添加纯色实线边框。
+
+    Args:
+        image: PIL Image 对象
+        width: 边框宽度 (像素)
+        color: 边框颜色 RGB
+
+    Returns:
+        添加边框后的图片
+    """
+    from PIL import ImageDraw
+
+    # 确保是 RGB 模式
+    if image.mode != "RGB":
+        image = image.convert("RGB")
+
+    # 复制图片以避免修改原图
+    result = image.copy()
+    draw = ImageDraw.Draw(result)
+    w, h = result.size
+
+    # 绘制边框（多层矩形）
+    for i in range(width):
+        draw.rectangle(
+            [i, i, w - 1 - i, h - 1 - i],
+            outline=color,
+        )
+
+    return result
+
+
+def add_dashed_border(
+    image: Image.Image,
+    width: int,
+    color: Tuple[int, int, int],
+    dash_length: int = 10,
+    gap_length: int = 5,
+) -> Image.Image:
+    """添加虚线边框.
+
+    Args:
+        image: PIL Image 对象
+        width: 边框宽度
+        color: 边框颜色
+        dash_length: 虚线段长度
+        gap_length: 虚线间隔长度
+
+    Returns:
+        添加边框后的图片
+    """
+    from PIL import ImageDraw
+
+    if image.mode != "RGB":
+        image = image.convert("RGB")
+
+    result = image.copy()
+    draw = ImageDraw.Draw(result)
+    w, h = result.size
+
+    # 绘制虚线边框
+    for layer in range(width):
+        offset = layer
+        # 上边
+        x = offset
+        while x < w - offset:
+            x_end = min(x + dash_length, w - 1 - offset)
+            draw.line([(x, offset), (x_end, offset)], fill=color, width=1)
+            x += dash_length + gap_length
+        # 下边
+        x = offset
+        while x < w - offset:
+            x_end = min(x + dash_length, w - 1 - offset)
+            draw.line([(x, h - 1 - offset), (x_end, h - 1 - offset)], fill=color, width=1)
+            x += dash_length + gap_length
+        # 左边
+        y = offset
+        while y < h - offset:
+            y_end = min(y + dash_length, h - 1 - offset)
+            draw.line([(offset, y), (offset, y_end)], fill=color, width=1)
+            y += dash_length + gap_length
+        # 右边
+        y = offset
+        while y < h - offset:
+            y_end = min(y + dash_length, h - 1 - offset)
+            draw.line([(w - 1 - offset, y), (w - 1 - offset, y_end)], fill=color, width=1)
+            y += dash_length + gap_length
+
+    return result
+
+
+def add_dotted_border(
+    image: Image.Image,
+    width: int,
+    color: Tuple[int, int, int],
+    dot_spacing: int = 4,
+) -> Image.Image:
+    """添加点线边框.
+
+    Args:
+        image: PIL Image 对象
+        width: 边框宽度
+        color: 边框颜色
+        dot_spacing: 点间距
+
+    Returns:
+        添加边框后的图片
+    """
+    from PIL import ImageDraw
+
+    if image.mode != "RGB":
+        image = image.convert("RGB")
+
+    result = image.copy()
+    draw = ImageDraw.Draw(result)
+    w, h = result.size
+
+    # 绘制点线边框
+    for layer in range(width):
+        offset = layer
+        # 上边和下边
+        for x in range(offset, w - offset, dot_spacing):
+            draw.point((x, offset), fill=color)
+            draw.point((x, h - 1 - offset), fill=color)
+        # 左边和右边
+        for y in range(offset, h - offset, dot_spacing):
+            draw.point((offset, y), fill=color)
+            draw.point((w - 1 - offset, y), fill=color)
+
+    return result
+
+
+def add_double_border(
+    image: Image.Image,
+    width: int,
+    color: Tuple[int, int, int],
+) -> Image.Image:
+    """添加双线边框.
+
+    Args:
+        image: PIL Image 对象
+        width: 边框总宽度
+        color: 边框颜色
+
+    Returns:
+        添加边框后的图片
+    """
+    from PIL import ImageDraw
+
+    if image.mode != "RGB":
+        image = image.convert("RGB")
+
+    result = image.copy()
+    draw = ImageDraw.Draw(result)
+    w, h = result.size
+
+    # 双线边框：外线 + 间隔 + 内线
+    outer_width = max(1, width // 3)
+    inner_width = max(1, width // 3)
+    gap = max(1, width - outer_width - inner_width)
+
+    # 外线
+    for i in range(outer_width):
+        draw.rectangle([i, i, w - 1 - i, h - 1 - i], outline=color)
+
+    # 内线
+    inner_offset = outer_width + gap
+    for i in range(inner_width):
+        offset = inner_offset + i
+        draw.rectangle([offset, offset, w - 1 - offset, h - 1 - offset], outline=color)
+
+    return result
+
+
+def add_3d_border(
+    image: Image.Image,
+    width: int,
+    color: Tuple[int, int, int],
+    style: str = "groove",
+) -> Image.Image:
+    """添加 3D 效果边框 (groove/ridge/inset/outset).
+
+    Args:
+        image: PIL Image 对象
+        width: 边框宽度
+        color: 基础颜色
+        style: 样式 ("groove", "ridge", "inset", "outset")
+
+    Returns:
+        添加边框后的图片
+    """
+    from PIL import ImageDraw
+
+    if image.mode != "RGB":
+        image = image.convert("RGB")
+
+    result = image.copy()
+    draw = ImageDraw.Draw(result)
+    w, h = result.size
+
+    # 计算亮色和暗色
+    r, g, b = color
+    light_color = (min(255, r + 60), min(255, g + 60), min(255, b + 60))
+    dark_color = (max(0, r - 60), max(0, g - 60), max(0, b - 60))
+
+    # 根据样式确定颜色顺序
+    if style == "groove":
+        top_left_outer, bottom_right_outer = dark_color, light_color
+        top_left_inner, bottom_right_inner = light_color, dark_color
+    elif style == "ridge":
+        top_left_outer, bottom_right_outer = light_color, dark_color
+        top_left_inner, bottom_right_inner = dark_color, light_color
+    elif style == "inset":
+        top_left_outer, bottom_right_outer = dark_color, light_color
+        top_left_inner, bottom_right_inner = dark_color, light_color
+    else:  # outset
+        top_left_outer, bottom_right_outer = light_color, dark_color
+        top_left_inner, bottom_right_inner = light_color, dark_color
+
+    half_width = width // 2
+
+    # 绘制外层
+    for i in range(half_width):
+        # 上边和左边
+        draw.line([(i, i), (w - 1 - i, i)], fill=top_left_outer)  # 上
+        draw.line([(i, i), (i, h - 1 - i)], fill=top_left_outer)  # 左
+        # 下边和右边
+        draw.line([(i, h - 1 - i), (w - 1 - i, h - 1 - i)], fill=bottom_right_outer)  # 下
+        draw.line([(w - 1 - i, i), (w - 1 - i, h - 1 - i)], fill=bottom_right_outer)  # 右
+
+    # 绘制内层
+    for i in range(half_width, width):
+        draw.line([(i, i), (w - 1 - i, i)], fill=top_left_inner)
+        draw.line([(i, i), (i, h - 1 - i)], fill=top_left_inner)
+        draw.line([(i, h - 1 - i), (w - 1 - i, h - 1 - i)], fill=bottom_right_inner)
+        draw.line([(w - 1 - i, i), (w - 1 - i, h - 1 - i)], fill=bottom_right_inner)
+
+    return result
+
+
+def add_border(
+    image: Image.Image,
+    width: int,
+    color: Tuple[int, int, int],
+    style: str = "solid",
+) -> Image.Image:
+    """添加边框（通用函数）.
+
+    支持多种边框样式。
+
+    Args:
+        image: PIL Image 对象
+        width: 边框宽度 (1-20 像素)
+        color: 边框颜色 RGB
+        style: 边框样式 ("solid", "dashed", "dotted", "double", "groove", "ridge", "inset", "outset")
+
+    Returns:
+        添加边框后的图片
+
+    Example:
+        >>> from PIL import Image
+        >>> img = Image.new("RGB", (100, 100), (255, 255, 255))
+        >>> result = add_border(img, 5, (0, 0, 0), style="solid")
+    """
+    # 验证宽度
+    if width < 1:
+        return image
+    if width > 20:
+        width = 20
+
+    if style == "solid":
+        return add_solid_border(image, width, color)
+    elif style == "dashed":
+        return add_dashed_border(image, width, color)
+    elif style == "dotted":
+        return add_dotted_border(image, width, color)
+    elif style == "double":
+        return add_double_border(image, width, color)
+    elif style in ("groove", "ridge", "inset", "outset"):
+        return add_3d_border(image, width, color, style)
+    else:
+        # 默认使用实线
+        return add_solid_border(image, width, color)
+
+
+def create_border_preview(
+    width: int,
+    color: Tuple[int, int, int],
+    style: str = "solid",
+    size: Tuple[int, int] = (100, 100),
+    background_color: Tuple[int, int, int] = (255, 255, 255),
+) -> Image.Image:
+    """创建边框样式预览图.
+
+    生成一个预览图，用于 UI 显示边框效果。
+
+    Args:
+        width: 边框宽度
+        color: 边框颜色
+        style: 边框样式
+        size: 预览图尺寸
+        background_color: 背景颜色
+
+    Returns:
+        预览图片
+    """
+    # 创建背景
+    preview = Image.new("RGB", size, background_color)
+
+    # 添加边框
+    return add_border(preview, width, color, style)
+
+
+def add_border_expand(
+    image: Image.Image,
+    width: int,
+    color: Tuple[int, int, int],
+    style: str = "solid",
+) -> Image.Image:
+    """添加边框并扩展图片尺寸.
+
+    与 add_border 不同，此函数会扩展图片尺寸以容纳边框。
+
+    Args:
+        image: PIL Image 对象
+        width: 边框宽度
+        color: 边框颜色
+        style: 边框样式
+
+    Returns:
+        扩展后添加边框的图片
+    """
+    if image.mode != "RGB":
+        image = image.convert("RGB")
+
+    orig_w, orig_h = image.size
+    new_w = orig_w + width * 2
+    new_h = orig_h + width * 2
+
+    # 创建新图片，填充边框颜色
+    result = Image.new("RGB", (new_w, new_h), color)
+
+    # 粘贴原图到中心
+    result.paste(image, (width, width))
+
+    # 如果不是实线样式，需要绘制特殊边框
+    if style != "solid":
+        result = add_border(result, width, color, style)
+
+    return result

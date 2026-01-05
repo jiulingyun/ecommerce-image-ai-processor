@@ -15,6 +15,8 @@ from src.models.api_config import APIConfig
 from src.models.image_task import ImageTask, TaskStatus
 from src.models.process_config import (
     BackgroundConfig,
+    BorderConfig,
+    BorderStyle,
     PresetColor,
     ProcessConfig,
 )
@@ -694,3 +696,218 @@ class TestGetPresetColors:
         assert white is not None
         assert white["rgb"] == (255, 255, 255)
         assert white["hex"] == "#FFFFFF"
+
+
+# ===================
+# 边框添加功能测试
+# ===================
+class TestAddImageBorder:
+    """测试边框添加功能."""
+
+    @pytest.mark.asyncio
+    async def test_add_border_with_params(
+        self,
+        image_service: ImageService,
+        sample_image_path: Path,
+        temp_dir: Path,
+    ) -> None:
+        """测试使用参数添加边框."""
+        output_path = temp_dir / "output_border.jpg"
+
+        result = await image_service.add_image_border(
+            sample_image_path,
+            output_path,
+            width=5,
+            color=(0, 0, 0),
+            style="solid",
+        )
+
+        assert result == output_path
+        assert output_path.exists()
+
+        # 验证输出图片
+        output_img = Image.open(output_path)
+        assert output_img.mode == "RGB"
+
+    @pytest.mark.asyncio
+    async def test_add_border_with_config(
+        self,
+        image_service: ImageService,
+        sample_image_path: Path,
+        temp_dir: Path,
+    ) -> None:
+        """测试使用配置对象添加边框."""
+        config = BorderConfig.from_hex("#FF0000", width=3, style=BorderStyle.DASHED)
+        output_path = temp_dir / "output_config_border.jpg"
+
+        result = await image_service.add_image_border(
+            sample_image_path,
+            output_path,
+            config=config,
+        )
+
+        assert result == output_path
+        assert output_path.exists()
+
+    @pytest.mark.asyncio
+    async def test_add_border_disabled(
+        self,
+        image_service: ImageService,
+        sample_image_path: Path,
+        temp_dir: Path,
+    ) -> None:
+        """测试边框未启用时直接复制文件."""
+        config = BorderConfig(enabled=False)
+        output_path = temp_dir / "output_disabled_border.jpg"
+
+        result = await image_service.add_image_border(
+            sample_image_path,
+            output_path,
+            config=config,
+        )
+
+        assert result.exists()
+
+    @pytest.mark.asyncio
+    async def test_add_border_expand(
+        self,
+        image_service: ImageService,
+        sample_image_path: Path,
+        temp_dir: Path,
+    ) -> None:
+        """测试扩展尺寸添加边框."""
+        # 获取原图尺寸
+        orig_img = Image.open(sample_image_path)
+        orig_w, orig_h = orig_img.size
+        border_width = 10
+
+        output_path = temp_dir / "output_expand_border.jpg"
+
+        result = await image_service.add_image_border(
+            sample_image_path,
+            output_path,
+            width=border_width,
+            color=(255, 0, 0),
+            expand=True,
+        )
+
+        assert result.exists()
+
+        # 验证尺寸扩展
+        output_img = Image.open(output_path)
+        assert output_img.width == orig_w + border_width * 2
+        assert output_img.height == orig_h + border_width * 2
+
+    @pytest.mark.asyncio
+    async def test_add_border_all_styles(
+        self,
+        image_service: ImageService,
+        sample_image_path: Path,
+        temp_dir: Path,
+    ) -> None:
+        """测试所有边框样式."""
+        styles = ["solid", "dashed", "dotted", "double", "groove", "ridge", "inset", "outset"]
+
+        for style in styles:
+            output_path = temp_dir / f"border_{style}.jpg"
+            result = await image_service.add_image_border(
+                sample_image_path,
+                output_path,
+                width=5,
+                color=(0, 0, 0),
+                style=style,
+            )
+            assert result.exists(), f"Style {style} failed"
+
+    @pytest.mark.asyncio
+    async def test_add_border_with_progress(
+        self,
+        image_service: ImageService,
+        sample_image_path: Path,
+        temp_dir: Path,
+    ) -> None:
+        """测试带进度回调."""
+        progress_updates = []
+
+        def on_progress(progress: int, message: str) -> None:
+            progress_updates.append((progress, message))
+
+        await image_service.add_image_border(
+            sample_image_path,
+            width=5,
+            color=(0, 0, 0),
+            on_progress=on_progress,
+        )
+
+        assert len(progress_updates) > 0
+        assert progress_updates[-1][0] == 100
+
+
+class TestGenerateBorderPreview:
+    """测试边框预览生成."""
+
+    def test_generate_preview_with_params(
+        self, image_service: ImageService
+    ) -> None:
+        """测试使用参数生成预览."""
+        preview = image_service.generate_border_preview(
+            width=5,
+            color=(0, 0, 0),
+            style="solid",
+            size=(100, 100),
+        )
+
+        assert preview.size == (100, 100)
+        assert preview.mode == "RGB"
+        # 检查边框像素（角落应该是黑色）
+        assert preview.getpixel((0, 0)) == (0, 0, 0)
+
+    def test_generate_preview_with_config(
+        self, image_service: ImageService
+    ) -> None:
+        """测试使用配置生成预览."""
+        config = BorderConfig.from_rgb(255, 0, 0, width=3, style=BorderStyle.SOLID)
+        preview = image_service.generate_border_preview(
+            config=config,
+            size=(100, 100),
+        )
+
+        assert preview.size == (100, 100)
+        # 边框应该是红色
+        assert preview.getpixel((0, 0)) == (255, 0, 0)
+
+    def test_generate_preview_different_styles(
+        self, image_service: ImageService
+    ) -> None:
+        """测试不同样式的预览."""
+        styles = ["solid", "dashed", "dotted", "double"]
+
+        for style in styles:
+            preview = image_service.generate_border_preview(
+                width=5,
+                color=(0, 0, 0),
+                style=style,
+                size=(100, 100),
+            )
+            assert preview.size == (100, 100)
+
+
+class TestGetBorderStyles:
+    """测试获取边框样式."""
+
+    def test_get_border_styles(self, image_service: ImageService) -> None:
+        """测试获取边框样式列表."""
+        styles = image_service.get_border_styles()
+
+        assert len(styles) == 8  # 8 种样式
+
+        # 验证结构
+        for style in styles:
+            assert "value" in style
+            assert "style" in style
+            assert "name" in style
+
+        # 验证包含实线样式
+        solid = next((s for s in styles if s["value"] == "solid"), None)
+        assert solid is not None
+        assert solid["name"] == "实线"
