@@ -64,6 +64,7 @@ class DashScopeProvider(BaseAIImageProvider):
         self._base_url = base_url or DASHSCOPE_BASE_URL
         self._timeout = timeout
         self._http_client: Optional[httpx.AsyncClient] = None
+        self._http_client_loop: Optional[asyncio.AbstractEventLoop] = None  # 跟踪客户端绑定的事件循环
 
         # 配置 dashscope SDK
         try:
@@ -79,9 +80,31 @@ class DashScopeProvider(BaseAIImageProvider):
 
     @property
     def http_client(self) -> httpx.AsyncClient:
-        """获取 HTTP 客户端."""
+        """获取 HTTP 客户端.
+        
+        如果当前事件循环与创建客户端时的不同，会自动重新创建客户端。
+        """
+        try:
+            current_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            current_loop = None
+        
+        # 如果客户端存在但绑定的事件循环已改变或关闭，需要重新创建
+        if self._http_client is not None:
+            loop_changed = (
+                self._http_client_loop is None 
+                or self._http_client_loop != current_loop
+                or self._http_client_loop.is_closed()
+            )
+            if loop_changed:
+                logger.debug("事件循环已改变，重新创建 HTTP 客户端")
+                # 旧客户端无法在此关闭（不能 await），直接丢弃
+                self._http_client = None
+                self._http_client_loop = None
+        
         if self._http_client is None:
             self._http_client = httpx.AsyncClient(timeout=self._timeout)
+            self._http_client_loop = current_loop
         return self._http_client
 
     def _image_to_base64_data_url(self, image: bytes, format: str = "png") -> str:

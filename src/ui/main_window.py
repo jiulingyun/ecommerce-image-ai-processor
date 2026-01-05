@@ -638,9 +638,31 @@ class MainWindow(QMainWindow):
                 size=output_size,
             )
 
+        # 加载抠图服务配置（从用户配置中加载）
+        from src.core.config_manager import get_config
+        from src.models.process_config import BackgroundRemovalConfig, BackgroundRemovalProvider
+        
+        bg_removal_config = None
+        try:
+            config_manager = get_config()
+            bg_removal_data = config_manager.get_user_config("background_removal", {})
+            if bg_removal_data:
+                provider = bg_removal_data.get("provider", "external_api")
+                bg_removal_config = BackgroundRemovalConfig(
+                    enabled=True,
+                    provider=BackgroundRemovalProvider(provider),
+                    api_url=bg_removal_data.get("api_url", "http://localhost:5000/api/remove-background"),
+                    api_key=bg_removal_data.get("api_key", ""),
+                    proxy=bg_removal_data.get("proxy"),
+                    timeout=bg_removal_data.get("timeout", 120),
+                )
+        except Exception as e:
+            logger.warning(f"加载抠图服务配置失败: {e}")
+
         # 组合所有配置
         return ProcessConfig(
             prompt=prompt_config,
+            background_removal=bg_removal_config,
             background=process_config.background,
             border=process_config.border,
             text=process_config.text,

@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
     QDialogButtonBox,
     QFileDialog,
     QFormLayout,
+    QGridLayout,
     QGroupBox,
     QHBoxLayout,
     QLabel,
@@ -35,6 +36,10 @@ from PyQt6.QtWidgets import (
 
 from src.core.config_manager import get_config
 from src.models.api_config import APIConfig, AIModelConfig
+from src.models.process_config import (
+    BackgroundRemovalConfig,
+    BackgroundRemovalProvider,
+)
 from src.services.ai_service import get_ai_service
 from src.utils.constants import (
     APP_DATA_DIR,
@@ -343,6 +348,230 @@ class AISettingsWidget(QWidget):
                 self._model_combo.setCurrentIndex(index)
 
 
+class BackgroundRemovalSettingsWidget(QWidget):
+    """抠图服务设置面板."""
+
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
+        super().__init__(parent)
+        self._setup_ui()
+
+    def _setup_ui(self) -> None:
+        layout = QVBoxLayout(self)
+        layout.setSpacing(16)
+
+        # 抠图服务配置组
+        provider_group = QGroupBox("抠图服务配置")
+        provider_layout = QVBoxLayout(provider_group)
+        provider_layout.setSpacing(12)
+
+        # 服务提供者选择
+        provider_row = QHBoxLayout()
+        provider_label = QLabel("服务提供者:")
+        provider_label.setFixedWidth(100)
+        provider_row.addWidget(provider_label)
+
+        self._provider_combo = QComboBox()
+        self._provider_combo.addItem("外部API服务", "external_api")
+        self._provider_combo.addItem("AI模型", "ai")
+        self._provider_combo.currentIndexChanged.connect(self._on_provider_changed)
+        provider_row.addWidget(self._provider_combo)
+
+        provider_layout.addLayout(provider_row)
+
+        layout.addWidget(provider_group)
+
+        # 外部API配置容器 (不使用 GroupBox 避免边框挤压布局)
+        self._api_container = QWidget()
+        api_layout = QVBoxLayout(self._api_container)
+        api_layout.setSpacing(10)
+        api_layout.setContentsMargins(10, 0, 10, 0)
+
+        # 标题
+        api_title = QLabel("外部API设置")
+        api_title.setStyleSheet("font-weight: bold; color: #333;")
+        api_layout.addWidget(api_title)
+
+        # 辅助函数：创建固定高度的行
+        def create_row(label_text: str, widget: QWidget, extra_widget: Optional[QWidget] = None) -> QWidget:
+            row_widget = QWidget()
+            row_widget.setFixedHeight(40)  # 强制固定行高，彻底杜绝重叠
+            
+            row_layout = QHBoxLayout(row_widget)
+            row_layout.setContentsMargins(0, 0, 0, 0)
+            row_layout.setSpacing(10)
+            
+            lbl = QLabel(label_text)
+            lbl.setFixedWidth(90)
+            lbl.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            row_layout.addWidget(lbl)
+            
+            row_layout.addWidget(widget, 1)  # Stretch factor 1
+            
+            if extra_widget:
+                row_layout.addWidget(extra_widget)
+                
+            return row_widget
+
+        # API URL
+        self._api_url_input = QLineEdit()
+        self._api_url_input.setPlaceholderText("http://localhost:5000/api/remove-background")
+        self._api_url_input.setText("http://localhost:5000/api/remove-background")
+        self._api_url_input.setMinimumHeight(32)
+        api_layout.addWidget(create_row("API 地址:", self._api_url_input))
+
+        # API Key
+        self._api_key_input = QLineEdit()
+        self._api_key_input.setPlaceholderText("可选，留空则不验证")
+        self._api_key_input.setEchoMode(QLineEdit.EchoMode.Password)
+        self._api_key_input.setMinimumHeight(32)
+        
+        self._toggle_key_btn = QPushButton("👁")
+        self._toggle_key_btn.setFixedSize(36, 32)
+        self._toggle_key_btn.setToolTip("显示/隐藏 API Key")
+        self._toggle_key_btn.clicked.connect(self._toggle_api_key_visibility)
+        
+        api_layout.addWidget(create_row("API 密钥:", self._api_key_input, self._toggle_key_btn))
+
+        # 代理设置
+        self._proxy_input = QLineEdit()
+        self._proxy_input.setPlaceholderText("可选，如 http://127.0.0.1:7890")
+        self._proxy_input.setMinimumHeight(32)
+        api_layout.addWidget(create_row("代理设置:", self._proxy_input))
+
+        # 请求超时
+        self._timeout_spinbox = QSpinBox()
+        self._timeout_spinbox.setMinimum(10)
+        self._timeout_spinbox.setMaximum(600)
+        self._timeout_spinbox.setValue(120)
+        self._timeout_spinbox.setSuffix(" 秒")
+        self._timeout_spinbox.setMinimumHeight(32)
+        self._timeout_spinbox.setFixedWidth(120)
+        
+        # 超时行特殊处理，不需要填满整行
+        timeout_row = QWidget()
+        timeout_row.setFixedHeight(40)
+        timeout_layout = QHBoxLayout(timeout_row)
+        timeout_layout.setContentsMargins(0, 0, 0, 0)
+        timeout_layout.setSpacing(10)
+        
+        t_lbl = QLabel("请求超时:")
+        t_lbl.setFixedWidth(90)
+        t_lbl.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        timeout_layout.addWidget(t_lbl)
+        timeout_layout.addWidget(self._timeout_spinbox)
+        timeout_layout.addStretch()
+        
+        api_layout.addWidget(timeout_row)
+
+        # 测试连接按钮
+        self._test_btn = QPushButton("测试连接")
+        self._test_btn.setFixedHeight(36)
+        self._test_btn.clicked.connect(self._test_connection)
+        
+        btn_row = QHBoxLayout()
+        btn_row.setContentsMargins(100, 5, 0, 0) # 左边距对齐输入框
+        btn_row.addWidget(self._test_btn)
+        api_layout.addLayout(btn_row)
+
+        layout.addWidget(self._api_container)
+
+        layout.addWidget(self._api_group)
+
+        # 说明
+        hint_label = QLabel(
+            "提示：外部API服务需要返回 PNG 蒙版图片\n"
+            "白色区域=保留主体，黑色区域=透明背景"
+        )
+        hint_label.setStyleSheet("color: #666; font-size: 11px;")
+        hint_label.setWordWrap(True)
+        layout.addWidget(hint_label)
+
+        layout.addStretch()
+
+        # 初始状态
+        self._is_password_visible = False
+
+    def _on_provider_changed(self, index: int) -> None:
+        """服务提供者变更."""
+        provider = self._provider_combo.currentData()
+        # 外部API时显示配置组
+        self._api_group.setVisible(provider == "external_api")
+
+    def _toggle_api_key_visibility(self) -> None:
+        """切换 API Key 可见性."""
+        self._is_password_visible = not self._is_password_visible
+        if self._is_password_visible:
+            self._api_key_input.setEchoMode(QLineEdit.EchoMode.Normal)
+            self._toggle_key_btn.setText("🔒")
+        else:
+            self._api_key_input.setEchoMode(QLineEdit.EchoMode.Password)
+            self._toggle_key_btn.setText("👁")
+
+    def _test_connection(self) -> None:
+        """测试连接."""
+        api_url = self._api_url_input.text().strip()
+        if not api_url:
+            QMessageBox.warning(self, "提示", "请先输入 API 地址")
+            return
+
+        self._test_btn.setEnabled(False)
+        self._test_btn.setText("正在测试...")
+
+        try:
+            import httpx
+            # 同步测试连接
+            with httpx.Client(timeout=10) as client:
+                response = client.options(api_url)
+                if response.status_code in (200, 204, 405):
+                    QMessageBox.information(
+                        self, "测试通过",
+                        f"API 服务可达\n状态码: {response.status_code}"
+                    )
+                else:
+                    QMessageBox.warning(
+                        self, "测试警告",
+                        f"服务可连接但返回状态码: {response.status_code}"
+                    )
+        except httpx.ConnectError:
+            QMessageBox.critical(self, "测试失败", f"无法连接到: {api_url}")
+        except Exception as e:
+            QMessageBox.critical(self, "测试失败", f"连接失败: {e}")
+        finally:
+            self._test_btn.setEnabled(True)
+            self._test_btn.setText("测试连接")
+
+    def get_settings(self) -> dict:
+        """获取当前设置."""
+        provider = self._provider_combo.currentData()
+        return {
+            "provider": provider,
+            "api_url": self._api_url_input.text().strip(),
+            "api_key": self._api_key_input.text().strip(),
+            "proxy": self._proxy_input.text().strip() or None,
+            "timeout": self._timeout_spinbox.value(),
+        }
+
+    def set_settings(self, settings: dict) -> None:
+        """设置当前值."""
+        if "provider" in settings:
+            index = self._provider_combo.findData(settings["provider"])
+            if index >= 0:
+                self._provider_combo.setCurrentIndex(index)
+            self._on_provider_changed(index)
+
+        if "api_url" in settings and settings["api_url"]:
+            self._api_url_input.setText(settings["api_url"])
+
+        if "api_key" in settings and settings["api_key"]:
+            self._api_key_input.setText(settings["api_key"])
+
+        if "proxy" in settings and settings["proxy"]:
+            self._proxy_input.setText(settings["proxy"])
+
+        if "timeout" in settings:
+            self._timeout_spinbox.setValue(settings["timeout"])
+
+
 class PathSettingsWidget(QWidget):
     """路径设置面板."""
 
@@ -476,6 +705,10 @@ class SettingsDialog(QDialog):
         self._ai_widget = AISettingsWidget()
         self._tab_widget.addTab(self._ai_widget, "AI 服务")
 
+        # 抠图服务设置标签页
+        self._bg_removal_widget = BackgroundRemovalSettingsWidget()
+        self._tab_widget.addTab(self._bg_removal_widget, "抠图服务")
+
         # 通用设置标签页
         self._general_widget = GeneralSettingsWidget()
         self._tab_widget.addTab(self._general_widget, "通用")
@@ -552,6 +785,17 @@ class SettingsDialog(QDialog):
             }
             self._ai_widget.set_settings(ai_settings)
 
+            # 加载抠图服务配置
+            bg_removal_config = self._config_manager.get_user_config("background_removal", {})
+            bg_removal_settings = {
+                "provider": bg_removal_config.get("provider", "external_api"),
+                "api_url": bg_removal_config.get("api_url", "http://localhost:5000/api/remove-background"),
+                "api_key": bg_removal_config.get("api_key", ""),
+                "proxy": bg_removal_config.get("proxy"),
+                "timeout": bg_removal_config.get("timeout", 120),
+            }
+            self._bg_removal_widget.set_settings(bg_removal_settings)
+
             logger.debug("设置对话框加载完成")
 
         except Exception as e:
@@ -593,6 +837,18 @@ class SettingsDialog(QDialog):
                     logger.info("AI 服务配置已更新")
                 except Exception as e:
                     logger.warning(f"更新 AI 服务失败: {e}")
+
+            # 保存抠图服务配置
+            bg_removal = self._bg_removal_widget.get_settings()
+            bg_removal_config_data = {
+                "provider": bg_removal.get("provider", "external_api"),
+                "api_url": bg_removal.get("api_url", "http://localhost:5000/api/remove-background"),
+                "api_key": bg_removal.get("api_key", ""),
+                "proxy": bg_removal.get("proxy"),
+                "timeout": bg_removal.get("timeout", 120),
+            }
+            self._config_manager.set_user_config("background_removal", bg_removal_config_data)
+            logger.info("抠图服务配置已更新")
 
             # 重新加载配置以应用变更
             self._config_manager.reload()
@@ -647,4 +903,5 @@ class SettingsDialog(QDialog):
         output = self._output_widget.get_settings()
         path = self._path_widget.get_settings()
         ai = self._ai_widget.get_settings()
-        return {**general, **output, **path, "ai": ai}
+        bg_removal = self._bg_removal_widget.get_settings()
+        return {**general, **output, **path, "ai": ai, "background_removal": bg_removal}

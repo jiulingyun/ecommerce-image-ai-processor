@@ -232,7 +232,6 @@ class BatchProcessor:
             task_id = batch_task.id
 
             logger.info(f"开始处理任务 {batch_task.queue_position}: {task.product_filename}")
-            logger.info(f"DEBUG: task object id={id(task)}, batch_task.task id={id(batch_task.task)}, same={task is batch_task.task}")
 
             def task_progress(progress: int, message: str) -> None:
                 """任务进度回调."""
@@ -255,8 +254,6 @@ class BatchProcessor:
 
                 # process_task 已经更新了任务状态
                 logger.info(f"任务 {batch_task.queue_position} 完成: {result_task.output_path}")
-                logger.info(f"DEBUG after process_task: result_task.status={result_task.status}, task.status={task.status}, batch_task.task.status={batch_task.task.status}")
-                logger.info(f"DEBUG: result_task is task: {result_task is task}, result_task is batch_task.task: {result_task is batch_task.task}")
 
             except Exception as e:
                 error_msg = str(e)

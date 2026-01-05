@@ -245,6 +245,127 @@ class AIPromptConfig(BaseModel):
 
 
 # ===================
+# 抠图服务配置
+# ===================
+
+
+class BackgroundRemovalProvider(str, Enum):
+    """抠图服务提供者类型."""
+
+    EXTERNAL_API = "external_api"  # 外部API服务
+    AI = "ai"  # AI模型抠图
+
+
+# 抠图服务提供者名称
+BACKGROUND_REMOVAL_PROVIDER_NAMES: dict[BackgroundRemovalProvider, str] = {
+    BackgroundRemovalProvider.EXTERNAL_API: "外部API服务",
+    BackgroundRemovalProvider.AI: "AI模型",
+}
+
+
+class BackgroundRemovalConfig(BaseModel):
+    """抠图服务配置.
+
+    配置抠图服务的提供者和相关参数。
+
+    Attributes:
+        enabled: 是否启用抠图（禁用时跳过抠图步骤）
+        provider: 抠图服务提供者类型
+        api_url: 外部API服务地址
+        api_key: 外部API密钥
+        proxy: 代理设置
+        timeout: 请求超时时间（秒）
+
+    Example:
+        >>> config = BackgroundRemovalConfig(
+        ...     provider=BackgroundRemovalProvider.EXTERNAL_API,
+        ...     api_url="http://localhost:5000/api/remove-background",
+        ...     api_key="your-api-key"
+        ... )
+    """
+
+    enabled: bool = Field(
+        default=True,
+        description="是否启用抠图",
+    )
+    provider: BackgroundRemovalProvider = Field(
+        default=BackgroundRemovalProvider.EXTERNAL_API,
+        description="抠图服务提供者",
+    )
+    api_url: str = Field(
+        default="http://localhost:5000/api/remove-background",
+        description="外部API服务地址",
+    )
+    api_key: str = Field(
+        default="",
+        description="外部API密钥",
+    )
+    proxy: Optional[str] = Field(
+        default=None,
+        description="代理设置",
+    )
+    timeout: int = Field(
+        default=120,
+        ge=10,
+        le=600,
+        description="请求超时时间（秒）",
+    )
+
+    @classmethod
+    def for_external_api(
+        cls,
+        api_url: str,
+        api_key: str = "",
+        proxy: Optional[str] = None,
+    ) -> "BackgroundRemovalConfig":
+        """创建外部API抠图配置.
+
+        Args:
+            api_url: API服务地址
+            api_key: API密钥
+            proxy: 代理设置
+
+        Returns:
+            BackgroundRemovalConfig 实例
+        """
+        return cls(
+            enabled=True,
+            provider=BackgroundRemovalProvider.EXTERNAL_API,
+            api_url=api_url,
+            api_key=api_key,
+            proxy=proxy,
+        )
+
+    @classmethod
+    def for_ai(cls) -> "BackgroundRemovalConfig":
+        """创建AI抠图配置.
+
+        Returns:
+            BackgroundRemovalConfig 实例
+        """
+        return cls(
+            enabled=True,
+            provider=BackgroundRemovalProvider.AI,
+        )
+
+    @classmethod
+    def get_available_providers(cls) -> List[dict]:
+        """获取所有可用的抠图服务提供者（供 UI 使用）.
+
+        Returns:
+            提供者信息列表
+        """
+        return [
+            {
+                "value": provider.value,
+                "provider": provider,
+                "name": BACKGROUND_REMOVAL_PROVIDER_NAMES[provider],
+            }
+            for provider in BackgroundRemovalProvider
+        ]
+
+
+# ===================
 # 背景颜色配置
 # ===================
 
@@ -1300,7 +1421,7 @@ class OutputConfig(BaseModel):
 class ProcessConfig(BaseModel):
     """图片处理配置.
 
-    包含 AI 提示词、背景、边框、文字和输出的完整配置。
+    包含 AI 提示词、抠图、背景、边框、文字和输出的完整配置。
 
     Example:
         >>> config = ProcessConfig()
@@ -1310,6 +1431,7 @@ class ProcessConfig(BaseModel):
     """
 
     prompt: AIPromptConfig = Field(default_factory=AIPromptConfig)
+    background_removal: BackgroundRemovalConfig = Field(default_factory=BackgroundRemovalConfig)
     background: BackgroundConfig = Field(default_factory=BackgroundConfig)
     border: BorderConfig = Field(default_factory=BorderConfig)
     text: TextConfig = Field(default_factory=TextConfig)

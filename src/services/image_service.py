@@ -36,6 +36,11 @@ from src.models.process_config import (
     TextAlign,
 )
 from src.services.ai_service import AIService, get_ai_service
+from src.services.background_removal import (
+    BackgroundRemoverType,
+    BaseBackgroundRemover,
+    get_background_remover,
+)
 from src.utils.constants import (
     DEFAULT_BACKGROUND_COLOR,
     DEFAULT_BORDER_COLOR,
@@ -301,7 +306,7 @@ class ImageService:
     ) -> ImageTask:
         """处理完整的图片任务.
 
-        执行完整的处理流程：背景去除 -> 商品合成 -> 后期处理。
+        执行新的处理流程：抠图 -> 后期处理（背景/边框/文字）-> AI合成 -> 保存
 
         Args:
             task: 图片任务
@@ -322,42 +327,43 @@ class ImageService:
                 on_progress(progress, message)
 
         try:
-            # Step 1: 去除商品背景 (0-30%)
-            report_progress(5, "去除商品背景")
+            # Step 1: 抠图 (0-25%)
+            report_progress(5, "抠图处理中")
             product_nobg = await self._remove_product_background(
                 task.product_path,
-                lambda p, m: report_progress(int(5 + p * 0.25), m),
+                config,
+                lambda p, m: report_progress(int(5 + p * 0.20), m),
             )
 
-            # Step 2: 合成商品到场景 (30-70%)
-            report_progress(35, "合成商品到场景")
+            # Step 2: 后期处理 - 对抠图结果添加背景/边框/文字 (25-50%)
+            report_progress(30, "后期处理")
+            processed_product = await self._apply_post_processing(
+                product_nobg,
+                config,
+                lambda p, m: report_progress(int(30 + p * 0.20), m),
+            )
+
+            # Step 3: AI合成 - 将处理后的商品合成到场景 (50-90%)
+            report_progress(55, "AI合成商品到场景")
             composite_result = await self._composite_to_scene(
                 task.background_path,
-                product_nobg,
-                lambda p, m: report_progress(int(35 + p * 0.35), m),
+                processed_product,
+                lambda p, m: report_progress(int(55 + p * 0.35), m),
                 config=config,
-            )
-
-            # Step 3: 后期处理 (70-90%)
-            report_progress(75, "后期处理")
-            final_result = await self._apply_post_processing(
-                composite_result,
-                config,
-                lambda p, m: report_progress(int(75 + p * 0.15), m),
             )
 
             # Step 4: 保存输出 (90-100%)
             report_progress(95, "保存输出")
+            # composite_result 是 bytes，需要转换为 Image
+            final_image = bytes_to_image(composite_result)
             output_path = await self._save_final_output(
-                final_result,
+                final_image,
                 task,
                 config,
             )
 
             # 完成
-            logger.info(f"DEBUG before mark_completed: task.status={task.status}")
             task.mark_completed(str(output_path))
-            logger.info(f"DEBUG after mark_completed: task.status={task.status}, task.output_path={task.output_path}")
             report_progress(100, "完成")
             logger.info(f"任务完成: {task.id}")
 
@@ -371,34 +377,88 @@ class ImageService:
     async def _remove_product_background(
         self,
         product_path: str,
+        config: ProcessConfig,
         on_progress: Optional[ProgressCallback] = None,
     ) -> bytes:
-        """去除商品背景（内部方法）."""
+        """去除商品背景（内部方法）.
+        
+        使用配置中指定的抠图服务（外部API或AI）进行背景去除。
+        
+        Args:
+            product_path: 商品图片路径
+            config: 处理配置
+            on_progress: 进度回调
+            
+        Returns:
+            透明背景的PNG图片字节数据
+        """
         image = load_image(product_path)
         image = ensure_rgba(image)
         image_bytes = image_to_bytes(image, format="PNG")
 
-        if on_progress:
-            on_progress(50, "调用 AI 服务")
+        # 检查是否启用抠图
+        if not config.background_removal.enabled:
+            logger.info("抠图已禁用，跳过")
+            if on_progress:
+                on_progress(100, "跳过抠图")
+            return image_bytes
 
-        result = await self.ai_service.remove_background(image_bytes)
+        if on_progress:
+            on_progress(30, "初始化抠图服务")
+
+        # 获取抠图服务
+        bg_removal_config = config.background_removal
+        if bg_removal_config.provider.value == "external_api":
+            remover = get_background_remover(
+                remover_type=BackgroundRemoverType.EXTERNAL_API,
+                api_url=bg_removal_config.api_url,
+                api_key=bg_removal_config.api_key,
+                timeout=bg_removal_config.timeout,
+                proxy=bg_removal_config.proxy,
+            )
+            if on_progress:
+                on_progress(50, "调用外部抠图服务")
+        else:
+            remover = get_background_remover(
+                remover_type=BackgroundRemoverType.AI,
+            )
+            if on_progress:
+                on_progress(50, "调用AI抠图服务")
+
+        result = await remover.remove_background(image_bytes)
 
         if on_progress:
-            on_progress(100, "背景去除完成")
+            on_progress(100, "抠图完成")
 
         return result
 
     async def _composite_to_scene(
         self,
         background_path: str,
-        product_bytes: bytes,
+        product: Image.Image | bytes,
         on_progress: Optional[ProgressCallback] = None,
         config: Optional[ProcessConfig] = None,
     ) -> bytes:
-        """合成商品到场景（内部方法）."""
+        """合成商品到场景（内部方法）.
+        
+        Args:
+            background_path: 背景图片路径
+            product: 商品图片（PIL Image 或 bytes）
+            on_progress: 进度回调
+            config: 处理配置
+            
+        Returns:
+            合成后的图片字节数据
+        """
         bg_image = load_image(background_path)
         bg_image = ensure_rgba(bg_image)
         bg_bytes = image_to_bytes(bg_image, format="PNG")
+
+        # 将 product 转换为 bytes
+        if isinstance(product, Image.Image):
+            product_bytes = image_to_bytes(product, format="PNG")
+        else:
+            product_bytes = product
 
         if on_progress:
             on_progress(50, "调用 AI 服务")
