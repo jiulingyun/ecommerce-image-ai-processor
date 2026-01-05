@@ -225,7 +225,8 @@ class BatchProcessor:
                 return
 
             # 等待暂停恢复
-            await self._pause_event.wait()
+            if self._pause_event:
+                await self._pause_event.wait()
 
             task = batch_task.task
             task_id = batch_task.id
@@ -291,7 +292,8 @@ class BatchProcessor:
         """暂停处理."""
         if self.is_processing and not self._is_paused:
             self._is_paused = True
-            self._pause_event.clear()
+            if self._pause_event:
+                self._pause_event.clear()
             self._queue.pause()
             logger.info("批量处理已暂停")
 
@@ -299,14 +301,16 @@ class BatchProcessor:
         """恢复处理."""
         if self._is_paused:
             self._is_paused = False
-            self._pause_event.set()
+            if self._pause_event:
+                self._pause_event.set()
             self._queue.resume()
             logger.info("批量处理已恢复")
 
     def cancel(self) -> None:
         """取消处理."""
         self._is_cancelled = True
-        self._pause_event.set()  # 确保不在暂停状态
+        if self._pause_event:
+            self._pause_event.set()  # 确保不在暂停状态
         logger.info("批量处理已取消")
 
     async def process_single(

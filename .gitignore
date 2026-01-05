@@ -68,6 +68,7 @@ venv.bak/
 .project
 .pydevproject
 .settings/
+.warp/
 
 # macOS
 .DS_Store
