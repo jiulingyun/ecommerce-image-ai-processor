@@ -61,6 +61,7 @@ class ConstrainedScrollArea(QScrollArea):
             widget.setFixedWidth(available_width)
 
 from src.models.image_task import ImageTask
+from src.ui.dialogs import SettingsDialog
 from src.ui.widgets import (
     AIConfigPanel,
     ImagePairPanel,
@@ -807,9 +808,18 @@ class MainWindow(QMainWindow):
         self.show_status_message("已删除任务")
 
     def _on_settings(self) -> None:
-        """打开设置."""
+        """打开设置对话框."""
         self.settings_requested.emit()
-        logger.debug("请求打开设置")
+        
+        dialog = SettingsDialog(self)
+        dialog.settings_changed.connect(self._on_settings_changed)
+        dialog.exec()
+        logger.debug("设置对话框已关闭")
+
+    def _on_settings_changed(self) -> None:
+        """设置变更处理."""
+        self.show_status_message("设置已更新")
+        logger.info("应用设置已变更")
 
     def _on_about(self) -> None:
         """显示关于对话框."""
