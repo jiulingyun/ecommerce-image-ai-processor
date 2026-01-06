@@ -37,6 +37,8 @@ git commit -m "Release v1.0.1"
 
 脚本会自动执行以下操作：
 - ✅ 检查是否有未提交的修改
+- ✅ 同步更新 `src/utils/constants.py` 中的 `APP_VERSION`
+- ✅ 自动提交版本号更新
 - ✅ 检查是否有未推送的提交
 - ✅ 推送所有提交到远端
 - ✅ 根据 VERSION 文件创建标签（如 `v1.0.1`）

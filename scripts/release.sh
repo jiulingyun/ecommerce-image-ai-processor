@@ -60,6 +60,40 @@ TAG_NAME="v${VERSION}"
 print_info "当前版本: $VERSION"
 print_info "标签名称: $TAG_NAME"
 
+# 同步更新 constants.py 中的版本号
+CONSTANTS_FILE="src/utils/constants.py"
+if [ -f "$CONSTANTS_FILE" ]; then
+    print_info "更新 $CONSTANTS_FILE 中的 APP_VERSION..."
+    
+    # 使用 sed 替换版本号（兼容 macOS 和 Linux）
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        sed -i '' "s/APP_VERSION = \".*\"/APP_VERSION = \"$VERSION\"/" "$CONSTANTS_FILE"
+    else
+        # Linux
+        sed -i "s/APP_VERSION = \".*\"/APP_VERSION = \"$VERSION\"/" "$CONSTANTS_FILE"
+    fi
+    
+    # 检查是否成功更新
+    if grep -q "APP_VERSION = \"$VERSION\"" "$CONSTANTS_FILE"; then
+        print_success "APP_VERSION 已更新为 $VERSION"
+        
+        # 如果有变更，自动提交
+        if ! git diff --quiet "$CONSTANTS_FILE"; then
+            print_info "提交版本号更新..."
+            git add "$CONSTANTS_FILE"
+            git commit -m "chore: update version to $VERSION"
+            print_success "版本号更新已提交"
+        fi
+    else
+        print_error "APP_VERSION 更新失败"
+        exit 1
+    fi
+else
+    print_error "$CONSTANTS_FILE 文件不存在"
+    exit 1
+fi
+
 # 检查是否有未提交的修改
 if ! git diff-index --quiet HEAD -- 2>/dev/null; then
     print_warning "检测到未提交的修改，请先提交所有修改"
