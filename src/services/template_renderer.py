@@ -414,20 +414,25 @@ class TemplateRenderer:
         text_width = max(line_widths) if line_widths else 0
         total_height = sum(line_heights) + line_height_px * (len(lines) - 1) if lines else 0
 
-        # 缩放后的位置
+        # 缩放后的位置和尺寸
         base_x = int(layer.x * scale_x)
         base_y = int(layer.y * scale_y)
+        scaled_width = int(layer.width * scale_x)
+        scaled_height = int(layer.height * scale_y)
+        
+        # 计算内边距
+        padding = int(layer.background_padding * avg_scale)
 
-        # 绘制背景
+        # 绘制背景（如果启用）
         if layer.background_enabled:
-            padding = int(layer.background_padding * avg_scale)
             bg_color = (*layer.background_color, int(layer.background_opacity * 2.55))
+            # 背景填充整个图层区域
             draw.rectangle(
                 [
-                    base_x - padding,
-                    base_y - padding,
-                    base_x + text_width + padding,
-                    base_y + total_height + padding,
+                    base_x,
+                    base_y,
+                    base_x + scaled_width,
+                    base_y + scaled_height,
                 ],
                 fill=bg_color,
             )
@@ -436,20 +441,25 @@ class TemplateRenderer:
         text_color = (*layer.font_color, int(layer.opacity * 2.55))
         scaled_stroke_width = max(1, int(layer.stroke_width * avg_scale)) if layer.stroke_enabled else 0
         
-        current_y = base_y
+        # 文字渲染区域（扣除内边距）
+        text_area_x = base_x + padding
+        text_area_y = base_y + padding
+        text_area_width = scaled_width - 2 * padding
+        
+        current_y = text_area_y
         for i, line in enumerate(lines):
             if not line:
                 current_y += line_height_px
                 continue
             
-            # 计算当前行的 X 位置(根据对齐方式)
+            # 计算当前行的 X 位置（在整个图层宽度内对齐）
             line_width = line_widths[i]
             if layer.align == TextAlign.CENTER:
-                x = base_x + (text_width - line_width) // 2
+                x = text_area_x + (text_area_width - line_width) // 2
             elif layer.align == TextAlign.RIGHT:
-                x = base_x + text_width - line_width
+                x = text_area_x + text_area_width - line_width
             else:  # LEFT
-                x = base_x
+                x = text_area_x
             
             # 绘制描边
             if layer.stroke_enabled:
