@@ -177,22 +177,21 @@ class TaskListItem(QFrame):
         """)
         self._progress_bar.setVisible(False)
         info_layout.addWidget(self._progress_bar)
-
-        self._update_status_display()
         
         info_layout.addStretch()  # 底部弹簧
         layout.addLayout(info_layout, 1)
 
         # 打开文件夹按钮（仅完成状态显示）
         self._open_folder_btn = QPushButton("📁")
-        self._open_folder_btn.setFixedSize(32, 32)
+        self._open_folder_btn.setFixedSize(36, 36)
         self._open_folder_btn.setStyleSheet("""
             QPushButton {
                 background-color: transparent;
                 border: 1px solid #d9d9d9;
-                border-radius: 4px;
+                border-radius: 6px;
                 color: #595959;
-                font-size: 14px;
+                font-size: 16px;
+                padding: 2px;
             }
             QPushButton:hover {
                 background-color: #e6f7ff;
@@ -226,6 +225,9 @@ class TaskListItem(QFrame):
         # 启用右键菜单
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self._show_context_menu)
+        
+        # 最后更新状态显示（所有组件创建完成后）
+        self._update_status_display()
 
     def _load_thumbnail(self, label: QLabel, file_path: str) -> None:
         """加载缩略图.
