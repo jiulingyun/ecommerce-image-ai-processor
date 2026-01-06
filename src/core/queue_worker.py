@@ -355,7 +355,8 @@ class QueueController(QObject):
 
     def stop(self) -> None:
         """停止处理."""
-        self.cancel_processing()
+        if self._worker:
+            self._worker.cancel_processing()
         if self._thread:
             self._thread.quit()
             self._thread.wait(5000)  # 等待最多5秒
@@ -365,8 +366,6 @@ class QueueController(QObject):
                 self._thread.wait()
         self._worker = None
         self._thread = None
-            self._thread = None
-        self._worker = None
 
     def _on_task_progress(self, task_id: str, progress: int, message: str) -> None:
         """任务进度回调."""

@@ -73,12 +73,12 @@ from src.ui.widgets import (
     OutputConfigPanel,
     ProcessConfigPanel,
     PromptConfigPanel,
-    QueueProgressPanel,
     TaskListWidget,
     TemplateConfigPanel,
     ToastManager,
     get_toast_manager,
 )
+from src.ui.widgets.toolbar_queue_progress import ToolbarQueueProgress
 from src.utils.error_messages import (
     get_user_friendly_error,
     UserFriendlyError,
@@ -163,7 +163,6 @@ class MainWindow(QMainWindow):
         # 业务组件引用
         self._image_pair_panel: Optional[ImagePairPanel] = None
         self._task_list_widget: Optional[TaskListWidget] = None
-        self._queue_progress_panel: Optional[QueueProgressPanel] = None
         self._image_preview: Optional[ImagePreview] = None
         self._prompt_config_panel: Optional[PromptConfigPanel] = None
         self._process_config_panel: Optional[ProcessConfigPanel] = None
@@ -173,6 +172,9 @@ class MainWindow(QMainWindow):
         # 任务管理
         self._tasks: dict[str, ImageTask] = {}  # task_id -> ImageTask
         self._selected_task_id: Optional[str] = None
+        
+        # 工具栏进度组件
+        self._toolbar_progress: Optional[ToolbarQueueProgress] = None
 
         # Action 引用
         self._action_export: Optional[QAction] = None
@@ -398,6 +400,12 @@ class MainWindow(QMainWindow):
             self._action_clear.setText("清空队列")
             self._toolbar.addAction(self._action_clear)
 
+        self._toolbar.addSeparator()
+
+        # 队列进度信息（中间区域）
+        self._toolbar_progress = ToolbarQueueProgress()
+        self._toolbar.addWidget(self._toolbar_progress)
+
         # 弹性空间
         spacer = QWidget()
         spacer.setSizePolicy(
@@ -472,19 +480,9 @@ class MainWindow(QMainWindow):
         separator.setFrameShadow(QFrame.Shadow.Sunken)
         layout.addWidget(separator)
 
-        # 任务列表
+        # 任务列表（占据所有剩余空间）
         self._task_list_widget = TaskListWidget()
         layout.addWidget(self._task_list_widget, 1)
-
-        # 分隔线
-        separator2 = QFrame()
-        separator2.setFrameShape(QFrame.Shape.HLine)
-        separator2.setFrameShadow(QFrame.Shadow.Sunken)
-        layout.addWidget(separator2)
-
-        # 队列进度面板
-        self._queue_progress_panel = QueueProgressPanel()
-        layout.addWidget(self._queue_progress_panel)
 
         return panel
 
@@ -604,12 +602,6 @@ class MainWindow(QMainWindow):
         if self._task_list_widget:
             self._task_list_widget.task_selected.connect(self._on_task_selected)
             self._task_list_widget.task_deleted.connect(self._on_task_deleted)
-
-        # 队列进度面板信号
-        if self._queue_progress_panel:
-            self._queue_progress_panel.start_clicked.connect(self._on_start_process)
-            self._queue_progress_panel.pause_clicked.connect(self._on_pause_process)
-            self._queue_progress_panel.cancel_clicked.connect(self._on_cancel_process)
 
         # 模板配置面板信号
         if self._template_config_panel:
@@ -769,9 +761,9 @@ class MainWindow(QMainWindow):
         if self._queue_label:
             self._queue_label.setText(f"队列: {self._queue_count}/{MAX_QUEUE_SIZE}")
 
-        # 更新进度面板的任务数
-        if self._queue_progress_panel:
-            self._queue_progress_panel.set_total_tasks(self._queue_count)
+        # 更新工具栏进度的任务数
+        if self._toolbar_progress:
+            self._toolbar_progress.set_total_tasks(self._queue_count)
         
         self._update_actions_state()
 
@@ -800,9 +792,9 @@ class MainWindow(QMainWindow):
         self._is_paused = is_paused
         self._update_actions_state()
 
-        # 同步进度面板状态
-        if self._queue_progress_panel:
-            self._queue_progress_panel.set_processing_state(is_processing, is_paused)
+        # 同步工具栏进度状态
+        if self._toolbar_progress:
+            self._toolbar_progress.set_processing_state(is_processing, is_paused)
 
         if not is_processing:
             self.update_progress(0, "就绪")
@@ -1010,9 +1002,9 @@ class MainWindow(QMainWindow):
             if self._image_pair_panel:
                 self._image_pair_panel.set_queue_count(0)
 
-            # 重置进度面板
-            if self._queue_progress_panel:
-                self._queue_progress_panel.reset()
+            # 重置工具栏进度
+            if self._toolbar_progress:
+                self._toolbar_progress.reset()
 
             self.queue_cleared.emit()
             self.update_queue_count(0)
@@ -1119,10 +1111,6 @@ class MainWindow(QMainWindow):
         """
         self._current_progress = progress
         self.update_progress(progress, message)
-        
-        # 更新进度面板
-        if self._queue_progress_panel:
-            self._queue_progress_panel.set_progress(progress)
 
     def _on_queue_task_completed(self, task_id: str, output_path: str) -> None:
         """队列任务完成回调.
@@ -1145,9 +1133,9 @@ class MainWindow(QMainWindow):
         if self._task_list_widget:
             self._task_list_widget.update_task_status(task_id, TaskStatus.COMPLETED)
 
-        # 更新进度面板
-        if self._queue_progress_panel:
-            self._queue_progress_panel.increment_completed()
+        # 更新工具栏进度
+        if self._toolbar_progress:
+            self._toolbar_progress.increment_completed()
 
         # 如果是当前选中的任务，更新预览显示结果图
         if self._selected_task_id == task_id and self._image_preview and output_path:

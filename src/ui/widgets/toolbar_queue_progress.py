@@ -1,40 +1,33 @@
-"""队列进度面板组件.
+"""工具栏队列进度组件.
 
-显示处理队列的整体进度、状态统计和实时反馈。
+紧凑版队列进度显示，适合放在工具栏中。
 """
 
 from __future__ import annotations
 
 from typing import Optional
 
-from PyQt6.QtCore import Qt, pyqtSignal, QTimer
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
-    QFrame,
     QHBoxLayout,
     QLabel,
     QProgressBar,
-    QPushButton,
-    QSizePolicy,
-    QVBoxLayout,
     QWidget,
 )
 
-from src.models.image_task import TaskStatus
 from src.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
 
-class QueueProgressPanel(QFrame):
-    """队列进度面板.
+class ToolbarQueueProgress(QWidget):
+    """工具栏队列进度组件.
 
-    显示处理队列的整体进度信息，包括：
-    - 总体进度条
-    - 已完成/总数统计
-    - 当前处理状态
-    - 预估剩余时间
-    
-    注意：操作按钮（开始/暂停/取消）已移至工具栏，此面板仅显示进度信息。
+    显示紧凑的队列处理进度信息：
+    - 状态标签
+    - 进度条
+    - 统计信息（已完成/总数）
+    - 用时
     """
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
@@ -44,7 +37,6 @@ class QueueProgressPanel(QFrame):
         self._total_tasks = 0
         self._completed_tasks = 0
         self._failed_tasks = 0
-        self._current_task_progress = 0
         self._is_processing = False
         self._is_paused = False
         self._elapsed_seconds = 0
@@ -58,72 +50,54 @@ class QueueProgressPanel(QFrame):
 
     def _setup_ui(self) -> None:
         """设置 UI."""
-        self.setProperty("card", True)
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(8, 4, 8, 4)
+        layout.setSpacing(12)
 
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(8, 8, 8, 8)
-        layout.setSpacing(6)
-
-        # 第一行：标题和状态（紧凑布局）
-        header_layout = QHBoxLayout()
-        header_layout.setSpacing(8)
-
-        self._title_label = QLabel("队列进度")
-        self._title_label.setProperty("heading", True)
-        header_layout.addWidget(self._title_label)
-
-        header_layout.addStretch()
-
+        # 状态标签
         self._status_label = QLabel("就绪")
         self._status_label.setProperty("hint", True)
-        header_layout.addWidget(self._status_label)
-        layout.addLayout(header_layout)
+        self._status_label.setMinimumWidth(60)
+        layout.addWidget(self._status_label)
 
-        # 第二行：统计信息（移到进度条上方）
-        stats_layout = QHBoxLayout()
-        stats_layout.setSpacing(12)
-
-        # 完成数
-        self._completed_label = QLabel("已完成: 0/0")
-        self._completed_label.setProperty("hint", True)
-        stats_layout.addWidget(self._completed_label)
-
-        # 失败数
-        self._failed_label = QLabel("失败: 0")
-        self._failed_label.setProperty("error", True)
-        stats_layout.addWidget(self._failed_label)
-
-        stats_layout.addStretch()
-
-        # 用时/预估
-        self._time_label = QLabel("")
-        self._time_label.setProperty("hint", True)
-        stats_layout.addWidget(self._time_label)
-
-        layout.addLayout(stats_layout)
-
-        # 第三行：进度条
+        # 进度条
         self._progress_bar = QProgressBar()
-        self._progress_bar.setFixedHeight(6)
+        self._progress_bar.setFixedHeight(16)
+        self._progress_bar.setFixedWidth(200)
         self._progress_bar.setTextVisible(False)
         layout.addWidget(self._progress_bar)
+
+        # 统计信息
+        self._stats_label = QLabel("0/0")
+        self._stats_label.setProperty("hint", True)
+        self._stats_label.setMinimumWidth(50)
+        layout.addWidget(self._stats_label)
+
+        # 失败数（仅在有失败时显示）
+        self._failed_label = QLabel()
+        self._failed_label.setProperty("error", True)
+        self._failed_label.setVisible(False)
+        layout.addWidget(self._failed_label)
+
+        # 用时
+        self._time_label = QLabel()
+        self._time_label.setProperty("hint", True)
+        self._time_label.setMinimumWidth(80)
+        layout.addWidget(self._time_label)
 
     def _update_display(self) -> None:
         """更新显示内容."""
         # 计算整体进度
         if self._total_tasks > 0:
-            # 每个完成任务占 100/总数 的进度
             completed_progress = (self._completed_tasks + self._failed_tasks) * 100 / self._total_tasks
-            # 当前任务进度贡献
-            current_contribution = self._current_task_progress / self._total_tasks
-            overall_progress = int(completed_progress + current_contribution)
+            overall_progress = int(completed_progress)
         else:
             overall_progress = 0
 
         self._progress_bar.setValue(overall_progress)
 
         # 更新统计
-        self._completed_label.setText(f"已完成: {self._completed_tasks}/{self._total_tasks}")
+        self._stats_label.setText(f"{self._completed_tasks}/{self._total_tasks}")
         
         if self._failed_tasks > 0:
             self._failed_label.setText(f"失败: {self._failed_tasks}")
@@ -135,30 +109,15 @@ class QueueProgressPanel(QFrame):
         if not self._is_processing:
             if self._total_tasks == 0:
                 self._status_label.setText("就绪")
-                self._status_label.setProperty("hint", True)
-                self._status_label.style().unpolish(self._status_label) # Force update
-                self._status_label.style().polish(self._status_label)
             elif self._completed_tasks + self._failed_tasks >= self._total_tasks:
                 self._status_label.setText("已完成")
-                self._status_label.setProperty("success", True)
-                self._status_label.style().unpolish(self._status_label)
-                self._status_label.style().polish(self._status_label)
             else:
-                self._status_label.setText("等待开始")
-                self._status_label.setProperty("warning", True)
-                self._status_label.style().unpolish(self._status_label)
-                self._status_label.style().polish(self._status_label)
+                self._status_label.setText("等待")
         else:
             if self._is_paused:
                 self._status_label.setText("已暂停")
-                self._status_label.setProperty("warning", True)
-                self._status_label.style().unpolish(self._status_label)
-                self._status_label.style().polish(self._status_label)
             else:
-                self._status_label.setText("处理中...")
-                self._status_label.setProperty("processing", True) # New property
-                self._status_label.style().unpolish(self._status_label)
-                self._status_label.style().polish(self._status_label)
+                self._status_label.setText("处理中")
 
         # 更新时间显示
         if self._is_processing and self._elapsed_seconds > 0:
@@ -169,21 +128,14 @@ class QueueProgressPanel(QFrame):
                 remaining_tasks = self._total_tasks - self._completed_tasks - self._failed_tasks
                 estimated_remaining = int(avg_time * remaining_tasks)
                 remaining_str = self._format_time(estimated_remaining)
-                self._time_label.setText(f"用时: {elapsed_str} | 预计剩余: {remaining_str}")
+                self._time_label.setText(f"{elapsed_str} / 剩余 {remaining_str}")
             else:
-                self._time_label.setText(f"用时: {elapsed_str}")
+                self._time_label.setText(elapsed_str)
         elif self._elapsed_seconds > 0 and not self._is_processing:
             elapsed_str = self._format_time(self._elapsed_seconds)
-            self._time_label.setText(f"总用时: {elapsed_str}")
+            self._time_label.setText(f"总计 {elapsed_str}")
         else:
             self._time_label.setText("")
-
-        # 更新按钮状态
-        self._update_buttons()
-
-    def _update_buttons(self) -> None:
-        """更新按钮状态（已移除按钮，保留方法以兼容）."""
-        pass
 
     def _format_time(self, seconds: int) -> str:
         """格式化时间显示."""
@@ -192,18 +144,17 @@ class QueueProgressPanel(QFrame):
         elif seconds < 3600:
             minutes = seconds // 60
             secs = seconds % 60
-            return f"{minutes}分{secs}秒"
+            return f"{minutes}:{secs:02d}"
         else:
             hours = seconds // 3600
             minutes = (seconds % 3600) // 60
-            return f"{hours}时{minutes}分"
+            return f"{hours}:{minutes:02d}:{seconds % 60:02d}"
 
     def _on_timer_tick(self) -> None:
         """计时器触发."""
         if self._is_processing and not self._is_paused:
             self._elapsed_seconds += 1
             self._update_display()
-
 
     # ========================
     # 公共方法
@@ -255,16 +206,6 @@ class QueueProgressPanel(QFrame):
             self._completed_tasks += 1
         else:
             self._failed_tasks += 1
-        self._current_task_progress = 0
-        self._update_display()
-
-    def update_current_progress(self, progress: int) -> None:
-        """更新当前任务进度.
-
-        Args:
-            progress: 进度值 (0-100)
-        """
-        self._current_task_progress = max(0, min(100, progress))
         self._update_display()
 
     def reset(self) -> None:
@@ -272,38 +213,13 @@ class QueueProgressPanel(QFrame):
         self._total_tasks = 0
         self._completed_tasks = 0
         self._failed_tasks = 0
-        self._current_task_progress = 0
         self._is_processing = False
         self._is_paused = False
         self._elapsed_seconds = 0
         self._timer.stop()
         self._update_display()
 
-    def set_progress(self, progress: int) -> None:
-        """设置进度.
-
-        Args:
-            progress: 进度值 (0-100)
-        """
-        self._progress_bar.setValue(progress)
-
     def increment_completed(self) -> None:
         """增加完成数."""
         self._completed_tasks += 1
-        self._current_task_progress = 0
         self._update_display()
-
-    def get_stats(self) -> dict:
-        """获取统计信息.
-
-        Returns:
-            统计信息字典
-        """
-        return {
-            "total": self._total_tasks,
-            "completed": self._completed_tasks,
-            "failed": self._failed_tasks,
-            "elapsed_seconds": self._elapsed_seconds,
-            "is_processing": self._is_processing,
-            "is_paused": self._is_paused,
-        }
