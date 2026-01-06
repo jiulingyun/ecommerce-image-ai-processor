@@ -197,7 +197,11 @@ class TextEditOverlay(QGraphicsProxyWidget):
 
         # 显示并获取焦点
         self.show()
+        # 确保编辑器可以接收焦点
+        self._editor.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self._editor.setFocus(Qt.FocusReason.OtherFocusReason)
+        # 强制激活编辑器
+        self._editor.activateWindow()
 
     def finish_editing(self) -> str:
         """完成编辑并返回新内容.

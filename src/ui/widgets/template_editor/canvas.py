@@ -330,6 +330,10 @@ class TemplateCanvas(QGraphicsView):
 
         # 启用鼠标追踪
         self.setMouseTracking(True)
+        
+        # 设置焦点策略：只通过点击获得焦点，不通过Tab键
+        # 这样方向键会由父窗口处理，但子组件（如文字编辑器）可以获得焦点
+        self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
 
         # 不设置视图背景画刷，让场景完全负责背景绘制
         # self.setBackgroundBrush(QBrush(QColor(40, 40, 40)))
@@ -552,6 +556,8 @@ class TemplateCanvas(QGraphicsView):
 
         if layer_id in self._layer_items:
             self._layer_items[layer_id].setSelected(True)
+            # 手动触发选择变更信号，确保属性面板更新
+            self.selection_changed.emit(self.selected_layers)
 
     def deselect_all(self) -> None:
         """取消所有选中."""

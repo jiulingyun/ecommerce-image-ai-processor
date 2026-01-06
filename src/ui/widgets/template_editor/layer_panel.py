@@ -122,17 +122,21 @@ class LayerItemWidget(QFrame):
         self._name_edit.editingFinished.connect(self._finish_rename)
         layout.addWidget(self._name_edit)
 
+        # 获取标准图标
+        from PyQt6.QtWidgets import QStyle
+        style = self.style()
+        
         # 可见性按钮
-        self._visibility_btn = QPushButton("显")
-        self._visibility_btn.setFixedSize(28, 24)
+        self._visibility_btn = QPushButton()
+        self._visibility_btn.setFixedSize(28, 28)
         self._visibility_btn.setFlat(True)
         self._visibility_btn.setToolTip("显示/隐藏")
         self._visibility_btn.clicked.connect(self._toggle_visibility)
         layout.addWidget(self._visibility_btn)
 
         # 锁定按钮
-        self._lock_btn = QPushButton("锁")
-        self._lock_btn.setFixedSize(28, 24)
+        self._lock_btn = QPushButton()
+        self._lock_btn.setFixedSize(28, 28)
         self._lock_btn.setFlat(True)
         self._lock_btn.setToolTip("锁定/解锁")
         self._lock_btn.clicked.connect(self._toggle_lock)
@@ -141,6 +145,10 @@ class LayerItemWidget(QFrame):
     def _update_display(self) -> None:
         """更新显示."""
         layer = self._layer
+        
+        # 获取标准图标
+        from PyQt6.QtWidgets import QStyle
+        style = self.style()
 
         # 更新图标
         icon_map = {
@@ -155,14 +163,17 @@ class LayerItemWidget(QFrame):
         name = self._get_layer_name()
         self._name_label.setText(name)
 
-        # 更新可见性按钮
-        self._visibility_btn.setText("显" if layer.visible else "隐")
-        self._visibility_btn.setStyleSheet(
-            "" if layer.visible else "color: gray;"
-        )
+        # 更新可见性按钮图标
+        if layer.visible:
+            self._visibility_btn.setIcon(style.standardIcon(QStyle.StandardPixmap.SP_DialogYesButton))
+        else:
+            self._visibility_btn.setIcon(style.standardIcon(QStyle.StandardPixmap.SP_DialogNoButton))
 
-        # 更新锁定按钮
-        self._lock_btn.setText("锁" if layer.locked else "开")
+        # 更新锁定按钮图标
+        if layer.locked:
+            self._lock_btn.setIcon(style.standardIcon(QStyle.StandardPixmap.SP_BrowserStop))
+        else:
+            self._lock_btn.setIcon(style.standardIcon(QStyle.StandardPixmap.SP_DialogOkButton))
 
         # 更新整体样式
         self.setProperty("hidden_layer", not layer.visible)

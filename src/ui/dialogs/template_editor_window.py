@@ -111,6 +111,9 @@ class TemplateEditorWindow(QMainWindow):
 
         # 撤销/重做管理器
         self._undo_manager: Optional[UndoRedoManager] = None
+        
+        # 剪贴板（用于复制/粘贴）
+        self._clipboard_layer: Optional[AnyLayer] = None
 
         # Action 引用
         self._action_new: Optional[QAction] = None
@@ -160,15 +163,34 @@ class TemplateEditorWindow(QMainWindow):
     
     def keyPressEvent(self, event) -> None:
         """键盘事件处理."""
+        from PyQt6.QtCore import Qt
+        key = event.key()
+        modifiers = event.modifiers()
+        
+        # Cmd/Ctrl + C: 复制
+        if key == Qt.Key.Key_C and modifiers & Qt.KeyboardModifier.ControlModifier:
+            self._on_copy()
+            event.accept()
+            return
+        
+        # Cmd/Ctrl + V: 粘贴
+        if key == Qt.Key.Key_V and modifiers & Qt.KeyboardModifier.ControlModifier:
+            self._on_paste()
+            event.accept()
+            return
+        
+        # Delete/Backspace: 删除
+        if key in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace):
+            self._on_delete_selected()
+            event.accept()
+            return
+        
         # 方向键微调图层位置
         if self._canvas and self._canvas.selected_layers:
-            from PyQt6.QtCore import Qt
-            key = event.key()
-            
             # 检查是否按下了方向键
             if key in (Qt.Key.Key_Left, Qt.Key.Key_Right, Qt.Key.Key_Up, Qt.Key.Key_Down):
                 # 计算偏移量（Shift键加速）
-                step = 10 if event.modifiers() & Qt.KeyboardModifier.ShiftModifier else 1
+                step = 10 if modifiers & Qt.KeyboardModifier.ShiftModifier else 1
                 
                 dx = dy = 0
                 if key == Qt.Key.Key_Left:
@@ -186,8 +208,8 @@ class TemplateEditorWindow(QMainWindow):
                     if layer:
                         layer.move_by(dx, dy)
                         self._current_template.update_layer(layer)
-                        # 更新画布显示
-                        self._canvas.update_layer(layer)
+                        # 更新画布显示（传递layer_id和更新后的layer对象）
+                        self._canvas.update_layer(layer_id, layer)
                         # 更新属性面板
                         if self._property_panel:
                             self._property_panel.set_layer(layer)
@@ -779,13 +801,36 @@ class TemplateEditorWindow(QMainWindow):
 
     def _on_copy(self) -> None:
         """复制选中图层."""
-        # TODO: 实现复制功能
-        pass
+        if not self._canvas or not self._current_template:
+            return
+        
+        selected = self._canvas.selected_layers
+        if not selected:
+            return
+        
+        # 复制第一个选中的图层
+        layer_id = selected[0]
+        layer = self._current_template.get_layer_by_id(layer_id)
+        if layer:
+            # 存储到剪贴板（使用实例变量）
+            self._clipboard_layer = layer.clone()
+            if self._statusbar:
+                self._statusbar.showMessage(f"已复制图层: {layer.name}")
 
     def _on_paste(self) -> None:
         """粘贴图层."""
-        # TODO: 实现粘贴功能
-        pass
+        if not hasattr(self, '_clipboard_layer') or not self._clipboard_layer:
+            if self._statusbar:
+                self._statusbar.showMessage("没有可粘贴的图层")
+            return
+        
+        # 克隆一个新的图层（避免重复 ID）
+        new_layer = self._clipboard_layer.clone()
+        # 偏移位置，避免完全重叠
+        new_layer.move_by(20, 20)
+        
+        # 添加到画布
+        self._add_layer(new_layer)
 
     # ========================
     # 槽函数 - 画布
