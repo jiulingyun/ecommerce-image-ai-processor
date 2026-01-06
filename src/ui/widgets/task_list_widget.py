@@ -13,9 +13,11 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import List, Optional
+import subprocess
+import platform
 
 from PyQt6.QtCore import Qt, pyqtSignal, QSize
-from PyQt6.QtGui import QPixmap
+from PyQt6.QtGui import QPixmap, QAction, QCursor
 from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -27,6 +29,8 @@ from PyQt6.QtWidgets import (
     QSizePolicy,
     QVBoxLayout,
     QWidget,
+    QMenu,
+    QApplication,
 )
 
 from src.models.image_task import ImageTask, TaskStatus
@@ -179,6 +183,27 @@ class TaskListItem(QFrame):
         info_layout.addStretch()  # 底部弹簧
         layout.addLayout(info_layout, 1)
 
+        # 打开文件夹按钮（仅完成状态显示）
+        self._open_folder_btn = QPushButton("📁")
+        self._open_folder_btn.setFixedSize(32, 32)
+        self._open_folder_btn.setStyleSheet("""
+            QPushButton {
+                background-color: transparent;
+                border: 1px solid #d9d9d9;
+                border-radius: 4px;
+                color: #595959;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: #e6f7ff;
+                border-color: #1890ff;
+            }
+        """)
+        self._open_folder_btn.setToolTip("在文件管理器中显示")
+        self._open_folder_btn.clicked.connect(self._on_open_folder)
+        self._open_folder_btn.setVisible(False)  # 默认隐藏
+        layout.addWidget(self._open_folder_btn, 0, Qt.AlignmentFlag.AlignVCenter)
+
         # 删除按钮
         self._delete_btn = QPushButton("×")
         self._delete_btn.setFixedSize(24, 24)
@@ -197,6 +222,10 @@ class TaskListItem(QFrame):
         self._delete_btn.setToolTip("删除任务")
         self._delete_btn.clicked.connect(self._on_delete)
         layout.addWidget(self._delete_btn, 0, Qt.AlignmentFlag.AlignVCenter)
+        
+        # 启用右键菜单
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self._show_context_menu)
 
     def _load_thumbnail(self, label: QLabel, file_path: str) -> None:
         """加载缩略图.
@@ -246,6 +275,10 @@ class TaskListItem(QFrame):
         self._progress_bar.setVisible(is_processing)
         if is_processing:
             self._progress_bar.setValue(self._task.progress)
+        
+        # 显示/隐藏打开文件夹按钮（仅完成状态且有输出文件时显示）
+        has_output = self._task.status == TaskStatus.COMPLETED and self._task.output_path
+        self._open_folder_btn.setVisible(bool(has_output))
 
     def update_task(self, task: ImageTask) -> None:
         """更新任务状态.
@@ -259,6 +292,73 @@ class TaskListItem(QFrame):
     def _on_delete(self) -> None:
         """删除按钮点击."""
         self.delete_clicked.emit(self._task.id)
+    
+    def _on_open_folder(self) -> None:
+        """打开文件夹按钮点击."""
+        if not self._task.output_path:
+            return
+        
+        self._open_file_location(self._task.output_path)
+    
+    def _open_file_location(self, file_path: str) -> None:
+        """在文件管理器中打开并选中文件.
+        
+        Args:
+            file_path: 文件路径
+        """
+        try:
+            file_path_obj = Path(file_path)
+            if not file_path_obj.exists():
+                logger.warning(f"文件不存在: {file_path}")
+                return
+            
+            system = platform.system()
+            if system == "Darwin":  # macOS
+                subprocess.run(["open", "-R", str(file_path_obj)])
+            elif system == "Windows":
+                subprocess.run(["explorer", "/select,", str(file_path_obj)])
+            else:  # Linux
+                # 在 Linux 上打开所在文件夹
+                subprocess.run(["xdg-open", str(file_path_obj.parent)])
+            
+            logger.info(f"打开文件位置: {file_path}")
+        except Exception as e:
+            logger.error(f"打开文件位置失败: {e}")
+    
+    def _show_context_menu(self, position) -> None:
+        """显示右键菜单.
+        
+        Args:
+            position: 菜单位置
+        """
+        menu = QMenu(self)
+        
+        # 根据任务状态添加不同菜单项
+        if self._task.status == TaskStatus.COMPLETED and self._task.output_path:
+            action_open_folder = QAction("📁 在文件管理器中显示", self)
+            action_open_folder.triggered.connect(lambda: self._open_file_location(self._task.output_path))
+            menu.addAction(action_open_folder)
+            
+            action_copy_path = QAction("📋 复制文件路径", self)
+            action_copy_path.triggered.connect(self._copy_output_path)
+            menu.addAction(action_copy_path)
+            
+            menu.addSeparator()
+        
+        # 删除选项
+        action_delete = QAction("🗑️ 删除任务", self)
+        action_delete.triggered.connect(self._on_delete)
+        menu.addAction(action_delete)
+        
+        # 在鼠标位置显示菜单
+        menu.exec(self.mapToGlobal(position))
+    
+    def _copy_output_path(self) -> None:
+        """复制输出文件路径到剪贴板."""
+        if self._task.output_path:
+            clipboard = QApplication.clipboard()
+            clipboard.setText(self._task.output_path)
+            logger.info(f"已复制路径: {self._task.output_path}")
 
 
 class TaskListWidget(QFrame):
