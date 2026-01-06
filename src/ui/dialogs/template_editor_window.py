@@ -481,6 +481,7 @@ class TemplateEditorWindow(QMainWindow):
         if self._template_list:
             self._template_list.template_selected.connect(self._on_template_selected_by_id)
             self._template_list.template_deleted.connect(self._on_template_deleted)
+            self._template_list.template_renamed.connect(self._on_template_renamed)
 
     def _setup_undo_manager(self) -> None:
         """设置撤销管理器."""
@@ -1077,6 +1078,29 @@ class TemplateEditorWindow(QMainWindow):
         if template:
             self._set_current_template(template)
             self.template_selected.emit(template)
+    
+    def _on_template_renamed(self, template_id: str) -> None:
+        """模板被重命名.
+        
+        如果重命名的是当前编辑的模板，需要重新加载以更新名称。
+        
+        Args:
+            template_id: 被重命名的模板ID
+        """
+        if self._current_template and self._current_template.id == template_id:
+            # 重新加载模板以获取新名称
+            template = self._template_manager.load_template(template_id)
+            if template:
+                # 保留当前的修改状态
+                is_modified = self._is_modified
+                # 更新名称，但保持其他属性不变
+                self._current_template.name = template.name
+                # 更新窗口标题
+                self.setWindowTitle(f"{WINDOW_TITLE} - {template.name}")
+                # 恢复修改状态
+                self._set_modified(is_modified)
+                if self._statusbar:
+                    self._statusbar.showMessage(f"模板已重命名: {template.name}")
 
     def _on_template_deleted(self, template_id: str) -> None:
         """模板删除.

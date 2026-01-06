@@ -91,6 +91,7 @@ class TemplateListWidget(QFrame):
     template_selected = pyqtSignal(str)  # template_id
     template_created = pyqtSignal(str)  # template_id
     template_deleted = pyqtSignal(str)  # template_id
+    template_renamed = pyqtSignal(str)  # template_id
 
     def __init__(
         self,
@@ -288,6 +289,8 @@ class TemplateListWidget(QFrame):
         if ok and name and name != item.metadata.name:
             if self._manager.rename_template(item.template_id, name):
                 self._refresh_list()
+                # 发射重命名信号
+                self.template_renamed.emit(item.template_id)
 
     def _on_duplicate(self, item: TemplateListItem) -> None:
         """复制模板."""
