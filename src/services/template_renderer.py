@@ -380,11 +380,11 @@ class TemplateRenderer:
         if not layer.content:
             return image
 
-        # 计算缩放后的字体大小（使用平均缩放比例）
+        # 计算缩放后的字体大小(使用平均缩放比例)
         avg_scale = (scale_x + scale_y) / 2
         scaled_font_size = max(1, int(layer.font_size * avg_scale))
 
-        # 获取字体（传递文本内容以便检测是否需要中文字体）
+        # 获取字体(传递文本内容以便检测是否需要中文字体)
         font = find_font(
             layer.font_family,
             scaled_font_size,
@@ -432,7 +432,7 @@ class TemplateRenderer:
                 fill=bg_color,
             )
 
-        # 绘制文字（逐行绘制）
+        # 绘制文字(逐行绘制)
         text_color = (*layer.font_color, int(layer.opacity * 2.55))
         scaled_stroke_width = max(1, int(layer.stroke_width * avg_scale)) if layer.stroke_enabled else 0
         
@@ -442,7 +442,7 @@ class TemplateRenderer:
                 current_y += line_height_px
                 continue
             
-            # 计算当前行的 X 位置（根据对齐方式）
+            # 计算当前行的 X 位置(根据对齐方式)
             line_width = line_widths[i]
             if layer.align == TextAlign.CENTER:
                 x = base_x + (text_width - line_width) // 2
@@ -467,8 +467,27 @@ class TemplateRenderer:
             # 绘制文字
             draw.text((x, current_y), line, font=font, fill=text_color)
             
+            # 绘制下划线
+            if layer.underline:
+                line_y = current_y + line_heights[i] + 2  # 下划线位置在文字下方2像素
+                underline_thickness = max(1, scaled_font_size // 20)  # 根据字体大小计算下划线粗细
+                draw.line(
+                    [(x, line_y), (x + line_width, line_y)],
+                    fill=text_color,
+                    width=underline_thickness,
+                )
+            
             # 移动到下一行
             current_y += line_heights[i] + line_height_px
+
+        # 应用旋转
+        if layer.rotation != 0:
+            temp = self._apply_rotation(
+                temp,
+                layer.rotation,
+                int((layer.x + layer.width / 2) * scale_x),
+                int((layer.y + layer.height / 2) * scale_y),
+            )
 
         # 合成
         image = Image.alpha_composite(image, temp)
@@ -552,6 +571,15 @@ class TemplateRenderer:
             alpha = temp.split()[3]
             alpha = alpha.point(lambda p: int(p * layer.opacity / 100))
             temp.putalpha(alpha)
+
+        # 应用旋转
+        if layer.rotation != 0:
+            temp = self._apply_rotation(
+                temp,
+                layer.rotation,
+                int((layer.x + layer.width / 2) * scale_x),
+                int((layer.y + layer.height / 2) * scale_y),
+            )
 
         # 合成
         image = Image.alpha_composite(image, temp)
@@ -645,12 +673,27 @@ class TemplateRenderer:
                 alpha = alpha.point(lambda p: int(p * layer.opacity / 100))
                 overlay.putalpha(alpha)
 
+            # 应用旋转
+            if layer.rotation != 0:
+                # 旋转图片(围绕中心点)
+                overlay = overlay.rotate(
+                    -layer.rotation,  # PIL 逆时针为正,我们的模型顺时针为正
+                    resample=Image.Resampling.BICUBIC,
+                    expand=True,  # 扩展画布以容纳旋转后的图片
+                )
+
             # 创建临时画布
             temp = Image.new("RGBA", image.size, (0, 0, 0, 0))
 
             # 缩放后的粘贴位置
             paste_x = int(layer.x * scale_x)
             paste_y = int(layer.y * scale_y)
+            
+            # 如果图片被旋转并扩展,需要调整粘贴位置使其居中
+            if layer.rotation != 0:
+                paste_x -= (overlay.width - scaled_width) // 2
+                paste_y -= (overlay.height - scaled_height) // 2
+            
             # 确保在画布范围内
             paste_x = max(0, min(paste_x, image.width - 1))
             paste_y = max(0, min(paste_y, image.height - 1))
@@ -728,6 +771,61 @@ class TemplateRenderer:
             return resized.crop((x, y, x + target_w, y + target_h))
 
         return image
+
+    def _apply_rotation(
+        self,
+        layer_image: Image.Image,
+        rotation: float,
+        center_x: int,
+        center_y: int,
+    ) -> Image.Image:
+        """对图层应用旋转变换.
+
+        Args:
+            layer_image: 图层图像
+            rotation: 旋转角度(顺时针,度)
+            center_x: 旋转中心X坐标
+            center_y: 旋转中心Y坐标
+
+        Returns:
+            旋转后的图像
+        """
+        if rotation == 0:
+            return layer_image
+
+        # PIL 的 rotate 是逆时针为正,我们的模型是顺时针为正,所以取负
+        # 使用 expand=False 在原图尺寸内旋转,避免改变画布大小
+        # 但对于整个图层,我们需要在独立画布上旋转
+        
+        # 提取非透明区域的边界框
+        bbox = layer_image.getbbox()
+        if not bbox:
+            return layer_image
+        
+        # 裁剪到内容区域
+        cropped = layer_image.crop(bbox)
+        
+        # 旋转(expand=True 使画布扩展以容纳旋转后的内容)
+        rotated = cropped.rotate(
+            -rotation,
+            resample=Image.Resampling.BICUBIC,
+            expand=True,
+        )
+        
+        # 创建新的完整尺寸画布
+        result = Image.new("RGBA", layer_image.size, (0, 0, 0, 0))
+        
+        # 计算粘贴位置,使旋转后的内容围绕指定中心点
+        original_center_x = bbox[0] + (bbox[2] - bbox[0]) // 2
+        original_center_y = bbox[1] + (bbox[3] - bbox[1]) // 2
+        
+        paste_x = center_x - rotated.width // 2
+        paste_y = center_y - rotated.height // 2
+        
+        # 粘贴到结果画布
+        result.paste(rotated, (paste_x, paste_y), rotated)
+        
+        return result
 
 
 # ===================

@@ -667,7 +667,7 @@ class TemplateEditorWindow(QMainWindow):
             file_path: 图片路径
         """
         layer = ImageLayer.create(
-            source=file_path,
+            image_path=file_path,
             x=50,
             y=50,
         )
