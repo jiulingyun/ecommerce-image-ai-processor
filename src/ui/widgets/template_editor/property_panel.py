@@ -1002,6 +1002,29 @@ class PropertyPanel(QWidget):
         if self._current_layer:
             self.set_layer(self._current_layer)
 
+    def update_layer_transform(self, x: int, y: int, width: int, height: int) -> None:
+        """仅更新图层位置和尺寸的显示，不修改数据.
+        
+        注意：模板数据已经在 canvas 中更新，这里只刷新UI显示。
+        
+        Args:
+            x: X坐标
+            y: Y坐标
+            width: 宽度
+            height: 高度
+        """
+        if not self._current_layer:
+            return
+        
+        # 仅更新对应编辑器的 Transform 控件显示
+        current_index = self._stack.currentIndex()
+        if current_index == 1:  # 文字编辑器
+            self._text_editor._transform.set_values(x, y, width, height)
+        elif current_index == 2:  # 形状编辑器
+            self._shape_editor._transform.set_values(x, y, width, height)
+        elif current_index == 3:  # 图片编辑器
+            self._image_editor._transform.set_values(x, y, width, height)
+
     def _on_layer_property_changed(self, prop: str, value: Any) -> None:
         """图层属性变化."""
         if not self._current_layer:

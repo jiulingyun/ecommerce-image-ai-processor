@@ -597,6 +597,16 @@ class TemplateEditorWindow(QMainWindow):
             QMessageBox.critical(self, "保存失败", f"无法保存模板:\n{e}")
             return False
 
+    def _refresh_template_list(self, template_id: str) -> None:
+        """刷新模板列表并选中指定模板.
+        
+        Args:
+            template_id: 要选中的模板ID
+        """
+        if self._template_list:
+            self._template_list.refresh()
+            self._template_list.select_template(template_id)
+
     # ========================
     # 图层操作
     # ========================
@@ -613,9 +623,9 @@ class TemplateEditorWindow(QMainWindow):
         # 添加到画布
         self._canvas.add_layer(layer)
 
-        # 更新图层面板
+        # 更新图层面板 - 使用 add_layer 而不是 set_layers，避免清空列表
         if self._layer_panel:
-            self._layer_panel.set_layers(self._current_template.get_layers())
+            self._layer_panel.add_layer(layer)
 
         # 记录撤销
         if self._undo_manager:
@@ -659,14 +669,34 @@ class TemplateEditorWindow(QMainWindow):
     def _on_save_template(self) -> None:
         """保存当前模板."""
         if self._current_template:
+            # 检查是否有图层完全超出画布
+            if self._canvas:
+                outside_layers = self._canvas.get_layers_outside_canvas()
+                if outside_layers:
+                    # 提示用户
+                    layer_names = ", ".join([name for _, name in outside_layers[:3]])
+                    if len(outside_layers) > 3:
+                        layer_names += f" 等 {len(outside_layers)} 个图层"
+                    
+                    reply = QMessageBox.question(
+                        self,
+                        "图层超出画布",
+                        f"检测到以下图层完全在画布外：\n{layer_names}\n\n"
+                        f"这些图层在导出时将不会显示。\n是否继续保存？",
+                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                        QMessageBox.StandardButton.Yes,
+                    )
+                    if reply == QMessageBox.StandardButton.No:
+                        return
+            
             if self._save_template():
-                # 刷新列表并重新选中当前模板
-                if self._template_list:
-                    self._template_list.refresh()
-                    self._template_list.select_template(self._current_template.id)
                 self.template_saved.emit(self._current_template)
                 # 清除未保存标记
                 self._set_modified(False)
+                # 延迟刷新列表以避免在绘制期间执行
+                if self._template_list:
+                    from PyQt6.QtCore import QTimer
+                    QTimer.singleShot(100, lambda: self._refresh_template_list(self._current_template.id))
 
     def _on_save_template_as(self) -> None:
         """另存为."""
@@ -863,6 +893,7 @@ class TemplateEditorWindow(QMainWindow):
         if layer_ids:
             # 有选中图层，取第一个（单选模式）
             layer_id = layer_ids[0]
+            # 始终从模板中获取最新的图层引用
             layer = self._current_template.get_layer_by_id(layer_id)
             if layer:
                 # 更新属性面板
@@ -899,9 +930,9 @@ class TemplateEditorWindow(QMainWindow):
             # 标记为已修改
             self._set_modified(True)
 
-            # 更新属性面板（传入最新的图层数据）
+            # 仅更新属性面板的位置显示
             if self._property_panel:
-                self._property_panel.set_layer(layer)
+                self._property_panel.update_layer_transform(x, y, layer.width, layer.height)
 
     def _on_layer_resized(self, layer_id: str, width: int, height: int) -> None:
         """图层调整大小.
@@ -920,9 +951,9 @@ class TemplateEditorWindow(QMainWindow):
             # 标记为已修改
             self._set_modified(True)
 
-            # 更新属性面板（传入最新的图层数据）
+            # 仅更新属性面板的尺寸显示，不重新设置整个图层
             if self._property_panel:
-                self._property_panel.set_layer(layer)
+                self._property_panel.update_layer_transform(layer.x, layer.y, width, height)
 
     def _on_layer_content_changed(self, layer_id: str, content: str) -> None:
         """图层内容变更.
@@ -1074,6 +1105,10 @@ class TemplateEditorWindow(QMainWindow):
         Args:
             template_id: 选中的模板ID
         """
+        # 如果已经是当前模板，不重新加载
+        if self._current_template and self._current_template.id == template_id:
+            return
+        
         template = self._template_manager.load_template(template_id)
         if template:
             self._set_current_template(template)

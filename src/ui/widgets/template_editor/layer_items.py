@@ -181,7 +181,7 @@ class LayerGraphicsItem(QGraphicsItem):
         # 设置可见性和透明度
         self.setVisible(layer.visible)
         self.setOpacity(layer.opacity / 100.0)
-
+    
     # ========================
     # 属性
     # ========================
@@ -420,6 +420,11 @@ class LayerGraphicsItem(QGraphicsItem):
                 self.signals.selected.emit(self.layer_id)
             else:
                 self.signals.deselected.emit(self.layer_id)
+        
+        elif change == QGraphicsItem.GraphicsItemChange.ItemSceneChange:
+            # 阻止图层被 Qt 自动从场景中移除
+            if value is None and self.scene() is not None:
+                value = self.scene()
 
         return super().itemChange(change, value)
 

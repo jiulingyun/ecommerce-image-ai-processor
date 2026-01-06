@@ -185,8 +185,9 @@ class LayerElement(BaseModel):
     type: LayerType = Field(description="图层类型")
 
     # 位置和尺寸
-    x: int = Field(default=0, ge=0, description="X坐标")
-    y: int = Field(default=0, ge=0, description="Y坐标")
+    # 允许负坐标，图层可以部分或全部在画布外
+    x: int = Field(default=0, description="X坐标")
+    y: int = Field(default=0, description="Y坐标")
     width: int = Field(default=100, ge=1, description="宽度")
     height: int = Field(default=100, ge=1, description="高度")
 
@@ -236,8 +237,9 @@ class LayerElement(BaseModel):
             x: 新的X坐标
             y: 新的Y坐标
         """
-        self.x = max(0, x)
-        self.y = max(0, y)
+        # 允许负坐标，图层可以在画布外
+        self.x = x
+        self.y = y
 
     def move_by(self, dx: int, dy: int) -> None:
         """相对移动图层.
@@ -246,8 +248,9 @@ class LayerElement(BaseModel):
             dx: X方向偏移
             dy: Y方向偏移
         """
-        self.x = max(0, self.x + dx)
-        self.y = max(0, self.y + dy)
+        # 允许负坐标，图层可以在画布外
+        self.x = self.x + dx
+        self.y = self.y + dy
 
     def resize(self, width: int, height: int) -> None:
         """调整图层尺寸.

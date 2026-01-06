@@ -69,7 +69,8 @@ GRID_MAJOR_COLOR = QColor(180, 180, 180, 100)
 GRID_MAJOR_INTERVAL = 5  # 每5个小格一条主线
 
 # 画布边距（场景超出画布的区域）
-CANVAS_MARGIN = 200
+# 设置为画布宽度的倍数，确保图层不会被意外删除
+CANVAS_MARGIN_MULTIPLIER = 3  # 场景是画布的 3 倍大小
 
 # 画布边框颜色
 CANVAS_BORDER_COLOR = QColor(0, 0, 0)
@@ -107,6 +108,9 @@ class TemplateScene(QGraphicsScene):
         self._background_color = QColor(255, 255, 255)
         self._show_grid = True
 
+        # 关键：禁用 BSP 索引，避免图层被自动移除
+        self.setItemIndexMethod(QGraphicsScene.ItemIndexMethod.NoIndex)
+        
         # 设置场景大小（包含边距）
         self._update_scene_rect()
 
@@ -156,12 +160,20 @@ class TemplateScene(QGraphicsScene):
         self.update()
 
     def _update_scene_rect(self) -> None:
-        """更新场景矩形."""
+        """更新场景矩形.
+        
+        场景大小是画布的 CANVAS_MARGIN_MULTIPLIER 倍，
+        确保图层可以在画布外移动而不被删除。
+        """
+        # 计算边距：使用画布尺寸的倍数
+        margin_w = self._canvas_width * (CANVAS_MARGIN_MULTIPLIER - 1) // 2
+        margin_h = self._canvas_height * (CANVAS_MARGIN_MULTIPLIER - 1) // 2
+        
         self.setSceneRect(
-            -CANVAS_MARGIN,
-            -CANVAS_MARGIN,
-            self._canvas_width + CANVAS_MARGIN * 2,
-            self._canvas_height + CANVAS_MARGIN * 2,
+            -margin_w,
+            -margin_h,
+            self._canvas_width + margin_w * 2,
+            self._canvas_height + margin_h * 2,
         )
 
     def drawBackground(self, painter: QPainter, rect: QRectF) -> None:
@@ -214,14 +226,15 @@ class TemplateScene(QGraphicsScene):
         if self._show_grid:
             self._draw_grid(painter, canvas_rect)
 
-        # 绘制画布边框 (加强对比，深色背景上使用浅灰色边框)
-        painter.setPen(QPen(QColor(100, 100, 100), 1))
+        # 绘制画布边框 - 使用明显的边框标识画布边界
+        # 外边框（浅色）
+        painter.setPen(QPen(QColor(120, 120, 120), 2))
         painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.drawRect(canvas_rect.adjusted(-1, -1, 0, 0)) # 微调边界
-
-        # 内部对比线
-        painter.setPen(QPen(QColor(60, 60, 60), 1))
         painter.drawRect(canvas_rect)
+        
+        # 内边框（深色，增加对比）
+        painter.setPen(QPen(QColor(80, 80, 80), 1))
+        painter.drawRect(canvas_rect.adjusted(1, 1, -1, -1))
 
         painter.restore()
 
@@ -405,7 +418,6 @@ class TemplateCanvas(QGraphicsView):
         self._template = template
 
         if template:
-            logger.info(f"set_template: 模板背景色 = {template.background_color}")
             # 更新画布大小
             self._scene.set_canvas_size(
                 template.canvas_width,
@@ -431,7 +443,6 @@ class TemplateCanvas(QGraphicsView):
         if not self._template:
             return
 
-        logger.info(f"refresh_from_template: 模板背景色 = {self._template.background_color}")
         # 更新画布
         self._scene.set_canvas_size(
             self._template.canvas_width,
@@ -555,6 +566,12 @@ class TemplateCanvas(QGraphicsView):
             self._scene.clearSelection()
 
         if layer_id in self._layer_items:
+            # 关键修复：选中图层前，确保图层项的数据引用是最新的
+            if self._template:
+                layer = self._template.get_layer_by_id(layer_id)
+                if layer:
+                    self._layer_items[layer_id].set_layer_data(layer)
+            
             self._layer_items[layer_id].setSelected(True)
             # 手动触发选择变更信号，确保属性面板更新
             self.selection_changed.emit(self.selected_layers)
@@ -666,6 +683,26 @@ class TemplateCanvas(QGraphicsView):
     def set_show_grid(self, show: bool) -> None:
         """设置是否显示网格."""
         self._scene.set_show_grid(show)
+
+    def get_layers_outside_canvas(self) -> list[tuple[str, str]]:
+        """获取完全超出画布的图层列表.
+        
+        Returns:
+            [(layer_id, layer_name), ...] 完全在画布外的图层
+        """
+        if not self._template:
+            return []
+        
+        outside_layers = []
+        canvas_rect = self._scene.canvas_rect
+        
+        for layer in self._template.get_layers():
+            # 检查图层是否完全在画布外
+            layer_rect = QRectF(layer.x, layer.y, layer.width, layer.height)
+            if not canvas_rect.intersects(layer_rect):
+                outside_layers.append((layer.id, layer.name))
+        
+        return outside_layers
 
     # ========================
     # 事件处理
@@ -785,6 +822,10 @@ class TemplateCanvas(QGraphicsView):
                 layer.x = x
                 layer.y = y
                 self._template.update_layer(layer)
+                
+                # 关键：更新图层项的数据引用，确保后续操作使用最新数据
+                if layer_id in self._layer_items:
+                    self._layer_items[layer_id].set_layer_data(layer)
 
         self.layer_moved.emit(layer_id, x, y)
 
@@ -797,6 +838,10 @@ class TemplateCanvas(QGraphicsView):
                 layer.width = width
                 layer.height = height
                 self._template.update_layer(layer)
+                
+                # 关键：更新图层项的数据引用，确保后续操作使用最新数据
+                if layer_id in self._layer_items:
+                    self._layer_items[layer_id].set_layer_data(layer)
 
         self.layer_resized.emit(layer_id, width, height)
 
