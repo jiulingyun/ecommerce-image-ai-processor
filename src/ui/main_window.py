@@ -1269,9 +1269,11 @@ class MainWindow(QMainWindow):
             self,
             f"关于 {APP_NAME}",
             f"<h3>{APP_NAME}</h3>"
+            f"<p>作者: {APP_AUTHOR}</p>"
             f"<p>版本: {APP_VERSION}</p>"
             "<p>一款基于 AI 的电商图片批量处理工具。</p>"
             "<p>支持背景去除、商品合成、边框添加等功能。</p>",
+            "<p>官网: {APP_URL}</p>"
         )
         logger.debug("显示关于对话框")
 

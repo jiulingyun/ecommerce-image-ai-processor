@@ -78,12 +78,10 @@ class TaskListItem(QFrame):
         """设置 UI."""
         self.setProperty("card", True)
         # 覆盖全局 card 样式中的 padding，由 layout margins 完全控制布局
-        # 必须重写背景和边框，否则可能被部分覆盖
+        # 不设置 background-color 和 border-color，让全局 card 样式处理深色模式
         self.setStyleSheet("""
             TaskListItem[card="true"] {
                 padding: 0px;
-                background-color: #ffffff;
-                border: 1px solid #e8e8e8;
                 border-radius: 8px;
             }
         """)
@@ -149,7 +147,8 @@ class TaskListItem(QFrame):
         bg_name = Path(self._task.background_path).name
         prod_name = Path(self._task.product_path).name
         name_label = QLabel(f"{bg_name[:15]}...")
-        name_label.setStyleSheet("font-size: 13px; color: #333; font-weight: 500;")
+        name_label.setStyleSheet("font-size: 13px; font-weight: 500;")
+        name_label.setProperty("taskName", True)
         name_label.setToolTip(f"背景: {bg_name}\n商品: {prod_name}")
         info_layout.addWidget(name_label)
 

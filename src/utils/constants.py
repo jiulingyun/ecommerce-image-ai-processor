@@ -8,6 +8,7 @@ from pathlib import Path
 APP_NAME = "电商图片批量AI合成与处理桌面工具"
 APP_VERSION = "1.0.0"
 APP_AUTHOR = "Yang"
+APP_URL = "https://jiuling.io"
 
 # ===================
 # 路径常量
