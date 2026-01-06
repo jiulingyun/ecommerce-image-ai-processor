@@ -2,6 +2,7 @@
 
 import sys
 from pathlib import Path
+from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 block_cipher = None
 
@@ -26,17 +27,32 @@ datas = [
     ('VERSION', '.'),  # 版本文件
 ]
 
+# 添加 Qt 插件和资源
+try:
+    qt_datas = collect_data_files('PyQt6.Qt6', subdir='plugins')
+    datas.extend(qt_datas)
+except Exception:
+    pass
+
 # 隐藏导入（确保所有依赖被包含）
 hiddenimports = [
     'PyQt6.QtCore',
     'PyQt6.QtGui',
     'PyQt6.QtWidgets',
+    'PyQt6.sip',
     'PIL._tkinter_finder',
     'keyring.backends',
     'keyring.backends.macOS',  # macOS
     'keyring.backends.Windows',  # Windows
     'keyring.backends.SecretService',  # Linux
 ]
+
+# 添加 Qt 子模块
+try:
+    qt_hidden = collect_submodules('PyQt6')
+    hiddenimports.extend([m for m in qt_hidden if m not in hiddenimports])
+except Exception:
+    pass
 
 # 排除的模块（减小打包体积）
 excludes = [
@@ -54,9 +70,9 @@ a = Analysis(
     binaries=[],
     datas=datas,
     hiddenimports=hiddenimports,
-    hookspath=[],
+    hookspath=['hooks'],
     hooksconfig={},
-    runtime_hooks=[],
+    runtime_hooks=['hooks/runtime_hook_pyqt6.py'],
     excludes=excludes,
     win_no_prefer_redirects=False,
     win_private_assemblies=False,

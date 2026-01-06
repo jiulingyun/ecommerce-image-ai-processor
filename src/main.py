@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -9,6 +10,26 @@ from pathlib import Path
 src_path = Path(__file__).parent
 if str(src_path) not in sys.path:
     sys.path.insert(0, str(src_path))
+
+# PyInstaller 打包后的 Qt 插件路径设置
+if getattr(sys, 'frozen', False):
+    # 获取打包后的资源路径
+    bundle_dir = Path(sys._MEIPASS)
+    
+    # macOS 特定配置
+    if sys.platform == 'darwin':
+        # 设置 Qt 插件路径
+        qt_plugin_path = bundle_dir / 'PyQt6' / 'Qt6' / 'plugins'
+        if qt_plugin_path.exists():
+            os.environ['QT_PLUGIN_PATH'] = str(qt_plugin_path)
+            os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = str(qt_plugin_path / 'platforms')
+        
+        # 设置 Qt 库路径（对于 Qt 框架）
+        qt_lib_path = bundle_dir
+        if qt_lib_path.exists():
+            # 将 Qt 框架路径添加到环境变量
+            current_path = os.environ.get('DYLD_FRAMEWORK_PATH', '')
+            os.environ['DYLD_FRAMEWORK_PATH'] = f"{qt_lib_path}:{current_path}" if current_path else str(qt_lib_path)
 
 
 def main() -> int:
