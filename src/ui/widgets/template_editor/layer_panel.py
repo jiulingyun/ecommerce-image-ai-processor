@@ -451,35 +451,49 @@ class LayerPanel(QWidget):
         # 操作按钮
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(2)
+        
+        # 获取标准图标
+        from PyQt6.QtWidgets import QStyle
+        style = self.style()
 
-        btn_add_text = QPushButton("文字")
-        btn_add_text.setFixedSize(40, 28)
-        btn_add_text.setToolTip("添加文字")
+        # 添加文字按钮
+        btn_add_text = QPushButton()
+        btn_add_text.setIcon(style.standardIcon(QStyle.StandardPixmap.SP_FileIcon))
+        btn_add_text.setFixedSize(36, 32)
+        btn_add_text.setToolTip("添加文字图层")
         btn_add_text.clicked.connect(self.add_text_requested.emit)
         btn_layout.addWidget(btn_add_text)
 
-        btn_add_rect = QPushButton("矩形")
-        btn_add_rect.setFixedSize(40, 28)
+        # 添加矩形按钮
+        btn_add_rect = QPushButton()
+        btn_add_rect.setIcon(style.standardIcon(QStyle.StandardPixmap.SP_DialogYesButton))
+        btn_add_rect.setFixedSize(36, 32)
         btn_add_rect.setToolTip("添加矩形")
         btn_add_rect.clicked.connect(self.add_rectangle_requested.emit)
         btn_layout.addWidget(btn_add_rect)
 
-        btn_add_ellipse = QPushButton("椭圆")
-        btn_add_ellipse.setFixedSize(40, 28)
+        # 添加椭圆按钮
+        btn_add_ellipse = QPushButton()
+        btn_add_ellipse.setIcon(style.standardIcon(QStyle.StandardPixmap.SP_DialogNoButton))
+        btn_add_ellipse.setFixedSize(36, 32)
         btn_add_ellipse.setToolTip("添加椭圆")
         btn_add_ellipse.clicked.connect(self.add_ellipse_requested.emit)
         btn_layout.addWidget(btn_add_ellipse)
 
-        btn_add_image = QPushButton("图片")
-        btn_add_image.setFixedSize(40, 28)
+        # 添加图片按钮
+        btn_add_image = QPushButton()
+        btn_add_image.setIcon(style.standardIcon(QStyle.StandardPixmap.SP_DirIcon))
+        btn_add_image.setFixedSize(36, 32)
         btn_add_image.setToolTip("添加图片")
         btn_add_image.clicked.connect(self.add_image_requested.emit)
         btn_layout.addWidget(btn_add_image)
 
         btn_layout.addStretch()
 
-        btn_delete = QPushButton("删除")
-        btn_delete.setFixedSize(40, 28)
+        # 删除按钮
+        btn_delete = QPushButton()
+        btn_delete.setIcon(style.standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
+        btn_delete.setFixedSize(36, 32)
         btn_delete.setToolTip("删除选中图层")
         btn_delete.clicked.connect(self._delete_selected)
         btn_layout.addWidget(btn_delete)

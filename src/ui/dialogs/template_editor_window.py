@@ -97,6 +97,9 @@ class TemplateEditorWindow(QMainWindow):
 
         # 当前模板
         self._current_template: Optional[TemplateConfig] = None
+        
+        # 未保存状态标记
+        self._is_modified = False
 
         # UI组件引用
         self._toolbar: Optional[EditorToolbar] = None
@@ -127,8 +130,74 @@ class TemplateEditorWindow(QMainWindow):
 
         # 创建默认新模板
         self._create_new_template()
-
+        
         logger.debug("模板编辑器窗口初始化完成")
+
+    # ========================
+    # 工具方法
+    # ========================
+    
+    def _set_modified(self, modified: bool) -> None:
+        """设置未保存状态.
+        
+        Args:
+            modified: 是否已修改
+        """
+        if self._is_modified == modified:
+            return
+        
+        self._is_modified = modified
+        self._update_window_title()
+    
+    def _update_window_title(self) -> None:
+        """更新窗口标题."""
+        title = WINDOW_TITLE
+        if self._current_template:
+            title = f"{WINDOW_TITLE} - {self._current_template.name}"
+        if self._is_modified:
+            title += " *（未保存）"
+        self.setWindowTitle(title)
+    
+    def keyPressEvent(self, event) -> None:
+        """键盘事件处理."""
+        # 方向键微调图层位置
+        if self._canvas and self._canvas.selected_layers:
+            from PyQt6.QtCore import Qt
+            key = event.key()
+            
+            # 检查是否按下了方向键
+            if key in (Qt.Key.Key_Left, Qt.Key.Key_Right, Qt.Key.Key_Up, Qt.Key.Key_Down):
+                # 计算偏移量（Shift键加速）
+                step = 10 if event.modifiers() & Qt.KeyboardModifier.ShiftModifier else 1
+                
+                dx = dy = 0
+                if key == Qt.Key.Key_Left:
+                    dx = -step
+                elif key == Qt.Key.Key_Right:
+                    dx = step
+                elif key == Qt.Key.Key_Up:
+                    dy = -step
+                elif key == Qt.Key.Key_Down:
+                    dy = step
+                
+                # 移动选中的图层
+                for layer_id in self._canvas.selected_layers:
+                    layer = self._current_template.get_layer_by_id(layer_id) if self._current_template else None
+                    if layer:
+                        layer.move_by(dx, dy)
+                        self._current_template.update_layer(layer)
+                        # 更新画布显示
+                        self._canvas.update_layer(layer)
+                        # 更新属性面板
+                        if self._property_panel:
+                            self._property_panel.set_layer(layer)
+                
+                # 标记为已修改
+                self._set_modified(True)
+                event.accept()
+                return
+        
+        super().keyPressEvent(event)
 
     # ========================
     # 初始化方法
@@ -139,6 +208,9 @@ class TemplateEditorWindow(QMainWindow):
         self.setWindowTitle(WINDOW_TITLE)
         self.setMinimumSize(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT)
         self.resize(1400, 900)
+        
+        # 设置焦点策略以接收键盘事件
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
         # 居中显示
         self._center_window()
@@ -365,9 +437,14 @@ class TemplateEditorWindow(QMainWindow):
             self._layer_panel.layer_visibility_changed.connect(
                 self._on_layer_visibility_changed
             )
-            self._layer_panel.layer_lock_changed.connect(
-                self._on_layer_locked_changed
-            )
+            self._layer_panel.layer_lock_changed.connect(self._on_layer_locked_changed)
+            self._layer_panel.layer_order_changed.connect(self._on_layers_reordered)
+            self._layer_panel.layer_delete_requested.connect(self._on_layer_deleted)
+            # 连接添加图层按钮信号
+            self._layer_panel.add_text_requested.connect(self._on_add_text_layer)
+            self._layer_panel.add_rectangle_requested.connect(self._on_add_rectangle)
+            self._layer_panel.add_ellipse_requested.connect(self._on_add_ellipse)
+            self._layer_panel.add_image_requested.connect(self._on_add_image)
             self._layer_panel.layer_order_changed.connect(self._on_layers_reordered)
             self._layer_panel.layer_delete_requested.connect(self._on_layer_deleted)
 
@@ -502,7 +579,7 @@ class TemplateEditorWindow(QMainWindow):
     # ========================
 
     def _add_layer(self, layer) -> None:
-        """添加图层.
+        """添加图层到当前模板.
 
         Args:
             layer: 图层对象
@@ -520,6 +597,9 @@ class TemplateEditorWindow(QMainWindow):
         # 记录撤销
         if self._undo_manager:
             self._undo_manager.record_add_layer(layer)
+        
+        # 标记为已修改
+        self._set_modified(True)
 
         # 选中新图层
         self._canvas.select_layer(layer.id)
@@ -562,6 +642,8 @@ class TemplateEditorWindow(QMainWindow):
                     self._template_list.refresh()
                     self._template_list.select_template(self._current_template.id)
                 self.template_saved.emit(self._current_template)
+                # 清除未保存标记
+                self._set_modified(False)
 
     def _on_save_template_as(self) -> None:
         """另存为."""
@@ -589,6 +671,8 @@ class TemplateEditorWindow(QMainWindow):
                     self._template_list.select_template(new_template.id)
                 
                 self.template_saved.emit(new_template)
+                # 清除未保存标记
+                self._set_modified(False)
                 if self._statusbar:
                     self._statusbar.showMessage(f"模板已保存为: {name}")
 
@@ -766,10 +850,8 @@ class TemplateEditorWindow(QMainWindow):
         # 模板数据已在 canvas._on_item_moved 中更新，这里只需刷新属性面板
         layer = self._current_template.get_layer_by_id(layer_id)
         if layer:
-            # 记录撤销（位置已在画布回调中更新）
-            # 注意：此时 layer.x/y 已经是新值，无法获取 old 值，撤销功能可能需要重新设计
-            # if self._undo_manager:
-            #     self._undo_manager.record_move_layer(layer_id, old_x, old_y, x, y)
+            # 标记为已修改
+            self._set_modified(True)
 
             # 更新属性面板（传入最新的图层数据）
             if self._property_panel:
@@ -789,12 +871,8 @@ class TemplateEditorWindow(QMainWindow):
         # 模板数据已在 canvas._on_item_resized 中更新，这里只需刷新属性面板
         layer = self._current_template.get_layer_by_id(layer_id)
         if layer:
-            # 记录撤销（尺寸已在画布回调中更新）
-            # 注意：此时 layer.width/height 已经是新值，撤销功能可能需要重新设计
-            # if self._undo_manager:
-            #     self._undo_manager.record_resize_layer(
-            #         layer_id, old_width, old_height, width, height
-            #     )
+            # 标记为已修改
+            self._set_modified(True)
 
             # 更新属性面板（传入最新的图层数据）
             if self._property_panel:
@@ -869,6 +947,9 @@ class TemplateEditorWindow(QMainWindow):
             # 同步更新图层面板
             if self._layer_panel:
                 self._layer_panel.remove_layer(layer_id)
+            
+            # 标记为已修改
+            self._set_modified(True)
 
     # ========================
     # 槽函数 - 属性面板
@@ -895,6 +976,9 @@ class TemplateEditorWindow(QMainWindow):
             # 更新图层属性
             setattr(layer, property_name, new_value)
             self._current_template.update_layer(layer)
+            
+            # 标记为已修改
+            self._set_modified(True)
 
             # 更新画布显示，并传递更新后的图层对象
             if self._canvas:
