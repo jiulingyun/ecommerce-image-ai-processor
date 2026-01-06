@@ -349,6 +349,7 @@ class TextLayer(LayerElement):
         le=3.0,
         description="行高倍数",
     )
+    word_wrap: bool = Field(default=True, description="自动换行")
 
     # 背景
     background_enabled: bool = Field(default=False, description="启用背景")

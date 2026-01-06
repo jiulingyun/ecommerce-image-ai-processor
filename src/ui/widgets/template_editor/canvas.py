@@ -573,7 +573,9 @@ class TemplateCanvas(QGraphicsView):
             self._template.update_layer(layer)
 
         if layer_id in self._layer_items:
-            self._layer_items[layer_id].update_from_layer()
+            item = self._layer_items[layer_id]
+            # 同步更新图形项内部的数据引用，然后刷新显示
+            item.set_layer_data(layer)
 
     def set_layer_locked(self, layer_id: str, locked: bool) -> None:
         """设置图层锁定状态.
@@ -591,7 +593,9 @@ class TemplateCanvas(QGraphicsView):
             self._template.update_layer(layer)
 
         if layer_id in self._layer_items:
-            self._layer_items[layer_id].update_from_layer()
+            item = self._layer_items[layer_id]
+            # 同步更新图形项内部的数据引用，然后刷新显示
+            item.set_layer_data(layer)
 
     def reorder_layers(self, layer_ids: list[str]) -> None:
         """重新排序图层.
@@ -687,6 +691,10 @@ class TemplateCanvas(QGraphicsView):
             return
 
         super().mousePressEvent(event)
+        
+        # 立即发射选择变更信号，确保在拖动前选中状态已同步
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.selection_changed.emit(self.selected_layers)
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         """鼠标移动事件."""

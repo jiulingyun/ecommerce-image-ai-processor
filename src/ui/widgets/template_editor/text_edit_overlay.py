@@ -94,6 +94,12 @@ class TextEditWidget(QTextEdit):
         alignment = align_map.get(layer.align, Qt.AlignmentFlag.AlignLeft)
         self.setAlignment(alignment)
 
+        # 设置自动换行
+        if layer.word_wrap:
+            self.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
+        else:
+            self.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
+
         # 设置内容
         self.setPlainText(layer.content)
 

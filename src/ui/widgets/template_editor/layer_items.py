@@ -532,6 +532,14 @@ class TextLayerItem(LayerGraphicsItem):
         self._is_editing = False
         self.update()
 
+    def mouseDoubleClickEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        """双击进入编辑模式."""
+        if not self.is_locked:
+            self.start_editing()
+            event.accept()
+        else:
+            super().mouseDoubleClickEvent(event)
+
     def update_from_layer(self) -> None:
         """从数据模型更新显示."""
         # 调用基类更新通用属性（含位置、尺寸、可见性等）
@@ -549,7 +557,7 @@ class TextLayerItem(LayerGraphicsItem):
         font.setUnderline(layer.underline)
         return font
 
-    def _get_alignment_flags(self) -> Qt.AlignmentFlag:
+    def _get_alignment_flags(self) -> int:
         """获取对齐标志."""
         layer = self._text_layer
         align_map = {
@@ -558,9 +566,13 @@ class TextLayerItem(LayerGraphicsItem):
             TextAlign.RIGHT: Qt.AlignmentFlag.AlignRight,
         }
         alignment = align_map.get(layer.align, Qt.AlignmentFlag.AlignLeft)
-        # 支持自动换行
-        alignment |= Qt.AlignmentFlag.AlignTop | Qt.TextFlag.TextWordWrap
-        return alignment
+        alignment |= Qt.AlignmentFlag.AlignTop
+        
+        # 根据 word_wrap 属性决定是否自动换行
+        if layer.word_wrap:
+            alignment |= Qt.TextFlag.TextWordWrap
+        
+        return int(alignment)
 
     def paint(
         self,
@@ -582,29 +594,31 @@ class TextLayerItem(LayerGraphicsItem):
             bg_color.setAlpha(int(layer.background_opacity * 255 / 100))
             painter.fillRect(rect, bg_color)
 
-        # 设置字体
-        font = self._build_font()
-        painter.setFont(font)
+        # 编辑模式时不绘制文字（由 TextEditOverlay 显示）
+        if not self._is_editing:
+            # 设置字体
+            font = self._build_font()
+            painter.setFont(font)
 
-        # 计算文字区域
-        text_rect = rect.adjusted(
-            layer.background_padding,
-            layer.background_padding,
-            -layer.background_padding,
-            -layer.background_padding,
-        )
+            # 计算文字区域
+            text_rect = rect.adjusted(
+                layer.background_padding,
+                layer.background_padding,
+                -layer.background_padding,
+                -layer.background_padding,
+            )
 
-        # 获取对齐标志
-        alignment = self._get_alignment_flags()
+            # 获取对齐标志
+            alignment = self._get_alignment_flags()
 
-        # 绘制描边
-        if layer.stroke_enabled and layer.stroke_width > 0:
-            self._draw_text_stroke(painter, font, text_rect, alignment)
+            # 绘制描边
+            if layer.stroke_enabled and layer.stroke_width > 0:
+                self._draw_text_stroke(painter, font, text_rect, alignment)
 
-        # 绘制文字
-        text_color = QColor(*layer.font_color)
-        painter.setPen(text_color)
-        painter.drawText(text_rect, int(alignment), layer.content)
+            # 绘制文字
+            text_color = QColor(*layer.font_color)
+            painter.setPen(text_color)
+            painter.drawText(text_rect, int(alignment), layer.content)
 
         # 编辑模式时显示边框指示
         if self._is_editing:

@@ -709,45 +709,48 @@ class TemplateEditorWindow(QMainWindow):
 
     def _on_layer_selected(self, layer_id: str) -> None:
         """画布图层被选中.
-
-        Args:
-            layer_id: 图层ID
+        
+        注意：此信号可能存在竞态，主要逻辑已移至 _on_selection_changed
         """
-        if not self._current_template:
-            return
-
-        layer = self._current_template.get_layer_by_id(layer_id)
-        if layer:
-            # 更新属性面板
-            if self._property_panel:
-                self._property_panel.set_layer(layer)
-
-            # 同步图层面板选择
-            if self._layer_panel:
-                self._layer_panel.select_layer(layer_id)
+        pass
 
     def _on_layer_deselected(self, layer_id: str) -> None:
         """画布图层取消选中.
-
-        Args:
-            layer_id: 图层ID
+        
+        注意：此信号可能存在竞态，主要逻辑已移至 _on_selection_changed
         """
         pass
 
     def _on_selection_changed(self, layer_ids: list[str]) -> None:
-        """画布选择变更.
+        """画布选择变更 - 统一处理选中逻辑.
 
         Args:
             layer_ids: 选中的图层ID列表
         """
-        if not layer_ids and self._property_panel and self._current_template:
+        if not self._current_template:
+            return
+            
+        if layer_ids:
+            # 有选中图层，取第一个（单选模式）
+            layer_id = layer_ids[0]
+            layer = self._current_template.get_layer_by_id(layer_id)
+            if layer:
+                # 更新属性面板
+                if self._property_panel:
+                    self._property_panel.set_layer(layer)
+
+                # 同步图层面板选择
+                if self._layer_panel:
+                    self._layer_panel.select_layer(layer_id)
+        else:
             # 无选中，显示画布属性
-            self._property_panel.set_canvas_properties(
-                self._current_template.canvas_width,
-                self._current_template.canvas_height,
-                self._current_template.background_color,
-            )
-            self._property_panel.set_layer(None)
+            if self._property_panel:
+                self._property_panel.set_canvas_properties(
+                    self._current_template.canvas_width,
+                    self._current_template.canvas_height,
+                    self._current_template.background_color,
+                )
+                self._property_panel.set_layer(None)
 
     def _on_layer_moved(self, layer_id: str, x: int, y: int) -> None:
         """图层移动.
@@ -760,17 +763,17 @@ class TemplateEditorWindow(QMainWindow):
         if not self._current_template:
             return
 
+        # 模板数据已在 canvas._on_item_moved 中更新，这里只需刷新属性面板
         layer = self._current_template.get_layer_by_id(layer_id)
         if layer:
-            old_x, old_y = layer.x, layer.y
-
             # 记录撤销（位置已在画布回调中更新）
-            if self._undo_manager:
-                self._undo_manager.record_move_layer(layer_id, old_x, old_y, x, y)
+            # 注意：此时 layer.x/y 已经是新值，无法获取 old 值，撤销功能可能需要重新设计
+            # if self._undo_manager:
+            #     self._undo_manager.record_move_layer(layer_id, old_x, old_y, x, y)
 
-            # 更新属性面板
+            # 更新属性面板（传入最新的图层数据）
             if self._property_panel:
-                self._property_panel.update_layer()
+                self._property_panel.set_layer(layer)
 
     def _on_layer_resized(self, layer_id: str, width: int, height: int) -> None:
         """图层调整大小.
@@ -783,19 +786,19 @@ class TemplateEditorWindow(QMainWindow):
         if not self._current_template:
             return
 
+        # 模板数据已在 canvas._on_item_resized 中更新，这里只需刷新属性面板
         layer = self._current_template.get_layer_by_id(layer_id)
         if layer:
-            old_width, old_height = layer.width, layer.height
+            # 记录撤销（尺寸已在画布回调中更新）
+            # 注意：此时 layer.width/height 已经是新值，撤销功能可能需要重新设计
+            # if self._undo_manager:
+            #     self._undo_manager.record_resize_layer(
+            #         layer_id, old_width, old_height, width, height
+            #     )
 
-            # 记录撤销
-            if self._undo_manager:
-                self._undo_manager.record_resize_layer(
-                    layer_id, old_width, old_height, width, height
-                )
-
-            # 更新属性面板
+            # 更新属性面板（传入最新的图层数据）
             if self._property_panel:
-                self._property_panel.update_layer()
+                self._property_panel.set_layer(layer)
 
     def _on_layer_content_changed(self, layer_id: str, content: str) -> None:
         """图层内容变更.
@@ -862,6 +865,10 @@ class TemplateEditorWindow(QMainWindow):
                 self._undo_manager.record_remove_layer(layer_id)
             else:
                 self._canvas.remove_layer(layer_id)
+            
+            # 同步更新图层面板
+            if self._layer_panel:
+                self._layer_panel.remove_layer(layer_id)
 
     # ========================
     # 槽函数 - 属性面板

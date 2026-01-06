@@ -357,6 +357,10 @@ class TextPropertyEditor(QWidget):
         self._underline = QCheckBox("下划线")
         self._underline.toggled.connect(lambda v: self._emit_change("underline", v))
         style_layout.addWidget(self._underline)
+        
+        self._word_wrap = QCheckBox("自动换行")
+        self._word_wrap.toggled.connect(lambda v: self._emit_change("word_wrap", v))
+        style_layout.addWidget(self._word_wrap)
         font_layout.addLayout(style_layout, 2, 0, 1, 4)
 
         layout.addWidget(font_group)
@@ -465,6 +469,10 @@ class TextPropertyEditor(QWidget):
         self._underline.blockSignals(True)
         self._underline.setChecked(layer.underline)
         self._underline.blockSignals(False)
+
+        self._word_wrap.blockSignals(True)
+        self._word_wrap.setChecked(layer.word_wrap)
+        self._word_wrap.blockSignals(False)
 
         # 背景
         self._bg_enabled.blockSignals(True)
@@ -962,20 +970,21 @@ class PropertyPanel(QWidget):
         Args:
             layer: 图层数据，None 表示无选中
         """
+        # 先更新 _current_layer，确保信号处理时使用正确的图层 ID
         self._current_layer = layer
 
         if layer is None:
             # 显示画布属性
             self._stack.setCurrentIndex(0)
         elif isinstance(layer, TextLayer):
-            self._text_editor.set_layer(layer)
             self._stack.setCurrentIndex(1)
+            self._text_editor.set_layer(layer)
         elif isinstance(layer, ShapeLayer):
-            self._shape_editor.set_layer(layer)
             self._stack.setCurrentIndex(2)
+            self._shape_editor.set_layer(layer)
         elif isinstance(layer, ImageLayer):
-            self._image_editor.set_layer(layer)
             self._stack.setCurrentIndex(3)
+            self._image_editor.set_layer(layer)
         else:
             self._stack.setCurrentIndex(0)
 
@@ -995,8 +1004,23 @@ class PropertyPanel(QWidget):
 
     def _on_layer_property_changed(self, prop: str, value: Any) -> None:
         """图层属性变化."""
-        if self._current_layer:
-            self.layer_property_changed.emit(self._current_layer.id, prop, value)
+        if not self._current_layer:
+            return
+        
+        # 验证当前显示的编辑器与 _current_layer 类型匹配
+        # 防止切换图层时的竞态条件
+        current_index = self._stack.currentIndex()
+        layer_type_index_map = {
+            1: TextLayer,   # 文字编辑器
+            2: ShapeLayer,  # 形状编辑器
+            3: ImageLayer,  # 图片编辑器
+        }
+        expected_type = layer_type_index_map.get(current_index)
+        if expected_type and not isinstance(self._current_layer, expected_type):
+            # 类型不匹配，忽略此次信号（可能是竞态导致）
+            return
+        
+        self.layer_property_changed.emit(self._current_layer.id, prop, value)
 
     def _on_canvas_property_changed(self, prop: str, value: Any) -> None:
         """画布属性变化."""
