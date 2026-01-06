@@ -6,7 +6,7 @@ from pathlib import Path
 # 应用信息
 # ===================
 APP_NAME = "电商图片批量AI合成与处理桌面工具"
-APP_VERSION = "1.0.0-preview"
+APP_VERSION = "1.0.1-preview"
 APP_AUTHOR = "Yang"
 APP_URL = "https://jiuling.io"
 
