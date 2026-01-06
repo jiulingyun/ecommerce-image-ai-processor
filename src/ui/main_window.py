@@ -915,13 +915,26 @@ class MainWindow(QMainWindow):
             logger.error("队列控制器未初始化")
             return
 
-        # 从右侧面板收集当前配置并应用到任务
+        # 过滤掉已结束的任务（完成/失败/取消），只处理待处理的任务
+        pending_tasks = {
+            task_id: task
+            for task_id, task in self._tasks.items()
+            if not task.is_finished
+        }
+        
+        if not pending_tasks:
+            QMessageBox.information(self, "提示", "所有任务已完成，请添加新任务。")
+            return
+        
+        logger.info(f"开始处理，总任务: {len(self._tasks)}, 待处理: {len(pending_tasks)}")
+
+        # 从右侧面板收集当前配置并应用到待处理的任务
         current_config = self._collect_current_config()
-        for task in self._tasks.values():
+        for task in pending_tasks.values():
             task.config = current_config
 
-        # 传递任务给控制器
-        self._queue_controller.set_tasks(self._tasks)
+        # 传递待处理的任务给控制器
+        self._queue_controller.set_tasks(pending_tasks)
         self._queue_controller.start()
 
         self.set_processing_state(True)
@@ -1273,9 +1286,9 @@ class MainWindow(QMainWindow):
             f"<h3>{APP_NAME}</h3>"
             f"<p>作者: {APP_AUTHOR}</p>"
             f"<p>版本: {APP_VERSION}</p>"
-            "<p>一款基于 AI 的电商图片批量处理工具。</p>"
-            "<p>支持背景去除、商品合成、边框添加等功能。</p>",
-            "<p>官网: {APP_URL}</p>"
+            f"<p>一款基于 AI 的电商图片批量处理工具。</p>"
+            f"<p>支持背景去除、商品合成、边框添加等功能。</p>"
+            f"<p>官网: {APP_URL}</p>"
         )
         logger.debug("显示关于对话框")
 

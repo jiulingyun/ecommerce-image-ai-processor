@@ -397,45 +397,78 @@ class TemplateRenderer:
         temp = Image.new("RGBA", image.size, (0, 0, 0, 0))
         draw = ImageDraw.Draw(temp)
 
-        # 计算文字边界
-        bbox = draw.textbbox((0, 0), layer.content, font=font)
-        text_width = bbox[2] - bbox[0]
-        text_height = bbox[3] - bbox[1]
+        # 处理多行文本
+        lines = layer.content.split('\n') if '\n' in layer.content else [layer.content]
+        
+        # 计算行高
+        line_height_px = int(scaled_font_size * layer.line_height)
+        
+        # 计算每行的宽度和总高度
+        line_widths = []
+        line_heights = []
+        for line in lines:
+            bbox = draw.textbbox((0, 0), line or ' ', font=font)
+            line_widths.append(bbox[2] - bbox[0])
+            line_heights.append(bbox[3] - bbox[1])
+        
+        text_width = max(line_widths) if line_widths else 0
+        total_height = sum(line_heights) + line_height_px * (len(lines) - 1) if lines else 0
 
         # 缩放后的位置
-        x = int(layer.x * scale_x)
-        y = int(layer.y * scale_y)
+        base_x = int(layer.x * scale_x)
+        base_y = int(layer.y * scale_y)
 
         # 绘制背景
         if layer.background_enabled:
-            padding = layer.background_padding
+            padding = int(layer.background_padding * avg_scale)
             bg_color = (*layer.background_color, int(layer.background_opacity * 2.55))
             draw.rectangle(
                 [
-                    x - padding,
-                    y - padding,
-                    x + text_width + padding,
-                    y + text_height + padding,
+                    base_x - padding,
+                    base_y - padding,
+                    base_x + text_width + padding,
+                    base_y + total_height + padding,
                 ],
                 fill=bg_color,
             )
 
-        # 绘制描边
-        if layer.stroke_enabled:
-            stroke_color = (*layer.stroke_color, 255)
-            for dx in range(-layer.stroke_width, layer.stroke_width + 1):
-                for dy in range(-layer.stroke_width, layer.stroke_width + 1):
-                    if dx != 0 or dy != 0:
-                        draw.text(
-                            (x + dx, y + dy),
-                            layer.content,
-                            font=font,
-                            fill=stroke_color,
-                        )
-
-        # 绘制文字
+        # 绘制文字（逐行绘制）
         text_color = (*layer.font_color, int(layer.opacity * 2.55))
-        draw.text((x, y), layer.content, font=font, fill=text_color)
+        scaled_stroke_width = max(1, int(layer.stroke_width * avg_scale)) if layer.stroke_enabled else 0
+        
+        current_y = base_y
+        for i, line in enumerate(lines):
+            if not line:
+                current_y += line_height_px
+                continue
+            
+            # 计算当前行的 X 位置（根据对齐方式）
+            line_width = line_widths[i]
+            if layer.align == TextAlign.CENTER:
+                x = base_x + (text_width - line_width) // 2
+            elif layer.align == TextAlign.RIGHT:
+                x = base_x + text_width - line_width
+            else:  # LEFT
+                x = base_x
+            
+            # 绘制描边
+            if layer.stroke_enabled:
+                stroke_color = (*layer.stroke_color, 255)
+                for dx in range(-scaled_stroke_width, scaled_stroke_width + 1):
+                    for dy in range(-scaled_stroke_width, scaled_stroke_width + 1):
+                        if dx != 0 or dy != 0:
+                            draw.text(
+                                (x + dx, current_y + dy),
+                                line,
+                                font=font,
+                                fill=stroke_color,
+                            )
+            
+            # 绘制文字
+            draw.text((x, current_y), line, font=font, fill=text_color)
+            
+            # 移动到下一行
+            current_y += line_heights[i] + line_height_px
 
         # 合成
         image = Image.alpha_composite(image, temp)

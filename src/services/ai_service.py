@@ -260,6 +260,18 @@ def get_ai_service(
     global _ai_service_instance
 
     if _ai_service_instance is None:
+        # 如果没有提供 config，尝试从配置管理器加载
+        if config is None:
+            try:
+                from src.core.config_manager import get_config
+                config_manager = get_config()
+                api_data = config_manager.get_user_config("api_config", {})
+                if api_data:
+                    config = APIConfig.model_validate(api_data)
+                    logger.info("从配置管理器加载 API 配置")
+            except Exception as e:
+                logger.warning(f"无法从配置管理器加载 API 配置: {e}")
+        
         _ai_service_instance = AIService(config, provider_type)
     elif config is not None:
         _ai_service_instance.config = config
