@@ -142,15 +142,17 @@ class LabeledSpinBox(QWidget):
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(4)
+        layout.setSpacing(2)
 
         self._label = QLabel(label)
-        self._label.setFixedWidth(24)
+        # 移除固定宽度，让其自适应但保持紧凑
+        self._label.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Preferred)
         layout.addWidget(self._label)
 
         self._spinbox = QSpinBox()
         self._spinbox.setRange(min_val, max_val)
         self._spinbox.setValue(value)
+        self._spinbox.setMinimumWidth(50)  # 确保最小宽度
         self._spinbox.valueChanged.connect(self.value_changed.emit)
         layout.addWidget(self._spinbox, 1)
 
@@ -300,7 +302,7 @@ class TextPropertyEditor(QWidget):
         """设置UI."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(8)
+        layout.setSpacing(4)  # 减少间距
 
         # 位置尺寸
         self._transform = TransformEditor()
@@ -311,6 +313,7 @@ class TextPropertyEditor(QWidget):
         # 字体样式组
         font_group = QGroupBox("字体样式")
         font_layout = QGridLayout(font_group)
+        font_layout.setContentsMargins(4, 8, 4, 4)
         font_layout.setSpacing(4)
 
         # 字体大小
@@ -318,28 +321,31 @@ class TextPropertyEditor(QWidget):
         self._font_size = QSpinBox()
         self._font_size.setRange(8, 200)
         self._font_size.setValue(24)
+        self._font_size.setMinimumWidth(60)
         self._font_size.valueChanged.connect(
             lambda v: self._emit_change("font_size", v)
         )
         font_layout.addWidget(self._font_size, 0, 1)
 
         # 字体颜色
-        font_layout.addWidget(QLabel("颜色:"), 1, 0)
+        font_layout.addWidget(QLabel("颜色:"), 0, 2)
         self._font_color = ColorButton((0, 0, 0))
+        self._font_color.setFixedSize(50, 24) # 稍微减小宽度
         self._font_color.color_changed.connect(
             lambda c: self._emit_change("font_color", c)
         )
-        font_layout.addWidget(self._font_color, 1, 1)
+        font_layout.addWidget(self._font_color, 0, 3)
 
         # 对齐方式
-        font_layout.addWidget(QLabel("对齐:"), 2, 0)
+        font_layout.addWidget(QLabel("对齐:"), 1, 0)
         self._align = QComboBox()
         self._align.addItems(["左对齐", "居中", "右对齐"])
         self._align.currentIndexChanged.connect(self._on_align_changed)
-        font_layout.addWidget(self._align, 2, 1)
+        font_layout.addWidget(self._align, 1, 1, 1, 3)
 
         # 样式复选框
         style_layout = QHBoxLayout()
+        style_layout.setSpacing(8)
         self._bold = QCheckBox("粗体")
         self._bold.toggled.connect(lambda v: self._emit_change("bold", v))
         style_layout.addWidget(self._bold)
@@ -351,13 +357,14 @@ class TextPropertyEditor(QWidget):
         self._underline = QCheckBox("下划线")
         self._underline.toggled.connect(lambda v: self._emit_change("underline", v))
         style_layout.addWidget(self._underline)
-        font_layout.addLayout(style_layout, 3, 0, 1, 2)
+        font_layout.addLayout(style_layout, 2, 0, 1, 4)
 
         layout.addWidget(font_group)
 
         # 背景设置组
         bg_group = QGroupBox("背景")
         bg_layout = QGridLayout(bg_group)
+        bg_layout.setContentsMargins(4, 8, 4, 4)
         bg_layout.setSpacing(4)
 
         self._bg_enabled = QCheckBox("启用背景")
@@ -366,24 +373,26 @@ class TextPropertyEditor(QWidget):
         )
         bg_layout.addWidget(self._bg_enabled, 0, 0, 1, 2)
 
-        bg_layout.addWidget(QLabel("颜色:"), 1, 0)
+        bg_layout.addWidget(QLabel("颜色:"), 0, 2)
         self._bg_color = ColorButton((255, 255, 255))
+        self._bg_color.setFixedSize(50, 24)
         self._bg_color.color_changed.connect(
             lambda c: self._emit_change("background_color", c)
         )
-        bg_layout.addWidget(self._bg_color, 1, 1)
+        bg_layout.addWidget(self._bg_color, 0, 3)
 
         self._bg_opacity = LabeledSlider("透明度:", 0, 100, 100, "%")
         self._bg_opacity.value_changed.connect(
             lambda v: self._emit_change("background_opacity", v)
         )
-        bg_layout.addWidget(self._bg_opacity, 2, 0, 1, 2)
+        bg_layout.addWidget(self._bg_opacity, 1, 0, 1, 4)
 
         layout.addWidget(bg_group)
 
         # 描边设置组
         stroke_group = QGroupBox("描边")
         stroke_layout = QGridLayout(stroke_group)
+        stroke_layout.setContentsMargins(4, 8, 4, 4)
         stroke_layout.setSpacing(4)
 
         self._stroke_enabled = QCheckBox("启用描边")
@@ -392,20 +401,22 @@ class TextPropertyEditor(QWidget):
         )
         stroke_layout.addWidget(self._stroke_enabled, 0, 0, 1, 2)
 
-        stroke_layout.addWidget(QLabel("颜色:"), 1, 0)
+        stroke_layout.addWidget(QLabel("颜色:"), 0, 2)
         self._stroke_color = ColorButton((255, 255, 255))
+        self._stroke_color.setFixedSize(50, 24)
         self._stroke_color.color_changed.connect(
             lambda c: self._emit_change("stroke_color", c)
         )
-        stroke_layout.addWidget(self._stroke_color, 1, 1)
+        stroke_layout.addWidget(self._stroke_color, 0, 3)
 
-        stroke_layout.addWidget(QLabel("宽度:"), 2, 0)
+        stroke_layout.addWidget(QLabel("宽度:"), 1, 0)
         self._stroke_width = QSpinBox()
         self._stroke_width.setRange(1, 10)
+        self._stroke_width.setMinimumWidth(60)
         self._stroke_width.valueChanged.connect(
             lambda v: self._emit_change("stroke_width", v)
         )
-        stroke_layout.addWidget(self._stroke_width, 2, 1)
+        stroke_layout.addWidget(self._stroke_width, 1, 1)
 
         layout.addWidget(stroke_group)
 
@@ -900,6 +911,7 @@ class PropertyPanel(QWidget):
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         """初始化属性面板."""
         super().__init__(parent)
+        self.setAutoFillBackground(True)
         self._current_layer: Optional[AnyLayer] = None
         self._setup_ui()
 

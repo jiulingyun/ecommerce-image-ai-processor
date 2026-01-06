@@ -265,49 +265,70 @@ class TemplateEditorWindow(QMainWindow):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
-        # 上下分割（主区域 + 图层面板）
-        v_splitter = QSplitter(Qt.Orientation.Vertical)
-        main_layout.addWidget(v_splitter)
+        # 主分割器（水平分割：列表 | 画布 | 右侧面板）
+        self._main_splitter = QSplitter(Qt.Orientation.Horizontal)
+        self._main_splitter.setHandleWidth(1)  # 细分割线
+        main_layout.addWidget(self._main_splitter)
 
-        # 上部：左中右三栏
-        top_container = QWidget()
-        top_layout = QHBoxLayout(top_container)
-        top_layout.setContentsMargins(0, 0, 0, 0)
-        top_layout.setSpacing(0)
-
-        # 左右分割
-        h_splitter = QSplitter(Qt.Orientation.Horizontal)
-        top_layout.addWidget(h_splitter)
-
-        # 左侧：模板列表
+        # 1. 左侧：模板列表
         self._template_list = TemplateListWidget(manager=self._template_manager)
+        self._template_list.setObjectName("templateListContainer")
         self._template_list.setMinimumWidth(200)
         self._template_list.setMaximumWidth(300)
-        h_splitter.addWidget(self._template_list)
+        self._main_splitter.addWidget(self._template_list)
 
-        # 中间：画布
+        # 2. 中间：画布区域
+        # 使用容器包裹画布，以便后续添加标尺或滚动条控制
+        canvas_container = QWidget()
+        canvas_layout = QVBoxLayout(canvas_container)
+        canvas_layout.setContentsMargins(0, 0, 0, 0)
+        canvas_layout.setSpacing(0)
+        
         self._canvas = TemplateCanvas()
-        h_splitter.addWidget(self._canvas)
+        canvas_layout.addWidget(self._canvas)
+        
+        self._main_splitter.addWidget(canvas_container)
 
-        # 右侧：属性面板
+        # 3. 右侧：属性面板 + 图层面板
+        right_panel_container = QWidget()
+        right_panel_container.setObjectName("rightPanelContainer")
+        right_layout = QVBoxLayout(right_panel_container)
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        right_layout.setSpacing(0)
+        
+        # 右侧分割器（垂直分割：属性 | 图层）
+        self._right_splitter = QSplitter(Qt.Orientation.Vertical)
+        self._right_splitter.setHandleWidth(1)
+        right_layout.addWidget(self._right_splitter)
+
+        # 3.1 属性面板 (Top)
         self._property_panel = PropertyPanel()
-        self._property_panel.setMinimumWidth(280)
-        self._property_panel.setMaximumWidth(400)
-        h_splitter.addWidget(self._property_panel)
+        self._property_panel.setMinimumHeight(200)
+        self._right_splitter.addWidget(self._property_panel)
 
-        # 设置分割比例
-        h_splitter.setSizes([250, 700, 350])
-
-        v_splitter.addWidget(top_container)
-
-        # 下部：图层面板
+        # 3.2 图层面板 (Bottom)
         self._layer_panel = LayerPanel()
-        self._layer_panel.setMinimumHeight(150)
-        self._layer_panel.setMaximumHeight(250)
-        v_splitter.addWidget(self._layer_panel)
+        self._layer_panel.setMinimumHeight(200)
+        self._right_splitter.addWidget(self._layer_panel)
 
-        # 设置分割比例
-        v_splitter.setSizes([650, 200])
+        # 添加到主分割器
+        self._main_splitter.addWidget(right_panel_container)
+
+        # 设置右侧面板宽度限制
+        right_panel_container.setMinimumWidth(280)
+        right_panel_container.setMaximumWidth(400)
+
+        # 设置初始分割比例
+        self._main_splitter.setStretchFactor(0, 0)  # 列表
+        self._main_splitter.setStretchFactor(1, 1)  # 画布 (拉伸)
+        self._main_splitter.setStretchFactor(2, 0)  # 右侧面板
+        
+        # 设置右侧垂直分割比例 (属性 4 : 图层 6)
+        self._right_splitter.setStretchFactor(0, 4)
+        self._right_splitter.setStretchFactor(1, 6)
+
+        # 设置初始大小
+        self._main_splitter.setSizes([250, 800, 320])
 
     def _setup_statusbar(self) -> None:
         """设置状态栏."""
@@ -536,6 +557,10 @@ class TemplateEditorWindow(QMainWindow):
         """保存当前模板."""
         if self._current_template:
             if self._save_template():
+                # 刷新列表并重新选中当前模板
+                if self._template_list:
+                    self._template_list.refresh()
+                    self._template_list.select_template(self._current_template.id)
                 self.template_saved.emit(self._current_template)
 
     def _on_save_template_as(self) -> None:
@@ -558,6 +583,11 @@ class TemplateEditorWindow(QMainWindow):
             )
             if new_template:
                 self._set_current_template(new_template)
+                # 刷新列表并选中新模板
+                if self._template_list:
+                    self._template_list.refresh()
+                    self._template_list.select_template(new_template.id)
+                
                 self.template_saved.emit(new_template)
                 if self._statusbar:
                     self._statusbar.showMessage(f"模板已保存为: {name}")
@@ -859,9 +889,9 @@ class TemplateEditorWindow(QMainWindow):
             setattr(layer, property_name, new_value)
             self._current_template.update_layer(layer)
 
-            # 更新画布显示
+            # 更新画布显示，并传递更新后的图层对象
             if self._canvas:
-                self._canvas.update_layer(layer_id)
+                self._canvas.update_layer(layer_id, layer)
 
             # 记录撤销
             if self._undo_manager:
@@ -880,6 +910,8 @@ class TemplateEditorWindow(QMainWindow):
         """
         if not self._current_template:
             return
+
+        logger.info(f"_on_canvas_property_changed: {property_name} = {new_value}")
 
         # 获取旧值
         old_value = getattr(self._current_template, property_name, None)

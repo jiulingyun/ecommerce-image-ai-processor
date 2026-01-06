@@ -81,7 +81,7 @@ class TemplateListItem(QListWidgetItem):
 # ===================
 
 
-class TemplateListWidget(QWidget):
+class TemplateListWidget(QFrame):
     """模板列表组件.
 
     显示和管理模板列表。

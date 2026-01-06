@@ -24,6 +24,7 @@ from PyQt6.QtGui import (
     QMouseEvent,
     QKeyEvent,
     QTransform,
+    QPixmap,
 )
 from PyQt6.QtWidgets import (
     QGraphicsView,
@@ -63,16 +64,16 @@ ZOOM_STEP = 0.1
 
 # 网格设置
 GRID_SIZE = 20
-GRID_COLOR = QColor(230, 230, 230)
-GRID_MAJOR_COLOR = QColor(200, 200, 200)
+GRID_COLOR = QColor(200, 200, 200, 50)
+GRID_MAJOR_COLOR = QColor(180, 180, 180, 100)
 GRID_MAJOR_INTERVAL = 5  # 每5个小格一条主线
 
 # 画布边距（场景超出画布的区域）
-CANVAS_MARGIN = 100
+CANVAS_MARGIN = 200
 
 # 画布边框颜色
-CANVAS_BORDER_COLOR = QColor(200, 200, 200)
-CANVAS_SHADOW_COLOR = QColor(0, 0, 0, 30)
+CANVAS_BORDER_COLOR = QColor(0, 0, 0)
+CANVAS_SHADOW_COLOR = QColor(0, 0, 0, 100)
 
 
 # ===================
@@ -132,9 +133,22 @@ class TemplateScene(QGraphicsScene):
         self.update()
 
     def set_background_color(self, color: tuple) -> None:
-        """设置背景颜色."""
-        self._background_color = QColor(*color)
-        self.update()
+        """设置背景颜色.
+        
+        Args:
+            color: RGB元组 (r, g, b) 或 RGBA元组 (r, g, b, a)
+        """
+        if len(color) == 3:
+            self._background_color = QColor(color[0], color[1], color[2])
+        elif len(color) >= 4:
+            self._background_color = QColor(color[0], color[1], color[2], color[3])
+        else:
+            self._background_color = QColor(255, 255, 255)
+        
+        logger.info(f"设置画布背景色: {color} -> QColor({self._background_color.red()}, {self._background_color.green()}, {self._background_color.blue()}, {self._background_color.alpha()})")
+        
+        # 强制刷新整个场景区域
+        self.invalidate(self.sceneRect(), QGraphicsScene.SceneLayer.BackgroundLayer)
 
     def set_show_grid(self, show: bool) -> None:
         """设置是否显示网格."""
@@ -154,11 +168,11 @@ class TemplateScene(QGraphicsScene):
         """绘制背景."""
         painter.save()
 
-        # 绘制场景背景（画布外区域）
-        painter.fillRect(rect, QColor(245, 245, 245))
+        # 绘制场景背景（画布外区域）- 深色背景
+        painter.fillRect(rect, QColor(30, 30, 30))
 
         # 绘制画布阴影
-        shadow_offset = 4
+        shadow_offset = 5
         shadow_rect = QRectF(
             shadow_offset,
             shadow_offset,
@@ -169,15 +183,44 @@ class TemplateScene(QGraphicsScene):
 
         # 绘制画布背景
         canvas_rect = self.canvas_rect
-        painter.fillRect(canvas_rect, self._background_color)
+        
+        # 直接绘制背景色，不再绘制棋盘格
+        # 棋盘格仅在背景色为透明时才显示
+        bg_color = self._background_color
+        
+        # 如果背景色是完全不透明的，直接绘制背景色
+        if bg_color.alpha() == 255:
+            painter.fillRect(canvas_rect, bg_color)
+        else:
+            # 否则先绘制棋盘格，再叠加背景色
+            check_size = 20
+            check_color1 = QColor(200, 200, 200)  # 浅灰
+            check_color2 = QColor(240, 240, 240)  # 更浅的灰
+            
+            if canvas_rect.intersects(rect):
+                pixmap = QPixmap(check_size * 2, check_size * 2)
+                pixmap.fill(check_color1)
+                p = QPainter(pixmap)
+                p.fillRect(0, 0, check_size, check_size, check_color2)
+                p.fillRect(check_size, check_size, check_size, check_size, check_color2)
+                p.end()
+                painter.fillRect(canvas_rect, QBrush(pixmap))
+            
+            # 叠加半透明背景色
+            if bg_color.alpha() > 0:
+                painter.fillRect(canvas_rect, bg_color)
 
         # 绘制网格
         if self._show_grid:
             self._draw_grid(painter, canvas_rect)
 
-        # 绘制画布边框
-        painter.setPen(QPen(CANVAS_BORDER_COLOR, 1))
+        # 绘制画布边框 (加强对比，深色背景上使用浅灰色边框)
+        painter.setPen(QPen(QColor(100, 100, 100), 1))
         painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.drawRect(canvas_rect.adjusted(-1, -1, 0, 0)) # 微调边界
+
+        # 内部对比线
+        painter.setPen(QPen(QColor(60, 60, 60), 1))
         painter.drawRect(canvas_rect)
 
         painter.restore()
@@ -288,8 +331,8 @@ class TemplateCanvas(QGraphicsView):
         # 启用鼠标追踪
         self.setMouseTracking(True)
 
-        # 设置背景
-        self.setBackgroundBrush(QBrush(QColor(245, 245, 245)))
+        # 不设置视图背景画刷，让场景完全负责背景绘制
+        # self.setBackgroundBrush(QBrush(QColor(40, 40, 40)))
 
     def _setup_scene(self) -> None:
         """设置场景."""
@@ -358,6 +401,7 @@ class TemplateCanvas(QGraphicsView):
         self._template = template
 
         if template:
+            logger.info(f"set_template: 模板背景色 = {template.background_color}")
             # 更新画布大小
             self._scene.set_canvas_size(
                 template.canvas_width,
@@ -383,6 +427,7 @@ class TemplateCanvas(QGraphicsView):
         if not self._template:
             return
 
+        logger.info(f"refresh_from_template: 模板背景色 = {self._template.background_color}")
         # 更新画布
         self._scene.set_canvas_size(
             self._template.canvas_width,
@@ -480,14 +525,20 @@ class TemplateCanvas(QGraphicsView):
         """
         return self._layer_items.get(layer_id)
 
-    def update_layer(self, layer_id: str) -> None:
+    def update_layer(self, layer_id: str, new_layer: Optional[AnyLayer] = None) -> None:
         """更新图层显示.
 
         Args:
             layer_id: 图层ID
+            new_layer: 可选的新图层数据对象
         """
         if layer_id in self._layer_items:
-            self._layer_items[layer_id].update_from_layer()
+            item = self._layer_items[layer_id]
+            if new_layer:
+                item.set_layer_data(new_layer)
+            
+            # 更新图层显示
+            item.update_from_layer()
 
     def select_layer(self, layer_id: str, clear_others: bool = True) -> None:
         """选中图层.

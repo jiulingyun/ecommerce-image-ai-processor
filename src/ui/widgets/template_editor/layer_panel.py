@@ -73,7 +73,11 @@ class LayerItemWidget(QFrame):
         super().__init__(parent)
         self._layer = layer
         self._is_editing_name = False
+        self._is_selected = False
 
+        # 确保背景色能正确应用
+        self.setAutoFillBackground(True)
+        
         self._setup_ui()
         self._update_display()
 
@@ -90,11 +94,15 @@ class LayerItemWidget(QFrame):
     def _setup_ui(self) -> None:
         """设置UI."""
         self.setFrameStyle(QFrame.Shape.StyledPanel)
-        self.setFixedHeight(40)
-
+        
+        # 使用水平布局，添加足够的内边距
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(4, 2, 4, 2)
-        layout.setSpacing(4)
+        layout.setContentsMargins(8, 6, 8, 6)
+        layout.setSpacing(6)
+        layout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
+
+        # 确保整体高度足够容纳内容和边框
+        self.setMinimumHeight(48)
 
         # 图标/缩略图
         self._icon_label = QLabel()
@@ -115,16 +123,16 @@ class LayerItemWidget(QFrame):
         layout.addWidget(self._name_edit)
 
         # 可见性按钮
-        self._visibility_btn = QPushButton("👁")
-        self._visibility_btn.setFixedSize(24, 24)
+        self._visibility_btn = QPushButton("显")
+        self._visibility_btn.setFixedSize(28, 24)
         self._visibility_btn.setFlat(True)
         self._visibility_btn.setToolTip("显示/隐藏")
         self._visibility_btn.clicked.connect(self._toggle_visibility)
         layout.addWidget(self._visibility_btn)
 
         # 锁定按钮
-        self._lock_btn = QPushButton("🔓")
-        self._lock_btn.setFixedSize(24, 24)
+        self._lock_btn = QPushButton("锁")
+        self._lock_btn.setFixedSize(28, 24)
         self._lock_btn.setFlat(True)
         self._lock_btn.setToolTip("锁定/解锁")
         self._lock_btn.clicked.connect(self._toggle_lock)
@@ -136,10 +144,10 @@ class LayerItemWidget(QFrame):
 
         # 更新图标
         icon_map = {
-            LayerType.TEXT: "T",
-            LayerType.RECTANGLE: "□",
-            LayerType.ELLIPSE: "○",
-            LayerType.IMAGE: "🖼",
+            LayerType.TEXT: "文",
+            LayerType.RECTANGLE: "矩",
+            LayerType.ELLIPSE: "圆",
+            LayerType.IMAGE: "图",
         }
         self._icon_label.setText(icon_map.get(layer.type, "?"))
 
@@ -148,19 +156,18 @@ class LayerItemWidget(QFrame):
         self._name_label.setText(name)
 
         # 更新可见性按钮
-        self._visibility_btn.setText("👁" if layer.visible else "👁‍🗨")
+        self._visibility_btn.setText("显" if layer.visible else "隐")
         self._visibility_btn.setStyleSheet(
             "" if layer.visible else "color: gray;"
         )
 
         # 更新锁定按钮
-        self._lock_btn.setText("🔒" if layer.locked else "🔓")
+        self._lock_btn.setText("锁" if layer.locked else "开")
 
         # 更新整体样式
-        if not layer.visible:
-            self.setStyleSheet("QFrame { background-color: #f0f0f0; }")
-        else:
-            self.setStyleSheet("")
+        self.setProperty("hidden_layer", not layer.visible)
+        self.style().unpolish(self)
+        self.style().polish(self)
 
     def _get_layer_name(self) -> str:
         """获取图层显示名称."""
@@ -225,6 +232,16 @@ class LayerItemWidget(QFrame):
         """从图层数据更新显示."""
         self._update_display()
 
+    def set_selected(self, selected: bool) -> None:
+        """设置选中状态."""
+        if self._is_selected != selected:
+            self._is_selected = selected
+            self.setProperty("selected", selected)
+            # 强制重新应用样式
+            self.style().unpolish(self)
+            self.style().polish(self)
+            self.update()
+
     def mouseDoubleClickEvent(self, event) -> None:
         """双击重命名."""
         self.start_rename()
@@ -262,8 +279,8 @@ class LayerListWidget(QListWidget):
         self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
         self.setDefaultDropAction(Qt.DropAction.MoveAction)
 
-        # 样式
-        self.setSpacing(2)
+        # 样式 - 增加列表项之间的间距
+        self.setSpacing(6)
 
         # 信号
         self.itemSelectionChanged.connect(self._on_selection_changed)
@@ -326,12 +343,25 @@ class LayerListWidget(QListWidget):
             self._layer_items[layer_id].update_from_layer()
 
     def select_layer(self, layer_id: str) -> None:
-        """选中指定图层."""
+        """选中指定图层.
+        
+        注意: 此方法不会触发 layer_selected 信号，仅更新UI状态。
+        """
+        # 先检查是否已经选中
+        if self.get_selected_layer_id() == layer_id:
+            return
+            
+        # 阻断信号以避免递归
+        self.blockSignals(True)
         for i in range(self.count()):
             item = self.item(i)
             if item.data(Qt.ItemDataRole.UserRole) == layer_id:
                 self.setCurrentItem(item)
                 break
+        self.blockSignals(False)
+        
+        # 仅更新图层项的选中视觉状态，不发射信号
+        self._update_selection_visual()
 
     def get_selected_layer_id(self) -> Optional[str]:
         """获取选中的图层ID."""
@@ -347,11 +377,21 @@ class LayerListWidget(QListWidget):
             for i in range(self.count())
         ]
 
+    def _update_selection_visual(self) -> None:
+        """更新图层项的选中视觉状态."""
+        selected_id = self.get_selected_layer_id()
+        for layer_id, item_widget in self._layer_items.items():
+            item_widget.set_selected(layer_id == selected_id)
+
     def _on_selection_changed(self) -> None:
-        """选择变化处理."""
-        layer_id = self.get_selected_layer_id()
-        if layer_id:
-            self.layer_selected.emit(layer_id)
+        """选择变化处理 - 用户交互触发."""
+        # 更新视觉状态
+        self._update_selection_visual()
+        
+        # 发射信号
+        selected_id = self.get_selected_layer_id()
+        if selected_id:
+            self.layer_selected.emit(selected_id)
 
     def dropEvent(self, event) -> None:
         """拖放事件 - 更新图层顺序."""
@@ -385,6 +425,7 @@ class LayerPanel(QWidget):
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         """初始化图层管理面板."""
         super().__init__(parent)
+        self.setAutoFillBackground(True)
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -411,34 +452,34 @@ class LayerPanel(QWidget):
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(2)
 
-        btn_add_text = QPushButton("T")
-        btn_add_text.setFixedSize(28, 28)
+        btn_add_text = QPushButton("文字")
+        btn_add_text.setFixedSize(40, 28)
         btn_add_text.setToolTip("添加文字")
         btn_add_text.clicked.connect(self.add_text_requested.emit)
         btn_layout.addWidget(btn_add_text)
 
-        btn_add_rect = QPushButton("□")
-        btn_add_rect.setFixedSize(28, 28)
+        btn_add_rect = QPushButton("矩形")
+        btn_add_rect.setFixedSize(40, 28)
         btn_add_rect.setToolTip("添加矩形")
         btn_add_rect.clicked.connect(self.add_rectangle_requested.emit)
         btn_layout.addWidget(btn_add_rect)
 
-        btn_add_ellipse = QPushButton("○")
-        btn_add_ellipse.setFixedSize(28, 28)
+        btn_add_ellipse = QPushButton("椭圆")
+        btn_add_ellipse.setFixedSize(40, 28)
         btn_add_ellipse.setToolTip("添加椭圆")
         btn_add_ellipse.clicked.connect(self.add_ellipse_requested.emit)
         btn_layout.addWidget(btn_add_ellipse)
 
-        btn_add_image = QPushButton("🖼")
-        btn_add_image.setFixedSize(28, 28)
+        btn_add_image = QPushButton("图片")
+        btn_add_image.setFixedSize(40, 28)
         btn_add_image.setToolTip("添加图片")
         btn_add_image.clicked.connect(self.add_image_requested.emit)
         btn_layout.addWidget(btn_add_image)
 
         btn_layout.addStretch()
 
-        btn_delete = QPushButton("🗑")
-        btn_delete.setFixedSize(28, 28)
+        btn_delete = QPushButton("删除")
+        btn_delete.setFixedSize(40, 28)
         btn_delete.setToolTip("删除选中图层")
         btn_delete.clicked.connect(self._delete_selected)
         btn_layout.addWidget(btn_delete)

@@ -85,10 +85,11 @@ class PromptConfigPanel(QFrame):
 
         # 模板说明
         self._template_desc = QLabel()
+        self._template_desc.setProperty("hint", True)
         self._template_desc.setWordWrap(True)
-        self._template_desc.setStyleSheet(
-            "color: #666; font-size: 11px; padding: 4px 0;"
-        )
+        # self._template_desc.setStyleSheet(
+        #     "color: #666; font-size: 11px; padding: 4px 0;"
+        # )
         template_layout.addWidget(self._template_desc)
 
         layout.addWidget(template_group)
@@ -103,23 +104,13 @@ class PromptConfigPanel(QFrame):
         self._prompt_edit.setPlaceholderText("输入自定义提示词，或选择模板自动填充...")
         self._prompt_edit.setFixedHeight(120)
         self._prompt_edit.setLineWrapMode(QPlainTextEdit.LineWrapMode.WidgetWidth)
-        self._prompt_edit.setStyleSheet("""
-            QPlainTextEdit {
-                border: 1px solid #d9d9d9;
-                border-radius: 4px;
-                padding: 8px;
-                background-color: #ffffff;
-                font-size: 13px;
-            }
-            QPlainTextEdit:focus {
-                border-color: #1890ff;
-            }
-        """)
+        # self._prompt_edit.setStyleSheet(...) # Removed hardcoded style
         prompt_layout.addWidget(self._prompt_edit)
 
         # 字数统计
         self._char_count_label = QLabel("0/1000")
-        self._char_count_label.setStyleSheet("color: #999; font-size: 11px;")
+        self._char_count_label.setProperty("hint", True)
+        # self._char_count_label.setStyleSheet("color: #999; font-size: 11px;")
         self._char_count_label.setAlignment(Qt.AlignmentFlag.AlignRight)
         prompt_layout.addWidget(self._char_count_label)
 
@@ -219,9 +210,11 @@ class PromptConfigPanel(QFrame):
         """更新字数统计."""
         text = self._prompt_edit.toPlainText()
         count = len(text)
-        color = "#ff4d4f" if count > 1000 else "#999"
+        
         self._char_count_label.setText(f"{count}/1000")
-        self._char_count_label.setStyleSheet(f"color: {color}; font-size: 11px;")
+        self._char_count_label.setProperty("error", count > 1000)
+        self._char_count_label.style().unpolish(self._char_count_label)
+        self._char_count_label.style().polish(self._char_count_label)
 
     def _on_template_changed(self, index: int) -> None:
         """模板选择变更."""

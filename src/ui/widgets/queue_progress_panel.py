@@ -66,14 +66,14 @@ class QueueProgressPanel(QFrame):
     def _setup_ui(self) -> None:
         """设置 UI."""
         self.setProperty("card", True)
-        self.setStyleSheet("""
-            QueueProgressPanel[card="true"] {
-                background-color: #fafafa;
-                border: 1px solid #e8e8e8;
-                border-radius: 8px;
-                padding: 12px;
-            }
-        """)
+        # self.setStyleSheet("""
+        #     QueueProgressPanel[card="true"] {
+        #         background-color: #fafafa;
+        #         border: 1px solid #e8e8e8;
+        #         border-radius: 8px;
+        #         padding: 12px;
+        #     }
+        # """)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
@@ -84,32 +84,23 @@ class QueueProgressPanel(QFrame):
         header_layout.setSpacing(8)
 
         self._title_label = QLabel("处理进度")
-        self._title_label.setStyleSheet("font-weight: bold; font-size: 14px; color: #333;")
+        self._title_label.setProperty("heading", True) # Use property for styling
+        # self._title_label.setStyleSheet("font-weight: bold; font-size: 14px; color: #333;")
         header_layout.addWidget(self._title_label)
 
         header_layout.addStretch()
 
         self._status_label = QLabel("就绪")
-        self._status_label.setStyleSheet("font-size: 12px; color: #666;")
+        self._status_label.setProperty("hint", True)
+        # self._status_label.setStyleSheet("font-size: 12px; color: #666;")
         header_layout.addWidget(self._status_label)
-
         layout.addLayout(header_layout)
 
         # 第二行：进度条
         self._progress_bar = QProgressBar()
         self._progress_bar.setFixedHeight(8)
         self._progress_bar.setTextVisible(False)
-        self._progress_bar.setStyleSheet("""
-            QProgressBar {
-                background-color: #e8e8e8;
-                border: none;
-                border-radius: 4px;
-            }
-            QProgressBar::chunk {
-                background-color: #1890ff;
-                border-radius: 4px;
-            }
-        """)
+        # self._progress_bar.setStyleSheet(...) # Removed hardcoded style
         layout.addWidget(self._progress_bar)
 
         # 第三行：统计信息
@@ -118,19 +109,23 @@ class QueueProgressPanel(QFrame):
 
         # 完成数
         self._completed_label = QLabel("已完成: 0/0")
-        self._completed_label.setStyleSheet("font-size: 12px; color: #52c41a;")
+        self._completed_label.setProperty("success", True)
+        # self._completed_label.setStyleSheet("font-size: 12px; color: #52c41a;")
         stats_layout.addWidget(self._completed_label)
 
         # 失败数
         self._failed_label = QLabel("失败: 0")
-        self._failed_label.setStyleSheet("font-size: 12px; color: #ff4d4f;")
+        self._failed_label.setProperty("error", True)
+        # self._failed_label.setStyleSheet("font-size: 12px; color: #ff4d4f;")
         stats_layout.addWidget(self._failed_label)
 
         stats_layout.addStretch()
 
         # 用时/预估
         self._time_label = QLabel("")
-        self._time_label.setStyleSheet("font-size: 12px; color: #999;")
+        self._time_label.setProperty("hint", True)
+        # self._time_label.setStyleSheet("font-size: 12px; color: #999;")
+        stats_layout.addWidget(self._time_label)
         stats_layout.addWidget(self._time_label)
 
         layout.addLayout(stats_layout)
@@ -190,20 +185,30 @@ class QueueProgressPanel(QFrame):
         if not self._is_processing:
             if self._total_tasks == 0:
                 self._status_label.setText("就绪")
-                self._status_label.setStyleSheet("font-size: 12px; color: #666;")
+                self._status_label.setProperty("hint", True)
+                self._status_label.style().unpolish(self._status_label) # Force update
+                self._status_label.style().polish(self._status_label)
             elif self._completed_tasks + self._failed_tasks >= self._total_tasks:
                 self._status_label.setText("已完成")
-                self._status_label.setStyleSheet("font-size: 12px; color: #52c41a;")
+                self._status_label.setProperty("success", True)
+                self._status_label.style().unpolish(self._status_label)
+                self._status_label.style().polish(self._status_label)
             else:
                 self._status_label.setText("等待开始")
-                self._status_label.setStyleSheet("font-size: 12px; color: #faad14;")
+                self._status_label.setProperty("warning", True)
+                self._status_label.style().unpolish(self._status_label)
+                self._status_label.style().polish(self._status_label)
         else:
             if self._is_paused:
                 self._status_label.setText("已暂停")
-                self._status_label.setStyleSheet("font-size: 12px; color: #faad14;")
+                self._status_label.setProperty("warning", True)
+                self._status_label.style().unpolish(self._status_label)
+                self._status_label.style().polish(self._status_label)
             else:
                 self._status_label.setText("处理中...")
-                self._status_label.setStyleSheet("font-size: 12px; color: #1890ff;")
+                self._status_label.setProperty("processing", True) # New property
+                self._status_label.style().unpolish(self._status_label)
+                self._status_label.style().polish(self._status_label)
 
         # 更新时间显示
         if self._is_processing and self._elapsed_seconds > 0:

@@ -130,7 +130,7 @@ class FormatConfigWidget(QWidget):
 
         # 格式说明
         self._hint_label = QLabel("JPEG: 适合照片，文件较小")
-        self._hint_label.setStyleSheet("color: #666; font-size: 11px;")
+        self._hint_label.setProperty("hint", True)
         layout.addWidget(self._hint_label)
 
         # 连接信号
@@ -218,7 +218,7 @@ class QualityConfigWidget(QWidget):
 
         # 质量说明
         hint_label = QLabel("较高的质量会产生更大的文件")
-        hint_label.setStyleSheet("color: #666; font-size: 11px;")
+        hint_label.setProperty("hint", True)
         layout.addWidget(hint_label)
 
         # 初始化预设
@@ -292,7 +292,7 @@ class ResizeConfigWidget(QWidget):
 
         # 模式说明
         self._mode_hint = QLabel()
-        self._mode_hint.setStyleSheet("color: #666; font-size: 11px;")
+        self._mode_hint.setProperty("hint", True)
         self._mode_hint.setWordWrap(True)
         layout.addWidget(self._mode_hint)
 

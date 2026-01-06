@@ -506,7 +506,7 @@ class MainWindow(QMainWindow):
         scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         scroll_area.setFrameShape(QFrame.Shape.NoFrame)
-        scroll_area.setStyleSheet("QScrollArea { background-color: #ffffff; border: none; }")
+        # scroll_area.setStyleSheet("QScrollArea { background-color: #ffffff; border: none; }")
 
         # 内容容器
         content_widget = QWidget()
@@ -523,7 +523,7 @@ class MainWindow(QMainWindow):
         separator2 = QFrame()
         separator2.setFrameShape(QFrame.Shape.HLine)
         separator2.setFrameShadow(QFrame.Shadow.Sunken)
-        separator2.setStyleSheet("background-color: #e8e8e8;")
+        # separator2.setStyleSheet("background-color: #e8e8e8;")
         layout.addWidget(separator2)
 
         # 后期处理配置面板
@@ -534,7 +534,7 @@ class MainWindow(QMainWindow):
         separator3 = QFrame()
         separator3.setFrameShape(QFrame.Shape.HLine)
         separator3.setFrameShadow(QFrame.Shadow.Sunken)
-        separator3.setStyleSheet("background-color: #e8e8e8;")
+        # separator3.setStyleSheet("background-color: #e8e8e8;")
         layout.addWidget(separator3)
 
         # 输出配置面板

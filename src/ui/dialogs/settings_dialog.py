@@ -191,7 +191,8 @@ class OutputSettingsWidget(QWidget):
 
         # 质量说明
         hint_label = QLabel("较高的质量会产生更大的文件")
-        hint_label.setStyleSheet("color: #666; font-size: 11px;")
+        hint_label.setProperty("hint", True)
+        # hint_label.setStyleSheet("color: #666; font-size: 11px;")
         quality_layout.addWidget(hint_label)
 
         layout.addWidget(quality_group)
@@ -291,7 +292,8 @@ class AISettingsWidget(QWidget):
             "提示：您可以在阿里云 DashScope 控制台获取 API Key\n"
             "https://dashscope.console.aliyun.com/"
         )
-        hint_label.setStyleSheet("color: #666; font-size: 11px;")
+        hint_label.setProperty("hint", True)
+        # hint_label.setStyleSheet("color: #666; font-size: 11px;")
         hint_label.setWordWrap(True)
         layout.addWidget(hint_label)
 
@@ -388,7 +390,8 @@ class BackgroundRemovalSettingsWidget(QWidget):
 
         # 标题
         api_title = QLabel("外部API设置")
-        api_title.setStyleSheet("font-weight: bold; color: #333;")
+        api_title.setProperty("subheading", True)
+        # api_title.setStyleSheet("font-weight: bold; color: #333;")
         api_layout.addWidget(api_title)
 
         # 辅助函数：创建固定高度的行
@@ -480,7 +483,8 @@ class BackgroundRemovalSettingsWidget(QWidget):
             "提示：外部API服务需要返回 PNG 蒙版图片\n"
             "白色区域=保留主体，黑色区域=透明背景"
         )
-        hint_label.setStyleSheet("color: #666; font-size: 11px;")
+        hint_label.setProperty("hint", True)
+        # hint_label.setStyleSheet("color: #666; font-size: 11px;")
         hint_label.setWordWrap(True)
         layout.addWidget(hint_label)
 
@@ -601,7 +605,8 @@ class PathSettingsWidget(QWidget):
 
         # 说明
         hint_label = QLabel("处理完成的图片将保存到此目录")
-        hint_label.setStyleSheet("color: #666; font-size: 11px;")
+        hint_label.setProperty("hint", True)
+        # hint_label.setStyleSheet("color: #666; font-size: 11px;")
         output_layout.addWidget(hint_label)
 
         layout.addWidget(output_group)
@@ -616,7 +621,8 @@ class PathSettingsWidget(QWidget):
         data_dir_label.setTextInteractionFlags(
             Qt.TextInteractionFlag.TextSelectableByMouse
         )
-        data_dir_label.setStyleSheet("color: #666;")
+        data_dir_label.setProperty("hint", True)
+        # data_dir_label.setStyleSheet("color: #666;")
         data_layout.addRow("数据目录:", data_dir_label)
 
         # 打开数据目录按钮

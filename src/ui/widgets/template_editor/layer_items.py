@@ -427,22 +427,49 @@ class LayerGraphicsItem(QGraphicsItem):
     # 公共方法
     # ========================
 
-    def update_from_layer(self) -> None:
-        """从数据模型更新显示."""
-        self.prepareGeometryChange()
-        self.setPos(self._layer.x, self._layer.y)
+    def set_layer_data(self, layer: AnyLayer) -> None:
+        """更新内部图层数据对象.
+        
+        用于当外部图层对象被替换时（如属性编辑后），更新内部引用。
+        """
+        if layer.id == self.layer_id:
+            self._layer = layer
+            # 还需要更新子类特有的引用
+            if isinstance(self, TextLayerItem) and isinstance(layer, TextLayer):
+                self._text_layer = layer
+            elif isinstance(self, ShapeLayerItem) and isinstance(layer, ShapeLayer):
+                self._shape_layer = layer
+            elif isinstance(self, ImageLayerItem) and isinstance(layer, ImageLayer):
+                self._image_layer = layer
         self.setZValue(self._layer.z_index)
         self.setVisible(self._layer.visible)
         self.setOpacity(self._layer.opacity / 100.0)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, not self._layer.locked)
         self.update()
 
-    def sync_to_layer(self) -> None:
-        """同步位置到数据模型."""
-        pos = self.pos()
-        self._layer.x = int(pos.x())
-        self._layer.y = int(pos.y())
-
+    def update_from_layer(self) -> None:
+        """从数据模型更新显示.
+        
+        基类实现处理通用属性：位置、尺寸、可见性、透明度、Z轴顺序。
+        子类应该调用此方法。
+        """
+        # 1. 几何变换（位置和尺寸）
+        # 检查尺寸是否变化，如果变化需要通知场景重绘
+        if (int(self.x()) != self._layer.x or 
+            int(self.y()) != self._layer.y or
+            self.boundingRect().width() != self._layer.width or 
+            self.boundingRect().height() != self._layer.height):
+            self.prepareGeometryChange()
+            self.setPos(self._layer.x, self._layer.y)
+        
+        # 2. 视觉属性
+        self.setVisible(self._layer.visible)
+        self.setOpacity(self._layer.opacity / 100.0)
+        self.setZValue(self._layer.z_index)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, not self._layer.locked)
+        
+        # 3. 强制重绘
+        self.update()
 
 # ===================
 # 文字图层图形项
@@ -505,13 +532,10 @@ class TextLayerItem(LayerGraphicsItem):
         self._is_editing = False
         self.update()
 
-    def mouseDoubleClickEvent(self, event: QGraphicsSceneMouseEvent) -> None:
-        """双击进入编辑模式."""
-        if event.button() == Qt.MouseButton.LeftButton and not self.is_locked:
-            self.start_editing()
-            event.accept()
-            return
-        super().mouseDoubleClickEvent(event)
+    def update_from_layer(self) -> None:
+        """从数据模型更新显示."""
+        # 调用基类更新通用属性（含位置、尺寸、可见性等）
+        super().update_from_layer()
 
     def _build_font(self) -> QFont:
         """根据图层属性构建字体."""
@@ -705,11 +729,9 @@ class ShapeLayerItem(LayerGraphicsItem):
         self.update()
         self.signals.layer_changed.emit(self.layer_id)
 
-    def disable_stroke(self) -> None:
-        """禁用描边."""
-        self._shape_layer.stroke_enabled = False
-        self.update()
-        self.signals.layer_changed.emit(self.layer_id)
+    def update_from_layer(self) -> None:
+        """从数据模型更新显示."""
+        super().update_from_layer()
 
     def paint(
         self,
@@ -927,10 +949,9 @@ class ImageLayerItem(LayerGraphicsItem):
         # 绘制选中状态
         super().paint(painter, option, widget)
 
-    def reload_image(self) -> None:
-        """重新加载图片."""
-        self._load_image()
-        self.update()
+    def update_from_layer(self) -> None:
+        """从数据模型更新显示."""
+        super().update_from_layer()
 
 
 # ===================

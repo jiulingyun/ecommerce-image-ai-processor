@@ -153,7 +153,7 @@ class DropZone(QFrame):
         self._filename_label = QLabel()
         self._filename_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._filename_label.setWordWrap(True)
-        self._filename_label.setStyleSheet("color: #333; font-size: 11px;")
+        self._filename_label.setProperty("hint", True)
         self._filename_label.hide()
         preview_layout.addWidget(self._filename_label)
 
