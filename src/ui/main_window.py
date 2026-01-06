@@ -75,6 +75,7 @@ from src.ui.widgets import (
     PromptConfigPanel,
     QueueProgressPanel,
     TaskListWidget,
+    TemplateConfigPanel,
     ToastManager,
     get_toast_manager,
 )
@@ -164,6 +165,7 @@ class MainWindow(QMainWindow):
         self._image_preview: Optional[ImagePreview] = None
         self._prompt_config_panel: Optional[PromptConfigPanel] = None
         self._process_config_panel: Optional[ProcessConfigPanel] = None
+        self._template_config_panel: Optional[TemplateConfigPanel] = None
         self._output_config_panel: Optional[OutputConfigPanel] = None
 
         # 任务管理
@@ -534,8 +536,17 @@ class MainWindow(QMainWindow):
         separator3 = QFrame()
         separator3.setFrameShape(QFrame.Shape.HLine)
         separator3.setFrameShadow(QFrame.Shadow.Sunken)
-        # separator3.setStyleSheet("background-color: #e8e8e8;")
         layout.addWidget(separator3)
+
+        # 模板配置面板
+        self._template_config_panel = TemplateConfigPanel()
+        layout.addWidget(self._template_config_panel)
+
+        # 分隔线
+        separator4 = QFrame()
+        separator4.setFrameShape(QFrame.Shape.HLine)
+        separator4.setFrameShadow(QFrame.Shadow.Sunken)
+        layout.addWidget(separator4)
 
         # 输出配置面板
         self._output_config_panel = OutputConfigPanel()
@@ -597,6 +608,18 @@ class MainWindow(QMainWindow):
             self._queue_progress_panel.start_clicked.connect(self._on_start_process)
             self._queue_progress_panel.pause_clicked.connect(self._on_pause_process)
             self._queue_progress_panel.cancel_clicked.connect(self._on_cancel_process)
+
+        # 模板配置面板信号
+        if self._template_config_panel:
+            self._template_config_panel.edit_template_requested.connect(self._on_edit_template_requested)
+
+    def _on_edit_template_requested(self, template_id: str) -> None:
+        """处理编辑模板请求.
+
+        Args:
+            template_id: 模板 ID，空字符串表示新建
+        """
+        self._open_template_editor(template_id if template_id else None)
 
     def _collect_current_config(self) -> ProcessConfig:
         """从右侧面板收集当前配置.
@@ -679,13 +702,25 @@ class MainWindow(QMainWindow):
         except Exception as e:
             logger.warning(f"加载抠图服务配置失败: {e}")
 
+        # 获取模板配置
+        template_config = None
+        processing_mode = None
+        if self._template_config_panel:
+            template_config = self._template_config_panel.get_config()
+            if template_config and template_config.enabled:
+                from src.models.process_config import ProcessingMode
+                processing_mode = ProcessingMode.TEMPLATE
+
         # 组合所有配置
+        from src.models.process_config import ProcessingMode
         return ProcessConfig(
+            mode=processing_mode or ProcessingMode.SIMPLE,
             prompt=prompt_config,
             background_removal=bg_removal_config,
             background=process_config.background,
             border=process_config.border,
             text=process_config.text,
+            template=template_config,
             output=output_config,
         )
 
@@ -1192,9 +1227,38 @@ class MainWindow(QMainWindow):
 
     def _on_open_template_editor(self) -> None:
         """打开模板编辑器."""
+        self._open_template_editor()
+
+    def _open_template_editor(self, template_id: Optional[str] = None) -> None:
+        """打开模板编辑器.
+
+        Args:
+            template_id: 要编辑的模板 ID，None 表示新建
+        """
         editor = TemplateEditorWindow(self)
+        # 连接编辑器关闭信号，刷新模板列表
+        editor.destroyed.connect(self._on_template_editor_closed)
+
+        # 如果指定了模板 ID，先加载模板
+        if template_id:
+            from src.services.template_manager import TemplateManager
+            manager = TemplateManager()
+            template = manager.load_template(template_id)
+            if template:
+                editor.set_template(template)
+                logger.info(f"打开模板编辑器，加载模板: {template.name}")
+            else:
+                logger.warning(f"无法加载模板: {template_id}")
+        else:
+            logger.info("打开模板编辑器，新建模板")
+
         editor.show()
-        logger.info("打开模板编辑器")
+
+    def _on_template_editor_closed(self) -> None:
+        """模板编辑器关闭后刷新模板列表."""
+        if self._template_config_panel:
+            self._template_config_panel.refresh_templates()
+            logger.debug("模板列表已刷新")
 
     def _on_about(self) -> None:
         """显示关于对话框."""

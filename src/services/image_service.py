@@ -641,6 +641,12 @@ class ImageService:
         
         使用模板系统渲染多图层内容到图片上。
         
+        处理流程：
+        1. 调整尺寸
+        2. 添加边框（如果启用）
+        3. 渲染模板图层
+        4. 添加文字（如果启用）
+        
         Args:
             image: 原始图片
             config: 处理配置
@@ -659,7 +665,7 @@ class ImageService:
         
         # Step 1: 加载模板
         if on_progress:
-            on_progress(20, "加载模板")
+            on_progress(10, "加载模板")
         
         template: Optional[TemplateConfig] = None
         
@@ -688,12 +694,10 @@ class ImageService:
             config.mode = ProcessingMode.SIMPLE
             return await self._apply_simple_effects(image, config, on_progress)
         
-        # Step 2: 创建渲染器
+        # Step 2: 确定目标尺寸并调整图片
         if on_progress:
-            on_progress(40, "准备渲染")
-        renderer = TemplateRenderer()
+            on_progress(20, "调整尺寸")
         
-        # Step 3: 确定目标尺寸
         if template_config.use_canvas_size:
             target_size = (template.canvas_width, template.canvas_height)
         else:
@@ -703,19 +707,70 @@ class ImageService:
         logger.info(f"目标输出尺寸: {target_size}")
         logger.info(f"模板图层数: {len(template.layers)}")
         
-        # Step 4: 渲染模板
-        if on_progress:
-            on_progress(60, "渲染模板图层")
+        # 先调整尺寸
+        effective_bg_color = config.background.get_effective_color()
+        image = await loop.run_in_executor(
+            None,
+            resize_with_mode,
+            image,
+            target_size,
+            config.output.resize_mode.value,
+            effective_bg_color,
+        )
+        logger.info(f"调整尺寸后: {image.size}")
         
+        # Step 3: 添加边框（在模板渲染之前，这样边框会在模板图层下面）
+        if config.border.enabled:
+            if on_progress:
+                on_progress(30, "添加边框")
+            logger.info(f"添加边框: 宽度={config.border.width}, 颜色={config.border.color}")
+            image = await loop.run_in_executor(
+                None,
+                self._add_border,
+                image,
+                config.border.width,
+                config.border.color,
+            )
+            logger.info(f"添加边框后图片尺寸: {image.size}")
+        else:
+            logger.info("边框未启用，跳过")
+        
+        # Step 4: 渲染模板图层
+        if on_progress:
+            on_progress(50, "渲染模板图层")
+        
+        renderer = TemplateRenderer()
         result = await loop.run_in_executor(
             None,
-            renderer.render_to_size,
+            renderer.render,
             image,
             template,
-            target_size,
+            template_config.skip_invisible_layers,
         )
-        
         logger.info(f"模板渲染完成: {result.size}")
+        
+        # Step 5: 添加文字（在模板渲染之后，这样文字会在最上层）
+        if config.text.enabled and config.text.content:
+            if on_progress:
+                on_progress(80, "添加文字")
+            text_size = get_text_size(
+                config.text.content,
+                config.text.font_family,
+                config.text.font_size,
+            )
+            text_position = config.text.get_effective_position(result.size, text_size)
+            logger.info(f"添加文字: 内容='{config.text.content}', 位置={text_position}")
+            result = await loop.run_in_executor(
+                None,
+                self._add_text,
+                result,
+                config.text.content,
+                text_position,
+                config.text.font_size,
+                config.text.color,
+            )
+        else:
+            logger.info("文字未启用或内容为空，跳过")
         
         if on_progress:
             on_progress(100, "模板渲染完成")

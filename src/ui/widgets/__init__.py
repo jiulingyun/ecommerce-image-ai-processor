@@ -8,6 +8,7 @@ from src.ui.widgets.output_config_panel import OutputConfigPanel
 from src.ui.widgets.process_config_panel import ProcessConfigPanel
 from src.ui.widgets.prompt_config_panel import PromptConfigPanel
 from src.ui.widgets.queue_progress_panel import QueueProgressPanel
+from src.ui.widgets.template_config_panel import TemplateConfigPanel
 from src.ui.widgets.task_list_widget import TaskListWidget, TaskListItem
 from src.ui.widgets.toast_notification import (
     ToastNotification,
@@ -38,6 +39,7 @@ __all__ = [
     "ProcessConfigPanel",
     "PromptConfigPanel",
     "QueueProgressPanel",
+    "TemplateConfigPanel",
     "TaskListWidget",
     "TaskListItem",
     "ToastNotification",

@@ -45,10 +45,33 @@ DEFAULT_FONT_SIZE = 24
 # 字体搜索路径
 FONT_SEARCH_PATHS = [
     "/System/Library/Fonts/",
+    "/System/Library/Fonts/Supplemental/",
     "/Library/Fonts/",
     "~/Library/Fonts/",
     "C:/Windows/Fonts/",
     "/usr/share/fonts/",
+    "/usr/share/fonts/truetype/",
+]
+
+# 中文字体回退列表（macOS/Windows/Linux 常见中文字体）
+CHINESE_FONT_FALLBACKS = [
+    # macOS
+    "PingFang SC.ttc",
+    "PingFang.ttc",
+    "STHeiti Light.ttc",
+    "STHeiti Medium.ttc",
+    "Hiragino Sans GB.ttc",
+    "Songti.ttc",
+    "Heiti.ttc",
+    # Windows
+    "msyh.ttc",  # 微软雅黑
+    "simsun.ttc",  # 宋体
+    "simhei.ttf",  # 黑体
+    # Linux
+    "wqy-microhei.ttc",
+    "wqy-zenhei.ttc",
+    "NotoSansCJK-Regular.ttc",
+    "NotoSansSC-Regular.otf",
 ]
 
 
@@ -57,7 +80,53 @@ FONT_SEARCH_PATHS = [
 # ===================
 
 
-def find_font(font_family: Optional[str], font_size: int, bold: bool = False, italic: bool = False) -> ImageFont.FreeTypeFont:
+def _has_chinese_characters(text: str) -> bool:
+    """检查文本是否包含中文字符.
+
+    Args:
+        text: 要检查的文本
+
+    Returns:
+        是否包含中文
+    """
+    for char in text:
+        if '\u4e00' <= char <= '\u9fff' or '\u3400' <= char <= '\u4dbf':
+            return True
+    return False
+
+
+def _find_chinese_font(font_size: int) -> Optional[ImageFont.FreeTypeFont]:
+    """查找中文字体.
+
+    Args:
+        font_size: 字体大小
+
+    Returns:
+        找到的字体，未找到返回 None
+    """
+    for search_path in FONT_SEARCH_PATHS:
+        expanded_path = os.path.expanduser(search_path)
+        if not os.path.exists(expanded_path):
+            continue
+
+        for font_name in CHINESE_FONT_FALLBACKS:
+            font_path = os.path.join(expanded_path, font_name)
+            if os.path.exists(font_path):
+                try:
+                    return ImageFont.truetype(font_path, font_size)
+                except (OSError, IOError):
+                    continue
+
+    return None
+
+
+def find_font(
+    font_family: Optional[str],
+    font_size: int,
+    bold: bool = False,
+    italic: bool = False,
+    text_content: Optional[str] = None,
+) -> ImageFont.FreeTypeFont:
     """查找字体.
 
     Args:
@@ -65,18 +134,26 @@ def find_font(font_family: Optional[str], font_size: int, bold: bool = False, it
         font_size: 字体大小
         bold: 是否粗体
         italic: 是否斜体
+        text_content: 要渲染的文本（用于检测是否需要中文字体）
 
     Returns:
         ImageFont 对象
     """
-    # 如果没有指定字体，使用默认
+    # 检查是否需要中文字体
+    needs_chinese = text_content and _has_chinese_characters(text_content)
+
+    # 如果没有指定字体，根据内容选择默认字体
     if not font_family:
+        if needs_chinese:
+            chinese_font = _find_chinese_font(font_size)
+            if chinese_font:
+                return chinese_font
         try:
             return ImageFont.truetype("Arial", font_size)
         except (OSError, IOError):
             return ImageFont.load_default()
 
-    # 尝试直接加载
+    # 尝试直接加载指定字体
     try:
         return ImageFont.truetype(font_family, font_size)
     except (OSError, IOError):
@@ -87,6 +164,7 @@ def find_font(font_family: Optional[str], font_size: int, bold: bool = False, it
         font_family,
         f"{font_family}.ttf",
         f"{font_family}.otf",
+        f"{font_family}.ttc",
     ]
 
     # 添加粗体/斜体变体
@@ -119,7 +197,15 @@ def find_font(font_family: Optional[str], font_size: int, bold: bool = False, it
                 except (OSError, IOError):
                     continue
 
+    # 如果指定的字体找不到，且需要中文，尝试中文字体回退
+    if needs_chinese:
+        chinese_font = _find_chinese_font(font_size)
+        if chinese_font:
+            logger.warning(f"字体 '{font_family}' 未找到，使用中文字体回退")
+            return chinese_font
+
     # 回退到默认字体
+    logger.warning(f"字体 '{font_family}' 未找到，使用默认字体")
     try:
         return ImageFont.truetype("Arial", font_size)
     except (OSError, IOError):
@@ -270,12 +356,13 @@ class TemplateRenderer:
         if not layer.content:
             return image
 
-        # 获取字体
+        # 获取字体（传递文本内容以便检测是否需要中文字体）
         font = find_font(
             layer.font_family,
             layer.font_size,
             layer.bold,
             layer.italic,
+            text_content=layer.content,
         )
 
         # 创建临时图像绘制文字
