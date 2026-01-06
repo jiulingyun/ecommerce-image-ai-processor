@@ -86,8 +86,13 @@ class Application:
     def show_main_window(self) -> None:
         """显示主窗口."""
         from src.ui.main_window import MainWindow
+        from src.ui.theme_manager import Theme, apply_theme
 
         if self._main_window is None:
+            # 应用主题（自动跟随系统）
+            apply_theme(Theme.AUTO)
+            logger.info("已应用系统主题")
+            
             self._main_window = MainWindow()
 
         self._main_window.show()

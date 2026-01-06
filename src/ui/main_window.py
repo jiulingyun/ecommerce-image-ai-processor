@@ -97,19 +97,6 @@ from src.utils.logger import setup_logger
 logger = setup_logger(__name__)
 
 
-def _get_stylesheet() -> str:
-    """加载样式表.
-
-    Returns:
-        样式表内容
-    """
-    style_path = Path(__file__).parent / "resources" / "styles.qss"
-    if style_path.exists():
-        try:
-            return style_path.read_text(encoding="utf-8")
-        except Exception as e:
-            logger.warning(f"加载样式表失败: {e}")
-    return ""
 
 
 class MainWindow(QMainWindow):
@@ -193,7 +180,6 @@ class MainWindow(QMainWindow):
 
         # 初始化
         self._setup_window()
-        self._apply_stylesheet()
         self._setup_menubar()
         self._setup_toolbar()
         self._setup_central_widget()
@@ -249,12 +235,6 @@ class MainWindow(QMainWindow):
             window_geometry.moveCenter(center_point)
             self.move(window_geometry.topLeft())
 
-    def _apply_stylesheet(self) -> None:
-        """应用样式表."""
-        stylesheet = _get_stylesheet()
-        if stylesheet:
-            self.setStyleSheet(stylesheet)
-            logger.debug("样式表已应用")
 
     def _setup_menubar(self) -> None:
         """设置菜单栏."""
