@@ -107,10 +107,35 @@ class DashScopeProvider(BaseAIImageProvider):
             self._http_client_loop = current_loop
         return self._http_client
 
-    def _image_to_base64_data_url(self, image: bytes, format: str = "png") -> str:
-        """将图片转换为 base64 data URL 格式."""
+    def _image_to_base64_data_url(self, image: bytes) -> str:
+        """将图片转换为 base64 data URL 格式.
+        
+        自动检测图片格式并生成正确的 MIME 类型。
+        """
+        import imghdr
+        
+        # 检测图片格式
+        image_type = imghdr.what(None, h=image)
+        
+        # 映射到正确的 MIME 类型
+        mime_type_map = {
+            'jpeg': 'image/jpeg',
+            'jpg': 'image/jpeg',
+            'png': 'image/png',
+            'gif': 'image/gif',
+            'bmp': 'image/bmp',
+            'webp': 'image/webp',
+        }
+        
+        # 默认使用 png（如果检测失败）
+        mime_type = mime_type_map.get(image_type, 'image/png')
+        
+        # 编码为 base64
         b64 = base64.b64encode(image).decode("utf-8")
-        return f"data:image/{format};base64,{b64}"
+        
+        logger.debug(f"图片格式检测: {image_type}, MIME类型: {mime_type}, Base64长度: {len(b64)}")
+        
+        return f"data:{mime_type};base64,{b64}"
 
     async def remove_background(
         self,
