@@ -136,6 +136,7 @@ class QueueWorker(QObject):
                 self._loop.close()
                 self._loop = None
             self._is_running = False
+            logger.debug(f"QueueWorker 已停止，_is_running={self._is_running}")
 
     async def _run_processing(self) -> None:
         """运行处理（异步）."""
@@ -187,8 +188,10 @@ class QueueWorker(QObject):
     @pyqtSlot()
     def cancel_processing(self) -> None:
         """取消处理."""
-        if self._processor and self._is_running:
+        if self._processor:
             self._processor.cancel()
+            # 注意：不在这里设置 _is_running = False
+            # 它会在 start_processing 的 finally 块中自动设置
             logger.info("处理已取消")
 
 
@@ -303,6 +306,14 @@ class QueueController(QObject):
         if not self._tasks:
             logger.warning("没有任务")
             return
+        
+        # 清理之前的线程和工作器
+        if self._thread and self._thread.isRunning():
+            logger.warning("之前的线程仍在运行，等待完成...")
+            self.stop()
+        
+        self._worker = None
+        self._thread = None
 
         # 创建工作线程
         self._thread = QThread(self)
@@ -343,11 +354,17 @@ class QueueController(QObject):
             self._worker.cancel_processing()
 
     def stop(self) -> None:
-        """停止并清理."""
-        self.cancel()
+        """停止处理."""
+        self.cancel_processing()
         if self._thread:
             self._thread.quit()
-            self._thread.wait(3000)  # 等待最多3秒
+            self._thread.wait(5000)  # 等待最多5秒
+            if self._thread.isRunning():
+                logger.warning("线程未在5秒内停止，强制终止")
+                self._thread.terminate()
+                self._thread.wait()
+        self._worker = None
+        self._thread = None
             self._thread = None
         self._worker = None
 

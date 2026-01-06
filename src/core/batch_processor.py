@@ -218,15 +218,21 @@ class BatchProcessor:
             on_progress: 进度回调
             on_task_complete: 任务完成回调
         """
+        # 在获取 semaphore 之前就检查取消和暂停状态
+        if self._is_cancelled:
+            batch_task.task.mark_cancelled()
+            return
+        
+        # 等待暂停恢复（在获取 semaphore 之前）
+        if self._pause_event:
+            await self._pause_event.wait()
+        
+        # 再次检查取消（暂停期间可能被取消）
+        if self._is_cancelled:
+            batch_task.task.mark_cancelled()
+            return
+        
         async with self._semaphore:  # type: ignore
-            # 检查是否取消
-            if self._is_cancelled:
-                batch_task.task.mark_cancelled()
-                return
-
-            # 等待暂停恢复
-            if self._pause_event:
-                await self._pause_event.wait()
 
             task = batch_task.task
             task_id = batch_task.id
@@ -310,7 +316,11 @@ class BatchProcessor:
         """取消处理."""
         self._is_cancelled = True
         if self._pause_event:
-            self._pause_event.set()  # 确保不在暂停状态
+            self._pause_event.set()  # 确保暂停的任务能够退出
+        # 取消所有待处理的任务
+        for batch_task in self._tasks:
+            if batch_task.task.status == TaskStatus.PENDING:
+                batch_task.task.mark_cancelled()
         logger.info("批量处理已取消")
 
     async def process_single(
