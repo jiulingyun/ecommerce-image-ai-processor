@@ -133,9 +133,13 @@ class DashScopeProvider(BaseAIImageProvider):
         # 编码为 base64
         b64 = base64.b64encode(image).decode("utf-8")
         
-        logger.debug(f"图片格式检测: {image_type}, MIME类型: {mime_type}, Base64长度: {len(b64)}")
+        # 生成 data URL
+        data_url = f"data:{mime_type};base64,{b64}"
         
-        return f"data:{mime_type};base64,{b64}"
+        logger.debug(f"图片格式检测: {image_type}, MIME类型: {mime_type}, 图片大小: {len(image)} bytes, Base64长度: {len(b64)}")
+        logger.debug(f"Data URL 前 100 字符: {data_url[:100]}...")
+        
+        return data_url
 
     async def remove_background(
         self,
