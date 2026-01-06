@@ -89,6 +89,8 @@ from src.utils.constants import (
     MAX_QUEUE_SIZE,
     WINDOW_MIN_HEIGHT,
     WINDOW_MIN_WIDTH,
+    APP_URL,
+    APP_AUTHOR
 )
 from src.utils.logger import setup_logger
 
