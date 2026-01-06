@@ -241,6 +241,8 @@ class TemplateRenderer:
     ) -> Image.Image:
         """渲染模板到图片.
 
+        注意：如果图片尺寸与模板画布尺寸不一致，图层坐标和尺寸会按比例缩放。
+
         Args:
             image: 原始图片
             template: 模板配置
@@ -256,6 +258,12 @@ class TemplateRenderer:
         # 创建工作副本
         result = image.copy()
 
+        # 计算缩放比例（图片尺寸 vs 模板画布尺寸）
+        scale_x = image.width / template.canvas_width
+        scale_y = image.height / template.canvas_height
+        
+        logger.debug(f"渲染模板: 图片尺寸={image.size}, 画布尺寸=({template.canvas_width}, {template.canvas_height}), 缩放=({scale_x:.2f}, {scale_y:.2f})")
+
         # 获取按 z_index 排序的图层
         layers = template.get_layers_sorted()
 
@@ -265,7 +273,7 @@ class TemplateRenderer:
                 continue
 
             try:
-                result = self._render_layer(result, layer)
+                result = self._render_layer(result, layer, scale_x, scale_y)
             except Exception as e:
                 logger.error(f"渲染图层失败: {layer.id}, 错误: {e}")
 
@@ -323,32 +331,48 @@ class TemplateRenderer:
         # 渲染模板图层
         return self.render(canvas, template)
 
-    def _render_layer(self, image: Image.Image, layer: AnyLayer) -> Image.Image:
+    def _render_layer(
+        self,
+        image: Image.Image,
+        layer: AnyLayer,
+        scale_x: float = 1.0,
+        scale_y: float = 1.0,
+    ) -> Image.Image:
         """渲染单个图层.
 
         Args:
             image: 当前图片
             layer: 图层数据
+            scale_x: X轴缩放比例
+            scale_y: Y轴缩放比例
 
         Returns:
             渲染后的图片
         """
         if isinstance(layer, TextLayer):
-            return self._render_text_layer(image, layer)
+            return self._render_text_layer(image, layer, scale_x, scale_y)
         elif isinstance(layer, ShapeLayer):
-            return self._render_shape_layer(image, layer)
+            return self._render_shape_layer(image, layer, scale_x, scale_y)
         elif isinstance(layer, ImageLayer):
-            return self._render_image_layer(image, layer)
+            return self._render_image_layer(image, layer, scale_x, scale_y)
         else:
             logger.warning(f"未知图层类型: {type(layer)}")
             return image
 
-    def _render_text_layer(self, image: Image.Image, layer: TextLayer) -> Image.Image:
+    def _render_text_layer(
+        self,
+        image: Image.Image,
+        layer: TextLayer,
+        scale_x: float = 1.0,
+        scale_y: float = 1.0,
+    ) -> Image.Image:
         """渲染文字图层.
 
         Args:
             image: 当前图片
             layer: 文字图层
+            scale_x: X轴缩放比例
+            scale_y: Y轴缩放比例
 
         Returns:
             渲染后的图片
@@ -356,10 +380,14 @@ class TemplateRenderer:
         if not layer.content:
             return image
 
+        # 计算缩放后的字体大小（使用平均缩放比例）
+        avg_scale = (scale_x + scale_y) / 2
+        scaled_font_size = max(1, int(layer.font_size * avg_scale))
+
         # 获取字体（传递文本内容以便检测是否需要中文字体）
         font = find_font(
             layer.font_family,
-            layer.font_size,
+            scaled_font_size,
             layer.bold,
             layer.italic,
             text_content=layer.content,
@@ -374,8 +402,9 @@ class TemplateRenderer:
         text_width = bbox[2] - bbox[0]
         text_height = bbox[3] - bbox[1]
 
-        # 位置
-        x, y = layer.x, layer.y
+        # 缩放后的位置
+        x = int(layer.x * scale_x)
+        y = int(layer.y * scale_y)
 
         # 绘制背景
         if layer.background_enabled:
@@ -413,12 +442,20 @@ class TemplateRenderer:
 
         return image
 
-    def _render_shape_layer(self, image: Image.Image, layer: ShapeLayer) -> Image.Image:
+    def _render_shape_layer(
+        self,
+        image: Image.Image,
+        layer: ShapeLayer,
+        scale_x: float = 1.0,
+        scale_y: float = 1.0,
+    ) -> Image.Image:
         """渲染形状图层.
 
         Args:
             image: 当前图片
             layer: 形状图层
+            scale_x: X轴缩放比例
+            scale_y: Y轴缩放比例
 
         Returns:
             渲染后的图片
@@ -427,9 +464,11 @@ class TemplateRenderer:
         temp = Image.new("RGBA", image.size, (0, 0, 0, 0))
         draw = ImageDraw.Draw(temp)
 
-        # 位置和尺寸
-        x1, y1 = layer.x, layer.y
-        x2, y2 = x1 + layer.width, y1 + layer.height
+        # 缩放后的位置和尺寸
+        x1 = int(layer.x * scale_x)
+        y1 = int(layer.y * scale_y)
+        x2 = int((layer.x + layer.width) * scale_x)
+        y2 = int((layer.y + layer.height) * scale_y)
 
         # 准备颜色
         fill_color = None
@@ -440,16 +479,22 @@ class TemplateRenderer:
         outline_width = 0
         if layer.stroke_enabled:
             outline_color = (*layer.stroke_color, 255)
-            outline_width = layer.stroke_width
+            # 缩放边框宽度
+            avg_scale = (scale_x + scale_y) / 2
+            outline_width = max(1, int(layer.stroke_width * avg_scale))
+
+        # 缩放圆角半径
+        avg_scale = (scale_x + scale_y) / 2
+        scaled_radius = int(layer.corner_radius * avg_scale)
 
         # 绘制形状
         if layer.is_rectangle:
-            if layer.corner_radius > 0:
+            if scaled_radius > 0:
                 # 圆角矩形
                 self._draw_rounded_rectangle(
                     draw,
                     (x1, y1, x2, y2),
-                    layer.corner_radius,
+                    scaled_radius,
                     fill_color,
                     outline_color,
                     outline_width,
@@ -528,12 +573,20 @@ class TemplateRenderer:
                 draw.line((x1, y1 + radius, x1, y2 - radius), fill=outline, width=width)
                 draw.line((x2, y1 + radius, x2, y2 - radius), fill=outline, width=width)
 
-    def _render_image_layer(self, image: Image.Image, layer: ImageLayer) -> Image.Image:
+    def _render_image_layer(
+        self,
+        image: Image.Image,
+        layer: ImageLayer,
+        scale_x: float = 1.0,
+        scale_y: float = 1.0,
+    ) -> Image.Image:
         """渲染图片图层.
 
         Args:
             image: 当前图片
             layer: 图片图层
+            scale_x: X轴缩放比例
+            scale_y: Y轴缩放比例
 
         Returns:
             渲染后的图片
@@ -547,8 +600,10 @@ class TemplateRenderer:
             if overlay.mode != "RGBA":
                 overlay = overlay.convert("RGBA")
 
-            # 根据适应模式调整大小
-            target_size = (layer.width, layer.height)
+            # 缩放后的目标尺寸
+            scaled_width = int(layer.width * scale_x)
+            scaled_height = int(layer.height * scale_y)
+            target_size = (scaled_width, scaled_height)
             overlay = self._fit_image(overlay, target_size, layer.fit_mode, layer.preserve_aspect_ratio)
 
             # 应用透明度
@@ -560,9 +615,12 @@ class TemplateRenderer:
             # 创建临时画布
             temp = Image.new("RGBA", image.size, (0, 0, 0, 0))
 
-            # 计算粘贴位置（确保在画布范围内）
-            paste_x = max(0, min(layer.x, image.width - 1))
-            paste_y = max(0, min(layer.y, image.height - 1))
+            # 缩放后的粘贴位置
+            paste_x = int(layer.x * scale_x)
+            paste_y = int(layer.y * scale_y)
+            # 确保在画布范围内
+            paste_x = max(0, min(paste_x, image.width - 1))
+            paste_y = max(0, min(paste_y, image.height - 1))
 
             temp.paste(overlay, (paste_x, paste_y), overlay)
 
