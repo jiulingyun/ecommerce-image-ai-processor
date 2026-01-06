@@ -73,6 +73,7 @@ class DropZone(QFrame):
         self._hint = hint
         self._file_path: Optional[str] = None
         self._thumbnail_size = THUMBNAIL_SIZE
+        self._is_pinned = False  # 图片是否固定
 
         self._setup_ui()
         self._setup_drag_drop()
@@ -95,6 +96,11 @@ class DropZone(QFrame):
     def has_file(self) -> bool:
         """是否已选择文件."""
         return self._file_path is not None
+    
+    @property
+    def is_pinned(self) -> bool:
+        """图片是否固定."""
+        return self._is_pinned
 
     # ========================
     # 初始化
@@ -184,6 +190,15 @@ class DropZone(QFrame):
         button_layout.addWidget(self._clear_btn, 1)  # stretch=1 均分空间
 
         layout.addWidget(button_container)
+        
+        # 固定复选框
+        from PyQt6.QtWidgets import QCheckBox
+        self._pin_checkbox = QCheckBox("📌 固定此图片（批量添加）")
+        self._pin_checkbox.setToolTip("勾选后，此图片将保留不被清除，方便批量添加任务")
+        self._pin_checkbox.setProperty("hint", True)
+        self._pin_checkbox.hide()
+        self._pin_checkbox.stateChanged.connect(self._on_pin_changed)
+        layout.addWidget(self._pin_checkbox)
 
         # 更新初始状态
         self._update_display()
@@ -214,10 +229,20 @@ class DropZone(QFrame):
         logger.debug(f"DropZone [{self._title}] 设置文件: {file_path}")
         return True
 
-    def clear(self) -> None:
-        """清除当前文件."""
+    def clear(self, force: bool = False) -> None:
+        """清除当前文件.
+        
+        Args:
+            force: 强制清除，忽略固定状态
+        """
+        # 如果图片被固定且不是强制清除，则不清除
+        if self._is_pinned and not force:
+            logger.debug(f"DropZone [{self._title}] 图片已固定，跳过清除")
+            return
+        
         if self._file_path:
             self._file_path = None
+            self._is_pinned = False
             self._update_display()
             self.file_cleared.emit()
             logger.debug(f"DropZone [{self._title}] 清除文件")
@@ -266,6 +291,7 @@ class DropZone(QFrame):
             self._filename_label.setText(Path(self._file_path).name)
             self._filename_label.show()
             self._clear_btn.show()
+            self._pin_checkbox.show()  # 显示固定复选框
             self.setProperty("dropzone-filled", True)
         else:
             # 显示提示
@@ -274,11 +300,21 @@ class DropZone(QFrame):
             self._hint_label.show()
             self._filename_label.hide()
             self._clear_btn.hide()
+            self._pin_checkbox.hide()  # 隐藏固定复选框
             self.setProperty("dropzone-filled", False)
+        
+        # 更新固定复选框状态
+        self._pin_checkbox.setChecked(self._is_pinned)
 
         # 刷新样式
         self.style().unpolish(self)
         self.style().polish(self)
+    
+    def _on_pin_changed(self, state: int) -> None:
+        """固定状态变化."""
+        from PyQt6.QtCore import Qt as QtCore
+        self._is_pinned = (state == QtCore.CheckState.Checked.value)
+        logger.debug(f"DropZone [{self._title}] 固定状态: {self._is_pinned}")
 
     def _load_thumbnail(self, file_path: str) -> None:
         """加载缩略图.

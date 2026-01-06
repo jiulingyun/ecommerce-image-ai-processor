@@ -100,6 +100,9 @@ class ImagePairPanel(QFrame):
     def _setup_ui(self) -> None:
         """设置 UI."""
         self.setProperty("panel", True)
+        
+        # 设置焦点策略，使面板可以接收键盘事件
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
         # 主布局
         layout = QVBoxLayout(self)
@@ -173,11 +176,24 @@ class ImagePairPanel(QFrame):
 
         layout.addWidget(button_container)
 
+        # 队列状态和提示
+        status_container = QFrame()
+        status_layout = QHBoxLayout(status_container)
+        status_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # 快捷键提示
+        shortcut_hint = QLabel("⏎ 回车键快速添加")
+        shortcut_hint.setProperty("hint", True)
+        status_layout.addWidget(shortcut_hint)
+        
+        status_layout.addStretch()
+        
         # 队列状态
         self._queue_status_label = QLabel(f"队列: 0/{MAX_QUEUE_SIZE}")
         self._queue_status_label.setProperty("hint", True)
-        self._queue_status_label.setAlignment(Qt.AlignmentFlag.AlignRight)
-        layout.addWidget(self._queue_status_label)
+        status_layout.addWidget(self._queue_status_label)
+        
+        layout.addWidget(status_container)
 
     def _connect_signals(self) -> None:
         """连接信号."""
@@ -186,15 +202,23 @@ class ImagePairPanel(QFrame):
         self._bg_drop_zone.file_cleared.connect(self._on_pair_changed)
         self._prod_drop_zone.file_dropped.connect(self._on_pair_changed)
         self._prod_drop_zone.file_cleared.connect(self._on_pair_changed)
+        
+        # 监听拖入区文件添加，如果配对完成则聚焦到添加按钮
+        self._bg_drop_zone.file_dropped.connect(self._on_file_added)
+        self._prod_drop_zone.file_dropped.connect(self._on_file_added)
 
     # ========================
     # 公共方法
     # ========================
 
-    def clear_pair(self) -> None:
-        """清空当前配对."""
-        self._bg_drop_zone.clear()
-        self._prod_drop_zone.clear()
+    def clear_pair(self, force: bool = False) -> None:
+        """清空当前配对.
+        
+        Args:
+            force: 强制清除，忽略固定状态
+        """
+        self._bg_drop_zone.clear(force)
+        self._prod_drop_zone.clear(force)
         self._update_button_state()
 
     def set_queue_count(self, count: int) -> None:
@@ -252,8 +276,31 @@ class ImagePairPanel(QFrame):
             self._add_task_btn.setToolTip("添加当前配对到处理队列")
 
     # ========================
+    # 事件处理
+    # ========================
+    
+    def keyPressEvent(self, event) -> None:
+        """键盘事件处理."""
+        from PyQt6.QtCore import Qt as QtCore
+        
+        # 回车键添加任务
+        if event.key() in (QtCore.Key.Key_Return, QtCore.Key.Key_Enter):
+            if self.can_add_task:
+                self._on_add_task()
+                event.accept()
+                return
+        
+        super().keyPressEvent(event)
+
+    # ========================
     # 槽函数
     # ========================
+    
+    def _on_file_added(self) -> None:
+        """文件添加后的处理."""
+        # 如果配对完成，聚焦到添加按钮以便快捷键操作
+        if self.is_pair_complete:
+            self._add_task_btn.setFocus()
 
     def _on_pair_changed(self) -> None:
         """配对状态变化."""
@@ -286,5 +333,11 @@ class ImagePairPanel(QFrame):
             self.task_added.emit(bg_path, prod_path)
             logger.info(f"添加任务: {bg_path} + {prod_path}")
 
-            # 清空配对，准备下一个
+            # 清空配对，准备下一个（尊重固定状态）
             self.clear_pair()
+            
+            # 如果有图片被固定，自动聚焦到未固定的输入框
+            if self._bg_drop_zone.is_pinned and not self._prod_drop_zone.has_file:
+                self._prod_drop_zone.setFocus()
+            elif self._prod_drop_zone.is_pinned and not self._bg_drop_zone.has_file:
+                self._bg_drop_zone.setFocus()
