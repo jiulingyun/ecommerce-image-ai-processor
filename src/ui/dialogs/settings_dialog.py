@@ -271,11 +271,13 @@ class AISettingsWidget(QWidget):
         model_layout.addWidget(model_label)
 
         self._model_combo = QComboBox()
+        # 只显示支持 base64 data URL 的模型
         self._model_combo.addItems([
-            "wanx-background-generation-v2",
             "qwen-image-edit-plus",
-            "wanx-style-cosplay-v1"
+            "qwen-image-edit-plus-2025-12-15",
+            "qwen-image-edit-plus-2025-10-30",
         ])
+        self._model_combo.setToolTip("选择图像编辑模型（仅显示支持 base64 格式的模型）")
         model_layout.addWidget(self._model_combo)
 
         provider_layout.addLayout(model_layout)
@@ -785,7 +787,7 @@ class SettingsDialog(QDialog):
             api_config = self._config_manager.get_user_config("api_config", {})
             ai_settings = {
                 "api_key": api_config.get("api_key", ""),
-                "model": api_config.get("model", {}).get("model", "wanx-background-generation-v2"),
+                "model": api_config.get("model", {}).get("model", "qwen-image-edit-plus"),
             }
             self._ai_widget.set_settings(ai_settings)
 
@@ -826,7 +828,7 @@ class SettingsDialog(QDialog):
             if ai.get("api_key"):
                 api_config_data = {
                     "api_key": ai["api_key"],
-                    "model": {"model": ai.get("model", "wanx-background-generation-v2")}
+                    "model": {"model": ai.get("model", "qwen-image-edit-plus")}
                 }
                 self._config_manager.set_user_config("api_config", api_config_data)
 
@@ -834,7 +836,7 @@ class SettingsDialog(QDialog):
                 try:
                     api_config = APIConfig(
                         api_key=ai["api_key"],
-                        model=AIModelConfig(model=ai.get("model", "wanx-background-generation-v2"))
+                        model=AIModelConfig(model=ai.get("model", "qwen-image-edit-plus"))
                     )
                     get_ai_service(config=api_config)
                     self.ai_config_changed.emit(api_config)
