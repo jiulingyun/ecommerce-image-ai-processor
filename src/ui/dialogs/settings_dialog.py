@@ -291,8 +291,8 @@ class AISettingsWidget(QWidget):
 
         # 说明
         hint_label = QLabel(
-            "提示：您可以在阿里云 DashScope 控制台获取 API Key\n"
-            "https://dashscope.console.aliyun.com/"
+            "提示：您可以在阿里云 百炼 控制台获取 API Key\n"
+            "https://bailian.console.aliyun.com"
         )
         hint_label.setProperty("hint", True)
         # hint_label.setStyleSheet("color: #666; font-size: 11px;")
