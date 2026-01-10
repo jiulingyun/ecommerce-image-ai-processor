@@ -11,6 +11,11 @@ from src.services.image_service import (
     get_image_service,
     reset_image_service,
 )
+from src.services.version_checker import (
+    VersionChecker,
+    VersionInfo,
+    check_for_updates,
+)
 
 __all__ = [
     # AI 服务
@@ -22,4 +27,8 @@ __all__ = [
     "ProgressCallback",
     "get_image_service",
     "reset_image_service",
+    # 版本检测服务
+    "VersionChecker",
+    "VersionInfo",
+    "check_for_updates",
 ]

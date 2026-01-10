@@ -66,7 +66,7 @@ from src.models.batch_queue import QueueStats
 from src.models.image_task import ImageTask, TaskStatus
 from src.models.process_config import ProcessConfig
 from src.services.ai_service import get_ai_service
-from src.ui.dialogs import SettingsDialog, TemplateEditorWindow
+from src.ui.dialogs import AboutDialog, SettingsDialog, TemplateEditorWindow
 from src.ui.widgets import (
     ImagePairPanel,
     ImagePreview,
@@ -1247,18 +1247,9 @@ class MainWindow(QMainWindow):
         """显示关于对话框."""
         self.about_requested.emit()
 
-        # 临时使用简单对话框（后续实现专用对话框）
-        QMessageBox.about(
-            self,
-            f"关于 {APP_NAME}",
-            f"<h3>{APP_NAME}</h3>"
-            f"<p>作者: {APP_AUTHOR}</p>"
-            f"<p>版本: {APP_VERSION}</p>"
-            f"<p>一款基于 AI 的电商图片批量处理工具。</p>"
-            f"<p>支持背景去除、商品合成、边框添加等功能。</p>"
-            f"<p>官网: {APP_URL}</p>"
-        )
-        logger.debug("显示关于对话框")
+        dialog = AboutDialog(self)
+        dialog.exec()
+        logger.debug("关于对话框已关闭")
 
     # ========================
     # 事件处理

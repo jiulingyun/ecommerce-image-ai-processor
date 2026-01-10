@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from src.utils.logger import setup_logger
+
+if TYPE_CHECKING:
+    from src.services.version_checker import VersionChecker, VersionInfo
 
 logger = setup_logger(__name__)
 
@@ -24,6 +27,7 @@ class Application:
         """初始化应用管理器."""
         self._main_window: Optional["MainWindow"] = None  # noqa: F821
         self._db_service: Optional["DatabaseService"] = None  # noqa: F821
+        self._version_checker: Optional["VersionChecker"] = None
         self._initialized: bool = False
 
     def initialize(self) -> None:
@@ -98,9 +102,43 @@ class Application:
         self._main_window.show()
         logger.info("主窗口已显示")
 
+        # 启动时检测版本更新（后台线程）
+        self._check_for_updates()
+
+    def _check_for_updates(self) -> None:
+        """检测版本更新.
+
+        在后台线程中检测 GitHub Release 最新版本。
+        如果网络不可用，静默失败，仅输出日志。
+        """
+        from src.services.version_checker import VersionChecker
+
+        self._version_checker = VersionChecker()
+        self._version_checker.update_available.connect(self._on_update_available)
+        self._version_checker.start()
+        logger.debug("已启动版本检测线程")
+
+    def _on_update_available(self, version_info: "VersionInfo") -> None:
+        """发现新版本时的回调.
+
+        Args:
+            version_info: 新版本信息
+        """
+        from src.ui.dialogs import UpdateDialog
+
+        if self._main_window:
+            dialog = UpdateDialog(version_info, self._main_window)
+            dialog.exec()
+
     def cleanup(self) -> None:
         """清理应用资源."""
         logger.info("开始清理应用资源...")
+
+        # 停止版本检测线程
+        if self._version_checker and self._version_checker.isRunning():
+            self._version_checker.quit()
+            self._version_checker.wait(1000)
+            logger.debug("版本检测线程已停止")
 
         # 关闭数据库连接
         if self._db_service:

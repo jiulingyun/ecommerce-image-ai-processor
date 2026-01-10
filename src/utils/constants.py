@@ -74,6 +74,15 @@ API_MAX_RETRIES = 3
 API_RETRY_DELAY = 1  # 秒
 
 # ===================
+# GitHub 版本检测
+# ===================
+GITHUB_REPO_OWNER = "jiulingyun"
+GITHUB_REPO_NAME = "ecommerce-image-ai-processor"
+GITHUB_RELEASES_URL = f"https://github.com/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/releases"
+GITHUB_API_LATEST_RELEASE = f"https://api.github.com/repos/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/releases/latest"
+VERSION_CHECK_TIMEOUT = 5  # 秒
+
+# ===================
 # UI 设置
 # ===================
 WINDOW_MIN_WIDTH = 1024
