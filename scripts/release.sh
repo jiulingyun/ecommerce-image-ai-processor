@@ -167,7 +167,23 @@ fi
 
 # 创建标签
 print_info "创建标签 $TAG_NAME"
-if git tag -a "$TAG_NAME" -m "Release version $VERSION"; then
+#
+# 生成发布说明（RELEASE_NOTES.md）：从上一个 tag 到当前 HEAD 的提交摘录
+LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
+if [ -n "$LAST_TAG" ]; then
+    print_info "生成发布说明：从 $LAST_TAG 到 HEAD 的提交记录"
+    git log "$LAST_TAG"..HEAD --no-merges --pretty=format:"- %s (%an)" > RELEASE_NOTES.md || true
+else
+    print_info "未检测到上一个标签，生成最近 10 条提交作为发布说明"
+    git log -n 10 --no-merges --pretty=format:"- %s (%an)" > RELEASE_NOTES.md || true
+fi
+
+# 添加标题和版本信息到发布说明顶部
+printf "Release version %s\n\n" "$VERSION" > RELEASE_NOTES_HEADER.md
+cat RELEASE_NOTES.md >> RELEASE_NOTES_HEADER.md
+mv RELEASE_NOTES_HEADER.md RELEASE_NOTES.md
+
+if git tag -a "$TAG_NAME" -F RELEASE_NOTES.md; then
     print_success "标签创建成功"
 else
     print_error "标签创建失败"

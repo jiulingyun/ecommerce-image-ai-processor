@@ -166,9 +166,9 @@ jobs:
             - **Windows**: 下载 `ecommerce-image-processor-windows-*.zip`，解压后运行 `电商图片AI处理工具.exe`
             - **macOS**: 下载 `ecommerce-image-processor-macos-*.zip`，解压后拖拽 `.app` 到应用程序文件夹
             - **Linux**: 下载 `ecommerce-image-processor-linux-*.tar.gz`，解压后运行可执行文件
-            
+
             ### 更新内容
-            - 请在此处添加更新日志
+            ${{ steps.generate_notes.outputs.notes }}
             
             ### 系统要求
             - Windows 10/11 (64-bit)
@@ -182,3 +182,21 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate release notes
+        id: generate_notes
+        run: |
+          # 获取上一个 tag（如果存在）
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
+          if [ -n "$LAST_TAG" ]; then
+            echo "Generating notes from $LAST_TAG to HEAD"
+            git log "$LAST_TAG"..HEAD --no-merges --pretty=format:"- %s (%an)" > release_notes.md || true
+          else
+            echo "No previous tag found, using last 50 commits"
+            git log -n 50 --no-merges --pretty=format:"- %s (%an)" > release_notes.md || true
+          fi
+
+          # 将 release_notes.md 内容设置为 step 输出（多行）
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          cat release_notes.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
