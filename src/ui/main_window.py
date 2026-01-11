@@ -60,6 +60,7 @@ class ConstrainedScrollArea(QScrollArea):
             available_width = self.viewport().width()
             widget.setFixedWidth(available_width)
 
+from src.core.config_manager import get_config
 from src.core.queue_worker import QueueController, get_queue_controller
 from src.models.api_config import APIConfig
 from src.models.batch_queue import QueueStats
@@ -749,9 +750,11 @@ class MainWindow(QMainWindow):
         Args:
             count: 队列中的任务数量
         """
-        self._queue_count = min(count, MAX_QUEUE_SIZE)
+        config_manager = get_config()
+        max_queue_size = config_manager.settings.max_queue_size
+        self._queue_count = min(count, max_queue_size)
         if self._queue_label:
-            self._queue_label.setText(f"队列: {self._queue_count}/{MAX_QUEUE_SIZE}")
+            self._queue_label.setText(f"队列: {self._queue_count}/{max_queue_size}")
 
         # 更新工具栏进度的任务数
         if self._toolbar_progress:
@@ -917,8 +920,13 @@ class MainWindow(QMainWindow):
         for task in pending_tasks.values():
             task.config = current_config
 
+        # 从配置中获取并发数
+        config_manager = get_config()
+        concurrent_limit = config_manager.settings.concurrent_limit
+
         # 传递待处理的任务给控制器
         self._queue_controller.set_tasks(pending_tasks)
+        self._queue_controller.set_concurrent_limit(concurrent_limit)
         self._queue_controller.start()
 
         self.set_processing_state(True)
@@ -1009,12 +1017,16 @@ class MainWindow(QMainWindow):
         Args:
             image_paths: 图片路径列表（1-3张）
         """
+        # 从配置中获取最大队列大小
+        config_manager = get_config()
+        max_queue_size = config_manager.settings.max_queue_size
+
         # 检查队列是否已满
-        if self._queue_count >= MAX_QUEUE_SIZE:
+        if self._queue_count >= max_queue_size:
             QMessageBox.warning(
                 self,
                 "队列已满",
-                f"队列最多支持 {MAX_QUEUE_SIZE} 个任务。\n请等待处理完成或清空队列。",
+                f"队列最多支持 {max_queue_size} 个任务。\n请等待处理完成或清空队列。",
             )
             return
 

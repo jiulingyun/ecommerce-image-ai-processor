@@ -34,6 +34,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.models.image_task import ImageTask, TaskStatus
+from src.core.config_manager import get_config
 from src.utils.constants import MAX_QUEUE_SIZE
 from src.utils.logger import setup_logger
 
@@ -528,7 +529,8 @@ class TaskListWidget(QFrame):
 
         header_layout.addStretch()
 
-        self._count_label = QLabel(f"0/{MAX_QUEUE_SIZE}")
+        config = get_config()
+        self._count_label = QLabel(f"0/{config.settings.max_queue_size}")
         self._count_label.setProperty("hint", True)
         header_layout.addWidget(self._count_label)
 
@@ -579,7 +581,8 @@ class TaskListWidget(QFrame):
             logger.warning(f"任务已存在: {task.id}")
             return False
 
-        if len(self._tasks) >= MAX_QUEUE_SIZE:
+        config = get_config()
+        if len(self._tasks) >= config.settings.max_queue_size:
             logger.warning("队列已满")
             return False
 
@@ -717,7 +720,8 @@ class TaskListWidget(QFrame):
 
     def _update_count(self) -> None:
         """更新计数显示."""
-        self._count_label.setText(f"{len(self._tasks)}/{MAX_QUEUE_SIZE}")
+        config = get_config()
+        self._count_label.setText(f"{len(self._tasks)}/{config.settings.max_queue_size}")
 
     def _update_empty_state(self) -> None:
         """更新空状态显示."""

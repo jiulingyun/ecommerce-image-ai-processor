@@ -25,6 +25,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.ui.widgets.multi_image_drop_zone import MultiImageDropZone
+from src.core.config_manager import get_config
 from src.utils.constants import MAX_QUEUE_SIZE, MAX_TASK_IMAGES
 from src.utils.logger import setup_logger
 
@@ -100,9 +101,10 @@ class ImageUploadPanel(QFrame):
     @property
     def can_add_task(self) -> bool:
         """是否可以添加任务."""
+        config = get_config()
         return (
             self.has_images
-            and self._current_queue_count < MAX_QUEUE_SIZE
+            and self._current_queue_count < config.settings.max_queue_size
         )
 
     # ========================
@@ -173,7 +175,8 @@ class ImageUploadPanel(QFrame):
         status_layout.addStretch()
         
         # 队列状态
-        self._queue_status_label = QLabel(f"队列: 0/{MAX_QUEUE_SIZE}")
+        config = get_config()
+        self._queue_status_label = QLabel(f"队列: 0/{config.settings.max_queue_size}")
         self._queue_status_label.setProperty("hint", True)
         status_layout.addWidget(self._queue_status_label)
         
@@ -198,8 +201,9 @@ class ImageUploadPanel(QFrame):
         Args:
             count: 队列数量
         """
+        config = get_config()
         self._current_queue_count = count
-        self._queue_status_label.setText(f"队列: {count}/{MAX_QUEUE_SIZE}")
+        self._queue_status_label.setText(f"队列: {count}/{config.settings.max_queue_size}")
         self._update_button_state()
 
     def set_enabled(self, enabled: bool) -> None:
@@ -234,10 +238,12 @@ class ImageUploadPanel(QFrame):
             self._mode_label.setStyleSheet("color: #52c41a;")
 
         # 更新添加按钮提示
+        config = get_config()
+        max_queue = config.settings.max_queue_size
         if not self.has_images:
             self._add_task_btn.setToolTip("请先添加图片")
-        elif self._current_queue_count >= MAX_QUEUE_SIZE:
-            self._add_task_btn.setToolTip(f"队列已满（最多{MAX_QUEUE_SIZE}个任务）")
+        elif self._current_queue_count >= max_queue:
+            self._add_task_btn.setToolTip(f"队列已满（最多{max_queue}个任务）")
         elif self.is_single_image_mode:
             self._add_task_btn.setToolTip("单图模式：将对图片进行后期处理")
         else:

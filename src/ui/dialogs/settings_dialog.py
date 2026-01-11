@@ -85,10 +85,17 @@ class GeneralSettingsWidget(QWidget):
 
         self._max_queue_spinbox = QSpinBox()
         self._max_queue_spinbox.setMinimum(1)
-        self._max_queue_spinbox.setMaximum(10)
+        self._max_queue_spinbox.setMaximum(50)
         self._max_queue_spinbox.setValue(MAX_QUEUE_SIZE)
-        self._max_queue_spinbox.setToolTip("同时处理的最大任务数量")
+        self._max_queue_spinbox.setToolTip("队列中最多可以添加的任务数量")
         queue_layout.addRow("最大队列大小:", self._max_queue_spinbox)
+
+        self._concurrent_limit_spinbox = QSpinBox()
+        self._concurrent_limit_spinbox.setMinimum(1)
+        self._concurrent_limit_spinbox.setMaximum(10)
+        self._concurrent_limit_spinbox.setValue(3)
+        self._concurrent_limit_spinbox.setToolTip("同时并行处理的任务数量\n设置为 1 表示按顺序一个一个处理")
+        queue_layout.addRow("并发处理数:", self._concurrent_limit_spinbox)
 
         layout.addWidget(queue_group)
 
@@ -114,6 +121,7 @@ class GeneralSettingsWidget(QWidget):
         return {
             "log_level": self._log_level_combo.currentText(),
             "max_queue_size": self._max_queue_spinbox.value(),
+            "concurrent_limit": self._concurrent_limit_spinbox.value(),
             "debug": self._debug_checkbox.isChecked(),
             "dev_tools": self._dev_tools_checkbox.isChecked(),
         }
@@ -127,6 +135,9 @@ class GeneralSettingsWidget(QWidget):
 
         if "max_queue_size" in settings:
             self._max_queue_spinbox.setValue(settings["max_queue_size"])
+
+        if "concurrent_limit" in settings:
+            self._concurrent_limit_spinbox.setValue(settings["concurrent_limit"])
 
         if "debug" in settings:
             self._debug_checkbox.setChecked(settings["debug"])
@@ -764,6 +775,7 @@ class SettingsDialog(QDialog):
             general_settings = {
                 "log_level": settings.log_level,
                 "max_queue_size": settings.max_queue_size,
+                "concurrent_limit": settings.concurrent_limit,
                 "debug": settings.debug,
                 "dev_tools": settings.dev_tools,
             }

@@ -69,14 +69,30 @@ class ConfigManager:
     def _load_settings(self) -> Settings:
         """加载应用设置.
 
-        优先从环境变量加载，然后从配置文件加载。
+        优先从环境变量加载，然后从用户配置文件加载。
 
         Returns:
             Settings 实例
         """
         try:
+            # 先创建默认设置
             settings = Settings()
-            logger.debug(f"应用设置加载完成: log_level={settings.log_level}")
+            
+            # 从用户配置文件加载并覆盖
+            user_config = self._load_user_config()
+            if user_config:
+                # 更新设置中对应的字段
+                settings_fields = {
+                    "log_level", "max_queue_size", "concurrent_limit",
+                    "default_output_width", "default_output_height",
+                    "default_output_quality", "debug", "dev_tools"
+                }
+                updates = {k: v for k, v in user_config.items() if k in settings_fields}
+                if updates:
+                    # 创建新的 Settings 实例并应用用户配置
+                    settings = Settings(**{**settings.model_dump(), **updates})
+            
+            logger.debug(f"应用设置加载完成: log_level={settings.log_level}, max_queue_size={settings.max_queue_size}, concurrent_limit={settings.concurrent_limit}")
             return settings
         except Exception as e:
             logger.error(f"加载应用设置失败: {e}")

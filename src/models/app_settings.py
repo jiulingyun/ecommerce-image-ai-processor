@@ -56,8 +56,15 @@ class Settings(BaseSettings):
     max_queue_size: int = Field(
         default=MAX_QUEUE_SIZE,
         ge=1,
-        le=10,
+        le=50,
         description="最大队列大小",
+    )
+
+    concurrent_limit: int = Field(
+        default=3,
+        ge=1,
+        le=10,
+        description="并发处理数量",
     )
 
     # 输出配置

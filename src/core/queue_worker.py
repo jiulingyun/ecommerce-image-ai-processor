@@ -64,6 +64,7 @@ class QueueWorker(QObject):
         self._tasks: Dict[str, ImageTask] = {}  # 从 MainWindow 同步的任务
         self._is_running = False
         self._loop: Optional[asyncio.AbstractEventLoop] = None
+        self._concurrent_limit: int = 3  # 默认并发数
 
     @property
     def is_running(self) -> bool:
@@ -94,6 +95,14 @@ class QueueWorker(QObject):
         if self._processor:
             self._processor.queue.config = config
 
+    def set_concurrent_limit(self, limit: int) -> None:
+        """设置并发处理数量.
+
+        Args:
+            limit: 并发数量 (1-10)
+        """
+        self._concurrent_limit = max(1, min(10, limit))
+
     @pyqtSlot()
     def start_processing(self) -> None:
         """开始处理队列."""
@@ -111,7 +120,7 @@ class QueueWorker(QObject):
         # 创建处理器
         self._processor = BatchProcessor(
             image_service=get_image_service(),
-            concurrent_limit=3,
+            concurrent_limit=self._concurrent_limit,
         )
 
         # 将任务添加到处理器队列（使用已存在的 ImageTask 以保持引用）
@@ -273,6 +282,7 @@ class QueueController(QObject):
         self._tasks: Dict[str, ImageTask] = {}
         self._config: Optional[ProcessConfig] = None
         self._processing_tasks: set = set()  # 跟踪已开始处理的任务
+        self._concurrent_limit: int = 3  # 默认并发数
 
     @property
     def is_running(self) -> bool:
@@ -300,6 +310,14 @@ class QueueController(QObject):
         """
         self._config = config
 
+    def set_concurrent_limit(self, limit: int) -> None:
+        """设置并发处理数量.
+
+        Args:
+            limit: 并发数量 (1-10)
+        """
+        self._concurrent_limit = max(1, min(10, limit))
+
     def start(self) -> None:
         """开始处理."""
         if self.is_running:
@@ -324,8 +342,9 @@ class QueueController(QObject):
         self._worker = QueueWorker()
         self._worker.moveToThread(self._thread)
 
-        # 设置任务
+        # 设置任务和配置
         self._worker.set_tasks(self._tasks)
+        self._worker.set_concurrent_limit(self._concurrent_limit)
         if self._config:
             self._worker.set_config(self._config)
 
