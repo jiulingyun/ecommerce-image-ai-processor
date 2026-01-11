@@ -254,6 +254,7 @@ class QueueController(QObject):
     """
 
     progress_updated = pyqtSignal(int, str)  # progress, message
+    task_started = pyqtSignal(str)  # task_id - 任务开始处理
     task_completed = pyqtSignal(str, str)  # task_id, output_path
     task_failed = pyqtSignal(str, str)  # task_id, error
     all_completed = pyqtSignal(object)  # QueueStats
@@ -270,6 +271,7 @@ class QueueController(QObject):
         self._worker: Optional[QueueWorker] = None
         self._tasks: Dict[str, ImageTask] = {}
         self._config: Optional[ProcessConfig] = None
+        self._processing_tasks: set = set()  # 跟踪已开始处理的任务
 
     @property
     def is_running(self) -> bool:
@@ -314,6 +316,7 @@ class QueueController(QObject):
         
         self._worker = None
         self._thread = None
+        self._processing_tasks.clear()  # 清空处理中任务集合
 
         # 创建工作线程
         self._thread = QThread(self)
@@ -369,6 +372,10 @@ class QueueController(QObject):
 
     def _on_task_progress(self, task_id: str, progress: int, message: str) -> None:
         """任务进度回调."""
+        # 首次收到任务进度时，发送 task_started 信号
+        if task_id not in self._processing_tasks:
+            self._processing_tasks.add(task_id)
+            self.task_started.emit(task_id)
         self.progress_updated.emit(progress, message)
 
     def _on_task_completed(self, task_id: str, output_path: str) -> None:

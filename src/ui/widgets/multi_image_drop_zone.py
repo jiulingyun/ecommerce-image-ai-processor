@@ -120,26 +120,14 @@ class ImageThumbnail(QFrame):
         layout.addWidget(self._thumbnail_label, 0, Qt.AlignmentFlag.AlignCenter)
         
         # 删除按钮
-        self._delete_btn = QPushButton("✕")
-        self._delete_btn.setFixedSize(24, 24)
-        self._delete_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #ff4d4f;
-                color: white;
-                font-size: 12px;
-                font-weight: bold;
-                border: none;
-                border-radius: 12px;
-            }
-            QPushButton:hover {
-                background-color: #ff7875;
-            }
-        """)
+        self._delete_btn = QPushButton("X")
+        self._delete_btn.setObjectName("deleteBtn")
+        self._delete_btn.setFixedSize(22, 22)
         self._delete_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._delete_btn.clicked.connect(lambda: self.delete_clicked.emit(self._index))
         layout.addWidget(self._delete_btn, 0, Qt.AlignmentFlag.AlignCenter)
         
-        # 整体样式
+        # 整体样式（包含删除按钮）
         self.setStyleSheet("""
             ImageThumbnail {
                 background-color: #fafafa;
@@ -149,6 +137,20 @@ class ImageThumbnail(QFrame):
             ImageThumbnail:hover {
                 border-color: #1890ff;
                 background-color: #e6f7ff;
+            }
+            QPushButton#deleteBtn {
+                background-color: #ff4d4f;
+                color: white;
+                font-size: 14px;
+                font-weight: bold;
+                font-family: Arial, Helvetica, sans-serif;
+                border: none;
+                border-radius: 11px;
+                padding: 0px;
+                margin: 0px;
+            }
+            QPushButton#deleteBtn:hover {
+                background-color: #ff7875;
             }
         """)
     

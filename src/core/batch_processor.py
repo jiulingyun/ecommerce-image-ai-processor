@@ -232,7 +232,7 @@ class BatchProcessor:
         async with self._semaphore:  # type: ignore
 
             task = batch_task.task
-            task_id = batch_task.id
+            task_id = task.id  # 使用 ImageTask.id 而不是 BatchTask.id
 
             logger.info(f"开始处理任务 {batch_task.queue_position}: {task.first_image_filename}")
 

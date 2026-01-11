@@ -50,6 +50,7 @@ class TaskListItem(QFrame):
     """
 
     delete_clicked = pyqtSignal(str)  # task_id
+    retry_clicked = pyqtSignal(str)  # task_id
 
     def __init__(
         self,
@@ -236,6 +237,30 @@ class TaskListItem(QFrame):
         info_layout.addStretch()  # 底部弹簧
         layout.addLayout(info_layout, 1)
 
+        # 重试按钮（仅失败状态显示）
+        self._retry_btn = QPushButton("重试")
+        self._retry_btn.setFixedSize(48, 28)
+        self._retry_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #fff7e6;
+                border: 1px solid #ffc069;
+                border-radius: 4px;
+                color: #fa8c16;
+                font-size: 12px;
+                font-weight: bold;
+                padding: 2px 8px;
+            }
+            QPushButton:hover {
+                background-color: #fff2e8;
+                border-color: #fa8c16;
+                color: #d46b08;
+            }
+        """)
+        self._retry_btn.setToolTip("重新处理此任务")
+        self._retry_btn.clicked.connect(self._on_retry)
+        self._retry_btn.setVisible(False)  # 默认隐藏
+        layout.addWidget(self._retry_btn, 0, Qt.AlignmentFlag.AlignVCenter)
+
         # 打开文件夹按钮（仅完成状态显示）
         self._open_folder_btn = QPushButton("📁")
         self._open_folder_btn.setFixedSize(36, 36)
@@ -337,6 +362,10 @@ class TaskListItem(QFrame):
         if is_processing:
             self._progress_bar.setValue(self._task.progress)
         
+        # 显示/隐藏重试按钮（仅失败状态显示）
+        is_failed = self._task.status == TaskStatus.FAILED
+        self._retry_btn.setVisible(is_failed)
+        
         # 显示/隐藏打开文件夹按钮（仅完成状态且有输出文件时显示）
         has_output = self._task.status == TaskStatus.COMPLETED and self._task.output_path
         self._open_folder_btn.setVisible(bool(has_output))
@@ -353,6 +382,10 @@ class TaskListItem(QFrame):
     def _on_delete(self) -> None:
         """删除按钮点击."""
         self.delete_clicked.emit(self._task.id)
+    
+    def _on_retry(self) -> None:
+        """重试按钮点击."""
+        self.retry_clicked.emit(self._task.id)
     
     def _on_open_folder(self) -> None:
         """打开文件夹按钮点击."""
@@ -395,6 +428,12 @@ class TaskListItem(QFrame):
         menu = QMenu(self)
         
         # 根据任务状态添加不同菜单项
+        if self._task.status == TaskStatus.FAILED:
+            action_retry = QAction("🔄 重新处理", self)
+            action_retry.triggered.connect(self._on_retry)
+            menu.addAction(action_retry)
+            menu.addSeparator()
+        
         if self._task.status == TaskStatus.COMPLETED and self._task.output_path:
             action_open_folder = QAction("📁 在文件管理器中显示", self)
             action_open_folder.triggered.connect(lambda: self._open_file_location(self._task.output_path))
@@ -430,10 +469,12 @@ class TaskListWidget(QFrame):
     Signals:
         task_selected: 任务选中信号，参数为 ImageTask
         task_deleted: 任务删除信号，参数为 task_id
+        task_retry: 任务重试信号，参数为 task_id
     """
 
     task_selected = pyqtSignal(object)  # ImageTask
     task_deleted = pyqtSignal(str)  # task_id
+    task_retry = pyqtSignal(str)  # task_id
 
     def __init__(
         self,
@@ -546,6 +587,7 @@ class TaskListWidget(QFrame):
         index = len(self._tasks) + 1
         item_widget = TaskListItem(task, index=index)
         item_widget.delete_clicked.connect(self._on_delete_clicked)
+        item_widget.retry_clicked.connect(self._on_retry_clicked)
 
         # 添加到列表
         list_item = QListWidgetItem()
@@ -681,6 +723,7 @@ class TaskListWidget(QFrame):
         for idx, task in enumerate(tasks_backup, 1):
             item_widget = TaskListItem(task, index=idx)
             item_widget.delete_clicked.connect(self._on_delete_clicked)
+            item_widget.retry_clicked.connect(self._on_retry_clicked)
 
             list_item = QListWidgetItem()
             list_item.setSizeHint(QSize(0, 88))
@@ -704,3 +747,7 @@ class TaskListWidget(QFrame):
     def _on_delete_clicked(self, task_id: str) -> None:
         """删除按钮点击."""
         self.task_deleted.emit(task_id)
+
+    def _on_retry_clicked(self, task_id: str) -> None:
+        """重试按钮点击."""
+        self.task_retry.emit(task_id)

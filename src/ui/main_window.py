@@ -567,6 +567,7 @@ class MainWindow(QMainWindow):
         
         # 连接控制器信号
         self._queue_controller.progress_updated.connect(self._on_queue_progress)
+        self._queue_controller.task_started.connect(self._on_queue_task_started)
         self._queue_controller.task_completed.connect(self._on_queue_task_completed)
         self._queue_controller.task_failed.connect(self._on_queue_task_failed)
         self._queue_controller.all_completed.connect(self._on_queue_completed)
@@ -582,6 +583,7 @@ class MainWindow(QMainWindow):
         if self._task_list_widget:
             self._task_list_widget.task_selected.connect(self._on_task_selected)
             self._task_list_widget.task_deleted.connect(self._on_task_deleted)
+            self._task_list_widget.task_retry.connect(self._on_task_retry)
 
         # 模板配置面板信号
         if self._template_config_panel:
@@ -1089,9 +1091,47 @@ class MainWindow(QMainWindow):
 
         self.show_status_message("已删除任务")
 
+    def _on_task_retry(self, task_id: str) -> None:
+        """处理任务重试.
+
+        Args:
+            task_id: 任务 ID
+        """
+        # 重置任务状态
+        if task_id in self._tasks:
+            task = self._tasks[task_id]
+            task.status = TaskStatus.PENDING
+            task.error_message = None
+            task.output_path = None
+            task.progress = 0
+
+            # 更新任务列表显示
+            if self._task_list_widget:
+                self._task_list_widget.update_task_status(task_id, TaskStatus.PENDING)
+
+            self.show_status_message(f"任务已重置: {task.first_image_filename}")
+            logger.info(f"重试任务: {task_id}")
+        else:
+            logger.warning(f"任务不存在: {task_id}")
+
     # ========================
     # 队列控制器回调
     # ========================
+
+    def _on_queue_task_started(self, task_id: str) -> None:
+        """队列任务开始处理回调.
+
+        Args:
+            task_id: 任务 ID
+        """
+        # 更新任务状态
+        if task_id in self._tasks:
+            self._tasks[task_id].status = TaskStatus.PROCESSING
+            logger.info(f"任务开始处理: {task_id}")
+
+        # 更新任务列表显示
+        if self._task_list_widget:
+            self._task_list_widget.update_task_status(task_id, TaskStatus.PROCESSING)
 
     def _on_queue_progress(self, progress: int, message: str) -> None:
         """队列进度更新回调.
