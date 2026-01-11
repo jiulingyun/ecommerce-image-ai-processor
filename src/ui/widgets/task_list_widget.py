@@ -668,6 +668,18 @@ class TaskListWidget(QFrame):
         else:
             logger.warning(f"Task {task_id} not found in self._tasks")
 
+    def update_task_progress(self, task_id: str, progress: int) -> None:
+        """更新任务进度.
+
+        Args:
+            task_id: 任务 ID
+            progress: 进度 (0-100)
+        """
+        if task_id in self._tasks:
+            self._tasks[task_id].progress = progress
+            if task_id in self._items:
+                self._items[task_id].update_task(self._tasks[task_id])
+
     def clear_all(self) -> None:
         """清空所有任务."""
         self._list_widget.clear()

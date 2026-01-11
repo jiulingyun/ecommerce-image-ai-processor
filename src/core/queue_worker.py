@@ -255,6 +255,7 @@ class QueueController(QObject):
 
     progress_updated = pyqtSignal(int, str)  # progress, message
     task_started = pyqtSignal(str)  # task_id - 任务开始处理
+    task_progress = pyqtSignal(str, int)  # task_id, progress - 任务进度更新
     task_completed = pyqtSignal(str, str)  # task_id, output_path
     task_failed = pyqtSignal(str, str)  # task_id, error
     all_completed = pyqtSignal(object)  # QueueStats
@@ -376,6 +377,8 @@ class QueueController(QObject):
         if task_id not in self._processing_tasks:
             self._processing_tasks.add(task_id)
             self.task_started.emit(task_id)
+        # 发送任务进度更新
+        self.task_progress.emit(task_id, progress)
         self.progress_updated.emit(progress, message)
 
     def _on_task_completed(self, task_id: str, output_path: str) -> None:

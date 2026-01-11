@@ -568,6 +568,7 @@ class MainWindow(QMainWindow):
         # 连接控制器信号
         self._queue_controller.progress_updated.connect(self._on_queue_progress)
         self._queue_controller.task_started.connect(self._on_queue_task_started)
+        self._queue_controller.task_progress.connect(self._on_queue_task_progress)
         self._queue_controller.task_completed.connect(self._on_queue_task_completed)
         self._queue_controller.task_failed.connect(self._on_queue_task_failed)
         self._queue_controller.all_completed.connect(self._on_queue_completed)
@@ -1132,6 +1133,21 @@ class MainWindow(QMainWindow):
         # 更新任务列表显示
         if self._task_list_widget:
             self._task_list_widget.update_task_status(task_id, TaskStatus.PROCESSING)
+
+    def _on_queue_task_progress(self, task_id: str, progress: int) -> None:
+        """队列任务进度更新回调.
+
+        Args:
+            task_id: 任务 ID
+            progress: 进度 (0-100)
+        """
+        # 更新任务进度
+        if task_id in self._tasks:
+            self._tasks[task_id].progress = progress
+
+        # 更新任务列表显示
+        if self._task_list_widget:
+            self._task_list_widget.update_task_progress(task_id, progress)
 
     def _on_queue_progress(self, progress: int, message: str) -> None:
         """队列进度更新回调.
