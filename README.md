@@ -8,6 +8,11 @@
 
 一款面向电商运营的桌面软件，通过 qwen-image-edit-plus AI 模型批量处理商品图片，实现背景去除、商品合成，并添加自定义背景、边框和文字。
 
+## 社交平台
+加入官方群聊以获取支持与交流（可任选渠道）：日常沟通、Bug 报告、功能建议和使用帮助 — 点击下方方徽章加入。
+
+[![Telegram](https://img.shields.io/badge/Telegram-Join-26A5E4?logo=telegram&logoColor=white)](https://t.me/image_ai_processor) [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/d8h4fPYY) [![QQ群](https://img.shields.io/badge/QQ-Join-12B7F5?logo=qq&logoColor=white)](https://qm.qq.com/q/GioWC1jnG2) [![WeChat](https://img.shields.io/badge/WeChat-Join-7BB32E?logo=wechat&logoColor=white)](https://www.jiulingyun.cn/ecommerce-image-ai-processor-wechat_qr.png)
+
 ## ✨ 功能特性
 
 - 🎨 **AI 智能合成**: 基于 qwen-image-edit-plus 模型，实现精准的背景去除和商品合成
@@ -162,11 +167,7 @@ pyinstaller --name="电商图片处理工具" --windowed src/main.py
 1. **应用内设置**: 在设置对话框中输入阿里云百炼 SK 密钥（推荐）
 
 #### 抠图服务 API
-- **免费获取**: 加入官方微信群获取免费抠图 API 服务（扫码加入）
-
-  ![微信群二维码](./images/wechat_qr.png)
-
-- **配置方式**: 在设置对话框中输入抠图 API 密钥
+**配置方式**: 在设置对话框中输入抠图 API 密钥
 
 ### 处理参数
 
@@ -188,3 +189,5 @@ pyinstaller --name="电商图片处理工具" --windowed src/main.py
 ---
 
 **Made with ❤️ for E-commerce**
+
+[![Stars](https://img.shields.io/github/stars/jiulingyun/ecommerce-image-ai-processor?style=social)](https://github.com/jiulingyun/ecommerce-image-ai-processor) [![Forks](https://img.shields.io/github/forks/jiulingyun/ecommerce-image-ai-processor?style=social)](https://github.com/jiulingyun/ecommerce-image-ai-processor/network) [![Releases](https://img.shields.io/github/v/release/jiulingyun/ecommerce-image-ai-processor)](https://github.com/jiulingyun/ecommerce-image-ai-processor/releases) [![Open Issues](https://img.shields.io/github/issues/jiulingyun/ecommerce-image-ai-processor)](https://github.com/jiulingyun/ecommerce-image-ai-processor/issues)

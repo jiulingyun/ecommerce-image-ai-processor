@@ -166,7 +166,7 @@ jobs:
             - **Windows**: 下载 `ecommerce-image-processor-windows-*.zip`，解压后运行 `电商图片AI处理工具.exe`
             - **macOS**: 下载 `ecommerce-image-processor-macos-*.zip`，解压后拖拽 `.app` 到应用程序文件夹
             - **Linux**: 下载 `ecommerce-image-processor-linux-*.tar.gz`，解压后运行可执行文件
-
+            
             ### 更新内容
             ${{ steps.generate_notes.outputs.notes }}
             
