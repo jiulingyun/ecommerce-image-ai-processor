@@ -430,35 +430,58 @@ class ImageService:
         """处理单图任务（仅主图）.
         
         执行流程：
-        - AI开启: 加载主图 → AI增强 → 后期处理 → 保存
-        - AI关闭: 加载主图 → 后期处理 → 保存
+        1. 加载主图
+        2. 可选：抠图 + 背景填充（如果启用）
+        3. 可选：AI 增强（如果启用）
+        4. 后期处理
+        5. 保存输出
         """
-        # Step 1: 加载主图 (0-20%)
-        report_progress(10, "加载主图")
+        # Step 1: 加载主图 (0-10%)
+        report_progress(5, "加载主图")
         image = load_image(task.background_path)
         image = ensure_rgba(image)
         image_bytes = image_to_bytes(image, format="PNG")
 
-        # Step 2: 可选的 AI 增强 (20-60%)
+        # Step 2: 可选的抠图 + 背景填充 (10-40%)
+        if config.background.enabled:
+            # 抠图
+            report_progress(10, "抠图处理中")
+            image_bytes = await self._remove_scene_background(
+                task.background_path,
+                config,
+                lambda p, m: report_progress(int(10 + p * 0.15), m),
+            )
+            
+            # 背景填充
+            report_progress(30, "背景填充")
+            image_bytes = await self._apply_background_to_scene(
+                image_bytes,
+                config,
+                lambda p, m: report_progress(int(30 + p * 0.1), m),
+            )
+        else:
+            report_progress(40, "跳过抠图和背景填充")
+
+        # Step 3: 可选的 AI 增强 (40-70%)
         if config.ai_editing.enabled:
-            report_progress(25, "AI 增强处理中")
+            report_progress(45, "AI 增强处理中")
             image_bytes = await self._apply_ai_enhance(
                 image_bytes,
                 config,
-                lambda p, m: report_progress(int(25 + p * 0.35), m),
+                lambda p, m: report_progress(int(45 + p * 0.25), m),
             )
         else:
-            report_progress(60, "跳过 AI 增强")
+            report_progress(70, "跳过 AI 增强")
 
-        # Step 3: 后期处理 (60-90%)
-        report_progress(65, "后期处理")
+        # Step 4: 后期处理 (70-90%)
+        report_progress(75, "后期处理")
         final_image = await self._apply_final_effects(
             image_bytes,
             config,
-            lambda p, m: report_progress(int(65 + p * 0.25), m),
+            lambda p, m: report_progress(int(75 + p * 0.15), m),
         )
 
-        # Step 4: 保存输出 (90-100%)
+        # Step 5: 保存输出 (90-100%)
         report_progress(95, "保存输出")
         output_path = await self._save_final_output(
             final_image,

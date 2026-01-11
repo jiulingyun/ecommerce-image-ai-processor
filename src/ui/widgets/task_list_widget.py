@@ -123,24 +123,42 @@ class TaskListItem(QFrame):
         self._load_thumbnail(self._bg_thumbnail, self._task.background_path)
         layout.addWidget(self._bg_thumbnail, 0, Qt.AlignmentFlag.AlignVCenter)
 
-        # 加号
-        plus_label = QLabel("+")
-        plus_label.setStyleSheet("color: #999; font-size: 16px; font-weight: bold;")
-        plus_label.setFixedWidth(20)
-        plus_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(plus_label, 0, Qt.AlignmentFlag.AlignVCenter)
+        # 单图模式或双图模式
+        is_single_mode = self._task.is_single_image_mode
 
-        # 商品图缩略图
-        self._prod_thumbnail = QLabel()
-        self._prod_thumbnail.setFixedSize(LIST_THUMBNAIL_SIZE[0], LIST_THUMBNAIL_SIZE[1])
-        self._prod_thumbnail.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._prod_thumbnail.setStyleSheet("""
-            background-color: #f5f5f5;
-            border: 1px solid #e8e8e8;
-            border-radius: 4px;
-        """)
-        self._load_thumbnail(self._prod_thumbnail, self._task.product_path)
-        layout.addWidget(self._prod_thumbnail, 0, Qt.AlignmentFlag.AlignVCenter)
+        if not is_single_mode:
+            # 双图模式：显示加号和商品图
+            plus_label = QLabel("+")
+            plus_label.setStyleSheet("color: #999; font-size: 16px; font-weight: bold;")
+            plus_label.setFixedWidth(20)
+            plus_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            layout.addWidget(plus_label, 0, Qt.AlignmentFlag.AlignVCenter)
+
+            # 商品图缩略图
+            self._prod_thumbnail = QLabel()
+            self._prod_thumbnail.setFixedSize(LIST_THUMBNAIL_SIZE[0], LIST_THUMBNAIL_SIZE[1])
+            self._prod_thumbnail.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            self._prod_thumbnail.setStyleSheet("""
+                background-color: #f5f5f5;
+                border: 1px solid #e8e8e8;
+                border-radius: 4px;
+            """)
+            self._load_thumbnail(self._prod_thumbnail, self._task.product_path)
+            layout.addWidget(self._prod_thumbnail, 0, Qt.AlignmentFlag.AlignVCenter)
+        else:
+            # 单图模式：显示标签
+            single_label = QLabel("单图")
+            single_label.setStyleSheet("""
+                color: #1890ff;
+                font-size: 11px;
+                font-weight: bold;
+                background-color: #e6f7ff;
+                border: 1px solid #91d5ff;
+                border-radius: 4px;
+                padding: 2px 6px;
+            """)
+            single_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            layout.addWidget(single_label, 0, Qt.AlignmentFlag.AlignVCenter)
 
         # 任务信息
         info_layout = QVBoxLayout()
@@ -149,11 +167,15 @@ class TaskListItem(QFrame):
 
         # 文件名
         bg_name = Path(self._task.background_path).name
-        prod_name = Path(self._task.product_path).name
-        name_label = QLabel(f"{bg_name[:15]}...")
+        if is_single_mode:
+            name_label = QLabel(f"{bg_name[:20]}..." if len(bg_name) > 20 else bg_name)
+            name_label.setToolTip(f"主图: {bg_name}")
+        else:
+            prod_name = Path(self._task.product_path).name
+            name_label = QLabel(f"{bg_name[:15]}...")
+            name_label.setToolTip(f"主图: {bg_name}\n商品: {prod_name}")
         name_label.setStyleSheet("font-size: 13px; font-weight: 500;")
         name_label.setProperty("taskName", True)
-        name_label.setToolTip(f"背景: {bg_name}\n商品: {prod_name}")
         info_layout.addWidget(name_label)
 
         # 状态
@@ -229,13 +251,17 @@ class TaskListItem(QFrame):
         # 最后更新状态显示（所有组件创建完成后）
         self._update_status_display()
 
-    def _load_thumbnail(self, label: QLabel, file_path: str) -> None:
+    def _load_thumbnail(self, label: QLabel, file_path: Optional[str]) -> None:
         """加载缩略图.
 
         Args:
             label: 目标标签
-            file_path: 文件路径
+            file_path: 文件路径（可为 None）
         """
+        if not file_path:
+            label.setText("-")
+            return
+            
         try:
             pixmap = QPixmap(file_path)
             if not pixmap.isNull():
