@@ -370,6 +370,49 @@ class BackgroundRemovalConfig(BaseModel):
 # ===================
 
 
+class BackgroundMode(str, Enum):
+    """背景模式枚举."""
+
+    SOLID_COLOR = "solid_color"  # 纯色填充
+    AI_GENERATED = "ai_generated"  # AI 生成背景
+
+
+# 背景模式中文名称
+BACKGROUND_MODE_NAMES: dict[BackgroundMode, str] = {
+    BackgroundMode.SOLID_COLOR: "纯色填充",
+    BackgroundMode.AI_GENERATED: "AI 生成背景",
+}
+
+
+# AI 背景预设提示词
+AI_BACKGROUND_PRESETS: dict[str, dict[str, str]] = {
+    "clean_white": {
+        "name": "纯白简洁背景",
+        "prompt": "纯净的白色背景，简洁干净，适合电商产品展示",
+    },
+    "product_stage": {
+        "name": "电商产品展示台",
+        "prompt": "专业的产品展示台，柔和的光影效果，浅灰色背景渐变",
+    },
+    "natural_light": {
+        "name": "自然光影白底",
+        "prompt": "自然光照射的白色背景，带有柔和的阴影效果",
+    },
+    "gradient_soft": {
+        "name": "渐变柔和背景",
+        "prompt": "从白色到浅灰的柔和渐变背景，现代简约风格",
+    },
+    "studio_lighting": {
+        "name": "摄影棚灯光效果",
+        "prompt": "专业摄影棚的灯光效果，均匀的照明，无反光白底",
+    },
+    "custom": {
+        "name": "自定义",
+        "prompt": "",
+    },
+}
+
+
 class PresetColor(str, Enum):
     """预设背景颜色枚举."""
 
@@ -455,26 +498,25 @@ def validate_rgb_color(color: RGBColor) -> RGBColor:
 class BackgroundConfig(BaseModel):
     """背景配置.
 
-    支持纯色背景添加，提供颜色选择器和 RGB 数值输入。
+    支持纯色背景和 AI 生成背景两种模式。
 
     Attributes:
-        enabled: 是否启用背景添加
-        preset: 预设颜色选择
-        color: 自定义 RGB 颜色值
+        enabled: 是否启用背景处理（同时控制抠图服务）
+        mode: 背景模式（纯色填充或 AI 生成）
+        preset: 预设颜色选择（纯色模式）
+        color: 自定义 RGB 颜色值（纯色模式）
         hex_color: HEX 颜色字符串（可选，用于 UI 输入）
+        ai_preset: AI 背景预设名称
+        ai_prompt: AI 背景自定义提示词
 
     Example:
         >>> config = BackgroundConfig(preset=PresetColor.WHITE)
         >>> config.get_effective_color()
         (255, 255, 255)
         >>>
-        >>> config = BackgroundConfig(preset=PresetColor.CUSTOM, color=(200, 100, 50))
-        >>> config.get_effective_color()
-        (200, 100, 50)
-        >>>
-        >>> config = BackgroundConfig.from_hex("#FF5733")
-        >>> config.get_effective_color()
-        (255, 87, 51)
+        >>> config = BackgroundConfig(mode=BackgroundMode.AI_GENERATED, ai_preset="clean_white")
+        >>> config.get_effective_ai_prompt()
+        '纯净的白色背景，简洁干净，适合电商产品展示'
     """
 
     # 预设颜色列表（供 UI 使用）
@@ -482,19 +524,32 @@ class BackgroundConfig(BaseModel):
 
     enabled: bool = Field(
         default=True,
-        description="是否启用背景添加",
+        description="是否启用背景处理（同时控制抠图服务）",
+    )
+    mode: BackgroundMode = Field(
+        default=BackgroundMode.SOLID_COLOR,
+        description="背景模式",
     )
     preset: PresetColor = Field(
         default=PresetColor.WHITE,
-        description="预设颜色选择",
+        description="预设颜色选择（纯色模式）",
     )
     color: RGBColor = Field(
         default=DEFAULT_BACKGROUND_COLOR,
-        description="自定义背景颜色 RGB",
+        description="自定义背景颜色 RGB（纯色模式）",
     )
     hex_color: Optional[str] = Field(
         default=None,
         description="HEX 颜色字符串（可选）",
+    )
+    ai_preset: str = Field(
+        default="clean_white",
+        description="AI 背景预设名称",
+    )
+    ai_prompt: str = Field(
+        default="",
+        max_length=500,
+        description="AI 背景自定义提示词",
     )
 
     @field_validator("color")
@@ -547,6 +602,30 @@ class BackgroundConfig(BaseModel):
             是否透明
         """
         return self.preset == PresetColor.TRANSPARENT
+
+    def is_ai_mode(self) -> bool:
+        """检查是否为 AI 生成背景模式.
+
+        Returns:
+            是否为 AI 模式
+        """
+        return self.mode == BackgroundMode.AI_GENERATED
+
+    def get_effective_ai_prompt(self) -> str:
+        """获取实际生效的 AI 提示词.
+
+        如果有自定义提示词则返回自定义提示词，
+        否则返回预设对应的提示词。
+
+        Returns:
+            AI 提示词字符串
+        """
+        # 优先使用自定义提示词
+        if self.ai_prompt:
+            return self.ai_prompt
+        # 使用预设提示词
+        preset_info = AI_BACKGROUND_PRESETS.get(self.ai_preset, {})
+        return preset_info.get("prompt", "纯净的白色背景，简洁干净，适合电商产品展示")
 
     @classmethod
     def from_hex(cls, hex_color: str, enabled: bool = True) -> "BackgroundConfig":
@@ -617,6 +696,38 @@ class BackgroundConfig(BaseModel):
             }
             for preset in PresetColor
             if preset not in (PresetColor.TRANSPARENT, PresetColor.CUSTOM)
+        ]
+
+    @classmethod
+    def get_ai_presets(cls) -> list[dict]:
+        """获取所有 AI 背景预设（供 UI 使用）.
+
+        Returns:
+            AI 背景预设信息列表
+        """
+        return [
+            {
+                "key": key,
+                "name": info["name"],
+                "prompt": info["prompt"],
+            }
+            for key, info in AI_BACKGROUND_PRESETS.items()
+        ]
+
+    @classmethod
+    def get_background_modes(cls) -> list[dict]:
+        """获取所有背景模式（供 UI 使用）.
+
+        Returns:
+            背景模式信息列表
+        """
+        return [
+            {
+                "value": mode.value,
+                "mode": mode,
+                "name": BACKGROUND_MODE_NAMES[mode],
+            }
+            for mode in BackgroundMode
         ]
 
 

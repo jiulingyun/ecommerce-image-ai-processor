@@ -656,8 +656,12 @@ class MainWindow(QMainWindow):
             )
 
         # 加载抠图服务配置（从用户配置中加载）
+        # 抠图服务的 enabled 状态由背景配置的 enabled 控制
         from src.core.config_manager import get_config
         from src.models.process_config import BackgroundRemovalConfig, BackgroundRemovalProvider
+        
+        # 获取背景配置的启用状态
+        bg_enabled = process_config.background.enabled if process_config else True
         
         bg_removal_config = None
         try:
@@ -666,15 +670,19 @@ class MainWindow(QMainWindow):
             if bg_removal_data:
                 provider = bg_removal_data.get("provider", "external_api")
                 bg_removal_config = BackgroundRemovalConfig(
-                    enabled=True,
+                    enabled=bg_enabled,  # 由背景配置控制
                     provider=BackgroundRemovalProvider(provider),
                     api_url=bg_removal_data.get("api_url", "http://localhost:5000/api/remove-background"),
                     api_key=bg_removal_data.get("api_key", ""),
                     proxy=bg_removal_data.get("proxy"),
                     timeout=bg_removal_data.get("timeout", 120),
                 )
+            else:
+                # 没有配置时也要创建默认配置，尊重 enabled 状态
+                bg_removal_config = BackgroundRemovalConfig(enabled=bg_enabled)
         except Exception as e:
             logger.warning(f"加载抠图服务配置失败: {e}")
+            bg_removal_config = BackgroundRemovalConfig(enabled=bg_enabled)
 
         # 获取模板配置
         template_config = None

@@ -8,19 +8,17 @@ from PyQt6.QtWidgets import QApplication
 
 from src.models.process_config import (
     BackgroundConfig,
+    BackgroundMode,
     BorderConfig,
     BorderStyle,
     PresetColor,
     ProcessConfig,
-    TextConfig,
-    TextPosition,
 )
 from src.ui.widgets.process_config_panel import (
     BackgroundConfigWidget,
     BorderConfigWidget,
     ColorButton,
     ProcessConfigPanel,
-    TextConfigWidget,
 )
 
 
@@ -187,67 +185,6 @@ class TestBorderConfigWidget:
         assert signals[0].enabled is True
 
 
-class TestTextConfigWidget:
-    """TextConfigWidget 组件测试."""
-
-    def test_init_default(self, qtbot) -> None:
-        """测试默认初始化."""
-        widget = TextConfigWidget()
-        qtbot.addWidget(widget)
-
-        config = widget.get_config()
-        assert config.enabled is False
-        assert config.content == ""
-        assert config.font_size == 14
-        assert config.color == (0, 0, 0)
-
-    def test_set_config(self, qtbot) -> None:
-        """测试设置配置."""
-        widget = TextConfigWidget()
-        qtbot.addWidget(widget)
-
-        config = TextConfig(
-            enabled=True,
-            content="测试文字",
-            preset_position=TextPosition.TOP_LEFT,
-            font_size=24,
-            color=(255, 0, 0),
-        )
-        widget.set_config(config)
-
-        result = widget.get_config()
-        assert result.enabled is True
-        assert result.content == "测试文字"
-        assert result.preset_position == TextPosition.TOP_LEFT
-        assert result.font_size == 24
-        assert result.color == (255, 0, 0)
-
-    def test_content_input(self, qtbot) -> None:
-        """测试文字内容输入."""
-        widget = TextConfigWidget()
-        qtbot.addWidget(widget)
-
-        signals = []
-        widget.config_changed.connect(lambda c: signals.append(c))
-
-        widget._content_input.setText("Hello World")
-
-        assert len(signals) == 1
-        assert signals[0].content == "Hello World"
-
-    def test_position_selection(self, qtbot) -> None:
-        """测试位置选择."""
-        widget = TextConfigWidget()
-        qtbot.addWidget(widget)
-
-        # 找到顶部居中的索引
-        index = widget._position_combo.findData(TextPosition.TOP_CENTER.value)
-        widget._position_combo.setCurrentIndex(index)
-
-        config = widget.get_config()
-        assert config.preset_position == TextPosition.TOP_CENTER
-
-
 class TestProcessConfigPanel:
     """ProcessConfigPanel 组件测试."""
 
@@ -260,7 +197,6 @@ class TestProcessConfigPanel:
         assert isinstance(config, ProcessConfig)
         assert isinstance(config.background, BackgroundConfig)
         assert isinstance(config.border, BorderConfig)
-        assert isinstance(config.text, TextConfig)
 
     def test_set_config(self, qtbot) -> None:
         """测试设置配置."""
@@ -270,7 +206,6 @@ class TestProcessConfigPanel:
         config = ProcessConfig(
             background=BackgroundConfig(enabled=False, preset=PresetColor.BLACK),
             border=BorderConfig(enabled=True, width=5),
-            text=TextConfig(enabled=True, content="Test"),
         )
         panel.set_config(config)
 
@@ -279,8 +214,6 @@ class TestProcessConfigPanel:
         assert result.background.preset == PresetColor.BLACK
         assert result.border.enabled is True
         assert result.border.width == 5
-        assert result.text.enabled is True
-        assert result.text.content == "Test"
 
     def test_get_subconfigs(self, qtbot) -> None:
         """测试获取子配置."""
@@ -289,11 +222,9 @@ class TestProcessConfigPanel:
 
         bg_config = panel.get_background_config()
         border_config = panel.get_border_config()
-        text_config = panel.get_text_config()
 
         assert isinstance(bg_config, BackgroundConfig)
         assert isinstance(border_config, BorderConfig)
-        assert isinstance(text_config, TextConfig)
 
     def test_config_changed_signal(self, qtbot) -> None:
         """测试配置变更信号."""
@@ -317,16 +248,27 @@ class TestProcessConfigPanel:
         # 设置初始配置
         initial_config = ProcessConfig(
             border=BorderConfig(enabled=True, width=10),
-            text=TextConfig(enabled=True, content="Initial"),
         )
         panel.set_config(initial_config)
 
         # 修改背景配置
         panel._background_widget._enabled_checkbox.setChecked(False)
 
-        # 验证边框和文字配置未受影响
+        # 验证边框配置未受影响
         result = panel.get_config()
         assert result.border.enabled is True
         assert result.border.width == 10
-        assert result.text.enabled is True
-        assert result.text.content == "Initial"
+
+    def test_background_mode_switch(self, qtbot) -> None:
+        """测试背景模式切换."""
+        panel = ProcessConfigPanel()
+        qtbot.addWidget(panel)
+
+        # 默认为纯色模式
+        config = panel.get_background_config()
+        assert config.mode == BackgroundMode.SOLID_COLOR
+
+        # 切换到 AI 模式（使用 click() 来触发信号）
+        panel._background_widget._ai_radio.click()
+        config = panel.get_background_config()
+        assert config.mode == BackgroundMode.AI_GENERATED

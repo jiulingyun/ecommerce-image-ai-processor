@@ -23,6 +23,7 @@ from src.models.api_config import APIConfig
 from src.models.image_task import ImageTask, TaskStatus
 from src.models.process_config import (
     BackgroundConfig,
+    BackgroundMode,
     BorderConfig,
     BorderStyle,
     OutputConfig,
@@ -453,7 +454,39 @@ class ImageService:
         config: ProcessConfig,
         on_progress: Optional[ProgressCallback] = None,
     ) -> bytes:
-        """对场景图添加自定义背景色（内部方法）.
+        """对场景图添加背景（纯色或 AI 生成）（内部方法）.
+        
+        根据配置的背景模式决定使用纯色填充还是 AI 生成背景。
+        
+        Args:
+            scene_bytes: 场景图字节数据（透明背景）
+            config: 处理配置
+            on_progress: 进度回调
+            
+        Returns:
+            添加背景后的图片字节数据
+        """
+        bg_config = config.background
+        
+        # 检查背景模式
+        if bg_config.is_ai_mode():
+            # AI 生成背景模式
+            return await self._apply_ai_background(
+                scene_bytes, config, on_progress
+            )
+        else:
+            # 纯色填充模式
+            return await self._apply_solid_background(
+                scene_bytes, config, on_progress
+            )
+
+    async def _apply_solid_background(
+        self,
+        scene_bytes: bytes,
+        config: ProcessConfig,
+        on_progress: Optional[ProgressCallback] = None,
+    ) -> bytes:
+        """应用纯色背景（内部方法）.
         
         Args:
             scene_bytes: 场景图字节数据（透明背景）
@@ -467,11 +500,11 @@ class ImageService:
         loop = asyncio.get_event_loop()
 
         if on_progress:
-            on_progress(50, "添加背景色")
+            on_progress(50, "添加纯色背景")
 
         # 添加背景色（使用 get_effective_color 获取实际生效的颜色）
         effective_bg_color = config.background.get_effective_color()
-        logger.debug(f"应用背景色: {effective_bg_color}")
+        logger.debug(f"应用纯色背景: {effective_bg_color}")
         image = await loop.run_in_executor(
             None, self._add_background_color, image, effective_bg_color
         )
@@ -480,9 +513,53 @@ class ImageService:
         result_bytes = image_to_bytes(image, format="PNG")
 
         if on_progress:
-            on_progress(100, "背景添加完成")
+            on_progress(100, "纯色背景添加完成")
 
         return result_bytes
+
+    async def _apply_ai_background(
+        self,
+        scene_bytes: bytes,
+        config: ProcessConfig,
+        on_progress: Optional[ProgressCallback] = None,
+    ) -> bytes:
+        """使用 AI 生成背景（内部方法）.
+        
+        Args:
+            scene_bytes: 场景图字节数据（透明背景）
+            config: 处理配置
+            on_progress: 进度回调
+            
+        Returns:
+            AI 生成背景后的图片字节数据
+        """
+        if on_progress:
+            on_progress(30, "AI 背景生成中...")
+
+        # 获取 AI 背景提示词
+        ai_prompt = config.background.get_effective_ai_prompt()
+        logger.info(f"AI 背景生成提示词: {ai_prompt}")
+
+        try:
+            # 调用 AI 服务生成背景
+            result_bytes = await self.ai_service.generate_background(
+                scene_bytes, ai_prompt
+            )
+            
+            if on_progress:
+                on_progress(100, "AI 背景生成完成")
+            
+            return result_bytes
+            
+        except Exception as e:
+            logger.error(f"AI 背景生成失败: {e}")
+            # 回退到纯色背景
+            logger.warning("回退到纯色背景模式")
+            if on_progress:
+                on_progress(50, "回退到纯色背景")
+            return await self._apply_solid_background(
+                scene_bytes, config, on_progress
+            )
 
     async def _composite_to_scene(
         self,

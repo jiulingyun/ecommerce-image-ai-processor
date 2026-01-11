@@ -8,7 +8,7 @@ import pytest
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication
 
-from src.ui.main_window import MainWindow, _get_stylesheet
+from src.ui.main_window import MainWindow
 from src.utils.constants import (
     APP_NAME,
     APP_VERSION,
@@ -39,27 +39,6 @@ def main_window(app):
     window = MainWindow()
     yield window
     window.close()
-
-
-# ========================
-# 样式表加载测试
-# ========================
-
-
-class TestGetStylesheet:
-    """测试样式表加载."""
-
-    def test_get_stylesheet_returns_string(self):
-        """测试样式表加载返回字符串."""
-        result = _get_stylesheet()
-        assert isinstance(result, str)
-
-    def test_get_stylesheet_contains_content(self):
-        """测试样式表包含内容."""
-        result = _get_stylesheet()
-        # 如果样式文件存在，应该包含 QMainWindow 样式
-        if result:
-            assert "QMainWindow" in result or "QWidget" in result
 
 
 # ========================

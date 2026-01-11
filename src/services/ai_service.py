@@ -207,6 +207,36 @@ class AIService:
         """
         return await self.provider.edit_image(image, prompt)
 
+    async def generate_background(
+        self,
+        image: bytes,
+        prompt: str,
+    ) -> bytes:
+        """使用 AI 为图片生成新背景.
+
+        将抠图后的透明背景图片与 AI 生成的背景融合。
+
+        Args:
+            image: 透明背景的图片字节数据
+            prompt: 背景描述提示词（如"纯净的白色背景，简洁干净"）
+
+        Returns:
+            添加 AI 生成背景后的图片字节数据
+
+        Raises:
+            AIServiceError: 当 AI 处理失败时
+            APIKeyNotFoundError: 当 API 密钥未配置时
+        """
+        # 构造背景生成的提示词
+        full_prompt = (
+            f"将图片中的主体保持不变，为其生成一个新的背景。"
+            f"背景要求：{prompt}。"
+            f"确保主体与背景自然融合，光影协调。"
+        )
+        logger.info(f"AI 背景生成提示词: {full_prompt}")
+        
+        return await self.provider.edit_image(image, full_prompt)
+
     async def health_check(self) -> bool:
         """检查 AI 服务是否可用.
 
