@@ -111,54 +111,85 @@ class TaskListItem(QFrame):
             """)
             layout.addWidget(index_label, 0, Qt.AlignmentFlag.AlignVCenter)
 
-        # 背景图缩略图
-        self._bg_thumbnail = QLabel()
-        self._bg_thumbnail.setFixedSize(LIST_THUMBNAIL_SIZE[0], LIST_THUMBNAIL_SIZE[1])
-        self._bg_thumbnail.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._bg_thumbnail.setStyleSheet("""
-            background-color: #f5f5f5;
-            border: 1px solid #e8e8e8;
-            border-radius: 4px;
-        """)
-        self._load_thumbnail(self._bg_thumbnail, self._task.background_path)
-        layout.addWidget(self._bg_thumbnail, 0, Qt.AlignmentFlag.AlignVCenter)
-
-        # 单图模式或双图模式
-        is_single_mode = self._task.is_single_image_mode
-
-        if not is_single_mode:
-            # 双图模式：显示加号和商品图
-            plus_label = QLabel("+")
-            plus_label.setStyleSheet("color: #999; font-size: 16px; font-weight: bold;")
-            plus_label.setFixedWidth(20)
-            plus_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            layout.addWidget(plus_label, 0, Qt.AlignmentFlag.AlignVCenter)
-
-            # 商品图缩略图
-            self._prod_thumbnail = QLabel()
-            self._prod_thumbnail.setFixedSize(LIST_THUMBNAIL_SIZE[0], LIST_THUMBNAIL_SIZE[1])
-            self._prod_thumbnail.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self._prod_thumbnail.setStyleSheet("""
+        # 图片缩略图容器
+        self._thumbnails_container = QFrame()
+        thumbnails_layout = QHBoxLayout(self._thumbnails_container)
+        thumbnails_layout.setContentsMargins(0, 0, 0, 0)
+        thumbnails_layout.setSpacing(4)
+        
+        # 显示所有图片缩略图（最多3张）
+        self._thumbnail_labels = []
+        for i, image_path in enumerate(self._task.image_paths):
+            # 图片编号标签
+            thumb_frame = QFrame()
+            thumb_layout = QVBoxLayout(thumb_frame)
+            thumb_layout.setContentsMargins(0, 0, 0, 0)
+            thumb_layout.setSpacing(2)
+            
+            # 编号
+            index_label = QLabel(f"图{i + 1}")
+            index_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            index_label.setStyleSheet("""
+                background-color: #1890ff;
+                color: white;
+                font-size: 9px;
+                font-weight: bold;
+                border-radius: 2px;
+                padding: 1px 4px;
+            """)
+            thumb_layout.addWidget(index_label, 0, Qt.AlignmentFlag.AlignCenter)
+            
+            # 缩略图
+            thumb_label = QLabel()
+            thumb_label.setFixedSize(LIST_THUMBNAIL_SIZE[0] - 10, LIST_THUMBNAIL_SIZE[1] - 10)
+            thumb_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            thumb_label.setStyleSheet("""
                 background-color: #f5f5f5;
                 border: 1px solid #e8e8e8;
                 border-radius: 4px;
             """)
-            self._load_thumbnail(self._prod_thumbnail, self._task.product_path)
-            layout.addWidget(self._prod_thumbnail, 0, Qt.AlignmentFlag.AlignVCenter)
-        else:
-            # 单图模式：显示标签
-            single_label = QLabel("单图")
-            single_label.setStyleSheet("""
+            self._load_thumbnail(thumb_label, image_path)
+            thumb_layout.addWidget(thumb_label, 0, Qt.AlignmentFlag.AlignCenter)
+            
+            self._thumbnail_labels.append(thumb_label)
+            thumbnails_layout.addWidget(thumb_frame)
+            
+            # 多图模式显示加号
+            if i < len(self._task.image_paths) - 1:
+                plus_label = QLabel("+")
+                plus_label.setStyleSheet("color: #999; font-size: 12px; font-weight: bold;")
+                plus_label.setFixedWidth(12)
+                plus_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                thumbnails_layout.addWidget(plus_label, 0, Qt.AlignmentFlag.AlignVCenter)
+        
+        layout.addWidget(self._thumbnails_container, 0, Qt.AlignmentFlag.AlignVCenter)
+        
+        # 模式标签
+        image_count = self._task.image_count
+        if image_count == 1:
+            mode_label = QLabel("单图")
+            mode_label.setStyleSheet("""
                 color: #1890ff;
-                font-size: 11px;
+                font-size: 10px;
                 font-weight: bold;
                 background-color: #e6f7ff;
                 border: 1px solid #91d5ff;
                 border-radius: 4px;
-                padding: 2px 6px;
+                padding: 2px 4px;
             """)
-            single_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            layout.addWidget(single_label, 0, Qt.AlignmentFlag.AlignVCenter)
+        else:
+            mode_label = QLabel(f"{image_count}图")
+            mode_label.setStyleSheet("""
+                color: #52c41a;
+                font-size: 10px;
+                font-weight: bold;
+                background-color: #f6ffed;
+                border: 1px solid #b7eb8f;
+                border-radius: 4px;
+                padding: 2px 4px;
+            """)
+        mode_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(mode_label, 0, Qt.AlignmentFlag.AlignVCenter)
 
         # 任务信息
         info_layout = QVBoxLayout()
@@ -166,14 +197,16 @@ class TaskListItem(QFrame):
         info_layout.addStretch()  # 顶部弹簧
 
         # 文件名
-        bg_name = Path(self._task.background_path).name
-        if is_single_mode:
-            name_label = QLabel(f"{bg_name[:20]}..." if len(bg_name) > 20 else bg_name)
-            name_label.setToolTip(f"主图: {bg_name}")
+        first_name = self._task.first_image_filename
+        if image_count == 1:
+            display_name = f"{first_name[:20]}..." if len(first_name) > 20 else first_name
+            tooltip = f"图片: {first_name}"
         else:
-            prod_name = Path(self._task.product_path).name
-            name_label = QLabel(f"{bg_name[:15]}...")
-            name_label.setToolTip(f"主图: {bg_name}\n商品: {prod_name}")
+            display_name = f"{first_name[:12]}... +{image_count - 1}"
+            tooltip = "\n".join([f"图{i+1}: {self._task.get_image_filename(i)}" for i in range(image_count)])
+        
+        name_label = QLabel(display_name)
+        name_label.setToolTip(tooltip)
         name_label.setStyleSheet("font-size: 13px; font-weight: 500;")
         name_label.setProperty("taskName", True)
         info_layout.addWidget(name_label)

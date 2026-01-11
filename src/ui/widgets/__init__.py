@@ -3,6 +3,8 @@
 from src.ui.widgets.ai_config_panel import AIConfigPanel
 from src.ui.widgets.drop_zone import DropZone
 from src.ui.widgets.image_pair_panel import ImagePairPanel
+from src.ui.widgets.image_upload_panel import ImageUploadPanel
+from src.ui.widgets.multi_image_drop_zone import MultiImageDropZone, ImageThumbnail
 from src.ui.widgets.image_preview import ImagePreview
 from src.ui.widgets.output_config_panel import OutputConfigPanel
 from src.ui.widgets.process_config_panel import ProcessConfigPanel
@@ -34,6 +36,9 @@ __all__ = [
     "AIConfigPanel",
     "DropZone",
     "ImagePairPanel",
+    "ImageUploadPanel",
+    "MultiImageDropZone",
+    "ImageThumbnail",
     "ImagePreview",
     "OutputConfigPanel",
     "ProcessConfigPanel",

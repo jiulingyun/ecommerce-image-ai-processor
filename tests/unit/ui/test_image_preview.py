@@ -87,8 +87,7 @@ def test_image_prod():
 def sample_task(test_image_bg, test_image_prod):
     """创建示例任务."""
     return ImageTask(
-        background_path=str(test_image_bg),
-        product_path=str(test_image_prod),
+        image_paths=[str(test_image_bg), str(test_image_prod)],
     )
 
 
@@ -99,17 +98,18 @@ class TestImagePreviewInit:
         """测试默认初始化."""
         widget = ImagePreview()
         assert widget.current_task is None
-        assert widget.is_showing_background is True
+        assert widget.current_image_index == 0
+        assert widget.is_showing_result is False
         widget.close()
 
     def test_has_image_label(self, preview):
         """测试图片标签存在."""
         assert hasattr(preview, "_image_label")
 
-    def test_has_switch_buttons(self, preview):
-        """测试切换按钮存在."""
-        assert hasattr(preview, "_bg_radio")
-        assert hasattr(preview, "_prod_radio")
+    def test_has_switch_container(self, preview):
+        """测试切换容器存在."""
+        assert hasattr(preview, "_switch_container")
+        assert hasattr(preview, "_result_radio")
 
     def test_switch_buttons_hidden_initially(self, preview):
         """测试切换按钮初始隐藏."""
@@ -123,9 +123,9 @@ class TestImagePreviewProperties:
         """测试初始任务为空."""
         assert preview.current_task is None
 
-    def test_is_showing_background_true_initially(self, preview):
-        """测试初始显示背景图."""
-        assert preview.is_showing_background is True
+    def test_current_image_index_initially_zero(self, preview):
+        """测试初始图片索引为0."""
+        assert preview.current_image_index == 0
 
 
 class TestImagePreviewSetTask:
@@ -145,11 +145,14 @@ class TestImagePreviewSetTask:
         # 或者检查 isHidden() 为 False
         assert not preview._switch_container.isHidden()
 
-    def test_set_task_shows_background_by_default(self, preview, sample_task):
-        """测试设置任务默认显示背景图."""
+    def test_set_task_shows_first_image_by_default(self, preview, sample_task):
+        """测试设置任务默认显示第一张图片."""
         preview.set_task(sample_task)
-        assert preview.is_showing_background
-        assert preview._bg_radio.isChecked()
+        assert preview.current_image_index == 0
+        assert not preview.is_showing_result
+        # 检查第一个图片单选按钮是否选中
+        if preview._image_radios:
+            assert preview._image_radios[0].isChecked()
 
     def test_set_task_none_clears(self, preview, sample_task):
         """测试设置 None 清空预览."""
@@ -179,24 +182,26 @@ class TestImagePreviewClear:
 class TestImagePreviewSwitch:
     """测试图片切换."""
 
-    def test_switch_to_product(self, preview, sample_task):
-        """测试切换到商品图."""
+    def test_switch_to_image(self, preview, sample_task):
+        """测试切换到指定图片."""
         preview.set_task(sample_task)
-        preview.switch_to_product()
-        assert not preview.is_showing_background
+        preview.switch_to_image(1)
+        assert preview.current_image_index == 1
+        assert not preview.is_showing_result
 
-    def test_switch_to_background(self, preview, sample_task):
-        """测试切换到背景图."""
+    def test_switch_to_first_image(self, preview, sample_task):
+        """测试切换回第一张图片."""
         preview.set_task(sample_task)
-        preview.switch_to_product()
-        preview.switch_to_background()
-        assert preview.is_showing_background
+        preview.switch_to_image(1)
+        preview.switch_to_image(0)
+        assert preview.current_image_index == 0
 
     def test_switch_updates_radio_button(self, preview, sample_task):
         """测试切换更新单选按钮."""
         preview.set_task(sample_task)
-        preview.switch_to_product()
-        assert preview._prod_radio.isChecked()
+        preview.switch_to_image(1)
+        if len(preview._image_radios) > 1:
+            assert preview._image_radios[1].isChecked()
 
     def test_image_changed_signal(self, preview, sample_task):
         """测试图片切换信号."""
@@ -205,36 +210,39 @@ class TestImagePreviewSwitch:
         signal_handler = MagicMock()
         preview.image_changed.connect(signal_handler)
 
-        preview.switch_to_product()
+        preview.switch_to_image(1)
 
         signal_handler.assert_called()
 
     def test_switch_without_task_does_nothing(self, preview):
         """测试无任务时切换无效."""
-        preview.switch_to_product()
-        assert preview.is_showing_background  # 保持默认值
+        preview.switch_to_image(1)
+        assert preview.current_image_index == 0  # 保持默认值
 
 
 class TestImagePreviewRadioButtons:
     """测试单选按钮切换."""
 
-    def test_bg_radio_checked_initially(self, preview, sample_task):
-        """测试背景图单选按钮初始选中."""
+    def test_first_radio_checked_initially(self, preview, sample_task):
+        """测试第一个单选按钮初始选中."""
         preview.set_task(sample_task)
-        assert preview._bg_radio.isChecked()
+        if preview._image_radios:
+            assert preview._image_radios[0].isChecked()
 
-    def test_clicking_prod_radio_switches(self, preview, sample_task):
-        """测试点击商品图单选按钮切换."""
+    def test_clicking_second_radio_switches(self, preview, sample_task):
+        """测试点击第二个单选按钮切换."""
         preview.set_task(sample_task)
-        preview._prod_radio.setChecked(True)
-        assert not preview.is_showing_background
+        if len(preview._image_radios) > 1:
+            preview._image_radios[1].setChecked(True)
+            assert preview.current_image_index == 1
 
-    def test_clicking_bg_radio_switches_back(self, preview, sample_task):
-        """测试点击背景图单选按钮切换回来."""
+    def test_clicking_first_radio_switches_back(self, preview, sample_task):
+        """测试点击第一个单选按钮切换回来."""
         preview.set_task(sample_task)
-        preview._prod_radio.setChecked(True)
-        preview._bg_radio.setChecked(True)
-        assert preview.is_showing_background
+        if len(preview._image_radios) > 1:
+            preview._image_radios[1].setChecked(True)
+            preview._image_radios[0].setChecked(True)
+            assert preview.current_image_index == 0
 
 
 class TestImagePreviewInfoDisplay:
@@ -244,6 +252,8 @@ class TestImagePreviewInfoDisplay:
         """测试信息标签存在."""
         assert hasattr(preview, "_info_label")
 
-    def test_has_empty_label(self, preview):
-        """测试空状态标签存在."""
-        assert hasattr(preview, "_empty_label")
+    def test_has_image_radios(self, preview, sample_task):
+        """测试图片单选按钮列表存在."""
+        preview.set_task(sample_task)
+        assert hasattr(preview, "_image_radios")
+        assert len(preview._image_radios) == sample_task.image_count

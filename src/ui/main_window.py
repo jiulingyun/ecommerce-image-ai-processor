@@ -68,7 +68,7 @@ from src.models.process_config import ProcessConfig
 from src.services.ai_service import get_ai_service
 from src.ui.dialogs import AboutDialog, SettingsDialog, TemplateEditorWindow
 from src.ui.widgets import (
-    ImagePairPanel,
+    ImageUploadPanel,
     ImagePreview,
     OutputConfigPanel,
     ProcessConfigPanel,
@@ -148,7 +148,7 @@ class MainWindow(QMainWindow):
         self._queue_label: Optional[QLabel] = None
 
         # 业务组件引用
-        self._image_pair_panel: Optional[ImagePairPanel] = None
+        self._image_upload_panel: Optional[ImageUploadPanel] = None
         self._task_list_widget: Optional[TaskListWidget] = None
         self._image_preview: Optional[ImagePreview] = None
         self._prompt_config_panel: Optional[PromptConfigPanel] = None
@@ -439,7 +439,7 @@ class MainWindow(QMainWindow):
         self._right_panel.setMinimumWidth(280)
 
     def _create_left_panel(self) -> QFrame:
-        """创建左侧面板 - 图片配对与任务列表.
+        """创建左侧面板 - 图片上传与任务列表.
 
         Returns:
             左侧面板 QFrame
@@ -450,9 +450,9 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(8)
 
-        # 图片配对面板
-        self._image_pair_panel = ImagePairPanel()
-        layout.addWidget(self._image_pair_panel)
+        # 图片上传面板（多图上传）
+        self._image_upload_panel = ImageUploadPanel()
+        layout.addWidget(self._image_upload_panel)
 
         # 分隔线
         separator = QFrame()
@@ -574,9 +574,9 @@ class MainWindow(QMainWindow):
 
     def _connect_signals(self) -> None:
         """连接信号槽."""
-        # 图片配对面板信号
-        if self._image_pair_panel:
-            self._image_pair_panel.task_added.connect(self._on_task_added)
+        # 图片上传面板信号
+        if self._image_upload_panel:
+            self._image_upload_panel.task_added.connect(self._on_task_added)
 
         # 任务列表信号
         if self._task_list_widget:
@@ -987,9 +987,9 @@ class MainWindow(QMainWindow):
             if self._image_preview:
                 self._image_preview.clear()
 
-            # 更新配对面板
-            if self._image_pair_panel:
-                self._image_pair_panel.set_queue_count(0)
+            # 更新上传面板
+            if self._image_upload_panel:
+                self._image_upload_panel.set_queue_count(0)
 
             # 重置工具栏进度
             if self._toolbar_progress:
@@ -1000,12 +1000,11 @@ class MainWindow(QMainWindow):
             self.show_status_message("队列已清空")
             logger.info("清空队列")
 
-    def _on_task_added(self, background_path: str, product_path: str) -> None:
+    def _on_task_added(self, image_paths: list) -> None:
         """处理任务添加.
 
         Args:
-            background_path: 主图路径（必填）
-            product_path: 商品图路径（可选，空字符串表示单图模式）
+            image_paths: 图片路径列表（1-3张）
         """
         # 检查队列是否已满
         if self._queue_count >= MAX_QUEUE_SIZE:
@@ -1016,11 +1015,8 @@ class MainWindow(QMainWindow):
             )
             return
 
-        # 创建任务（product_path 为空时传入 None）
-        task = ImageTask(
-            background_path=background_path,
-            product_path=product_path if product_path else None,
-        )
+        # 创建任务
+        task = ImageTask(image_paths=image_paths)
 
         # 保存任务
         self._tasks[task.id] = task
@@ -1032,23 +1028,21 @@ class MainWindow(QMainWindow):
         # 更新队列计数
         self.update_queue_count(len(self._tasks))
 
-        # 更新配对面板的队列计数
-        if self._image_pair_panel:
-            self._image_pair_panel.set_queue_count(len(self._tasks))
+        # 更新上传面板的队列计数
+        if self._image_upload_panel:
+            self._image_upload_panel.set_queue_count(len(self._tasks))
 
-        # 发送信号（单图模式时只发送主图路径）
-        imported_paths = [background_path]
-        if product_path:
-            imported_paths.append(product_path)
-        self.images_imported.emit(imported_paths)
+        # 发送信号
+        self.images_imported.emit(image_paths)
 
         # 状态提示
-        if task.is_single_image_mode:
-            self.show_status_message(f"已添加单图任务: {task.background_filename}")
+        image_count = task.image_count
+        if image_count == 1:
+            self.show_status_message(f"已添加单图任务: {task.first_image_filename}")
             logger.info(f"添加单图任务: {task.id}")
         else:
-            self.show_status_message(f"已添加双图任务: {task.background_filename}")
-            logger.info(f"添加双图任务: {task.id}")
+            self.show_status_message(f"已添加{image_count}图合成任务: {task.first_image_filename}")
+            logger.info(f"添加{image_count}图合成任务: {task.id}")
 
     def _on_task_selected(self, task: ImageTask) -> None:
         """处理任务选中.
@@ -1089,9 +1083,9 @@ class MainWindow(QMainWindow):
         # 更新队列计数
         self.update_queue_count(len(self._tasks))
 
-        # 更新配对面板的队列计数
-        if self._image_pair_panel:
-            self._image_pair_panel.set_queue_count(len(self._tasks))
+        # 更新上传面板的队列计数
+        if self._image_upload_panel:
+            self._image_upload_panel.set_queue_count(len(self._tasks))
 
         self.show_status_message("已删除任务")
 

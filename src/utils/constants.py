@@ -31,6 +31,9 @@ TEMP_DIR = APP_DATA_DIR / "temp"
 # 最大队列大小
 MAX_QUEUE_SIZE = 10
 
+# 每个任务最大图片数量
+MAX_TASK_IMAGES = 3
+
 # 默认输出尺寸
 DEFAULT_OUTPUT_WIDTH = 800
 DEFAULT_OUTPUT_HEIGHT = 800

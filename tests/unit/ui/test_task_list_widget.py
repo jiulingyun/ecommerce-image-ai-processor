@@ -87,8 +87,7 @@ def test_image_prod():
 def sample_task(test_image_bg, test_image_prod):
     """创建示例任务."""
     return ImageTask(
-        background_path=str(test_image_bg),
-        product_path=str(test_image_prod),
+        image_paths=[str(test_image_bg), str(test_image_prod)],
     )
 
 
@@ -121,12 +120,10 @@ class TestTaskListWidgetAddTask:
     def test_add_multiple_tasks(self, task_list, test_image_bg, test_image_prod):
         """测试添加多个任务."""
         task1 = ImageTask(
-            background_path=str(test_image_bg),
-            product_path=str(test_image_prod),
+            image_paths=[str(test_image_bg), str(test_image_prod)],
         )
         task2 = ImageTask(
-            background_path=str(test_image_bg),
-            product_path=str(test_image_prod),
+            image_paths=[str(test_image_bg), str(test_image_prod)],
         )
 
         task_list.add_task(task1)
@@ -137,12 +134,10 @@ class TestTaskListWidgetAddTask:
     def test_task_ids_unique(self, task_list, test_image_bg, test_image_prod):
         """测试任务 ID 唯一."""
         task1 = ImageTask(
-            background_path=str(test_image_bg),
-            product_path=str(test_image_prod),
+            image_paths=[str(test_image_bg), str(test_image_prod)],
         )
         task2 = ImageTask(
-            background_path=str(test_image_bg),
-            product_path=str(test_image_prod),
+            image_paths=[str(test_image_bg), str(test_image_prod)],
         )
 
         task_list.add_task(task1)
@@ -176,8 +171,7 @@ class TestTaskListWidgetClearAll:
         """测试清空所有任务."""
         for _ in range(3):
             task = ImageTask(
-                background_path=str(test_image_bg),
-                product_path=str(test_image_prod),
+                image_paths=[str(test_image_bg), str(test_image_prod)],
             )
             task_list.add_task(task)
 
@@ -260,8 +254,7 @@ class TestTaskListWidgetGetAllTasks:
         tasks_added = []
         for _ in range(3):
             task = ImageTask(
-                background_path=str(test_image_bg),
-                product_path=str(test_image_prod),
+                image_paths=[str(test_image_bg), str(test_image_prod)],
             )
             tasks_added.append(task)
             task_list.add_task(task)

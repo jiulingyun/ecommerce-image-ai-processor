@@ -47,8 +47,8 @@ class BatchProcessor:
 
     Example:
         >>> processor = BatchProcessor()
-        >>> processor.add_task("bg1.jpg", "prod1.png")
-        >>> processor.add_task("bg2.jpg", "prod2.png")
+        >>> processor.add_task(["bg1.jpg", "prod1.png"])
+        >>> processor.add_task(["image.jpg"])
         >>> await processor.process_all(on_progress=my_callback)
     """
 
@@ -96,16 +96,14 @@ class BatchProcessor:
 
     def add_task(
         self,
-        background_path: str,
-        product_path: str,
+        image_paths: list[str],
         output_path: Optional[str] = None,
         config: Optional[ProcessConfig] = None,
     ) -> BatchTask:
         """添加任务到队列.
 
         Args:
-            background_path: 背景图路径
-            product_path: 商品图路径
+            image_paths: 图片路径列表（1-3张图片）
             output_path: 输出路径
             config: 任务配置
 
@@ -116,8 +114,7 @@ class BatchProcessor:
             ValueError: 队列已满
         """
         return self._queue.add_task(
-            background_path=background_path,
-            product_path=product_path,
+            image_paths=image_paths,
             output_path=output_path,
             config=config,
         )
@@ -237,7 +234,7 @@ class BatchProcessor:
             task = batch_task.task
             task_id = batch_task.id
 
-            logger.info(f"开始处理任务 {batch_task.queue_position}: {task.product_filename}")
+            logger.info(f"开始处理任务 {batch_task.queue_position}: {task.first_image_filename}")
 
             def task_progress(progress: int, message: str) -> None:
                 """任务进度回调."""

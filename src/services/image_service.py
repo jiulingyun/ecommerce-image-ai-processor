@@ -314,12 +314,11 @@ class ImageService:
 
         支持两种处理模式：
         
-        双图模式（有商品图）：
-        1. 场景图抠背景→ 2. 添加背景色/AI背景 → 3. AI合成商品 → 4. 后期处理 → 5. 保存
+        单图模式（1张图片）：
+        加载图片 → [可选抠图+背景填充] → [可选AI增强] → 后期处理 → 保存
         
-        单图模式（无商品图）：
-        - AI开启: 加载主图 → AI增强 → 后期处理 → 保存
-        - AI关闭: 加载主图 → 后期处理 → 保存
+        多图合成模式（2-3张图片）：
+        AI多图合成 → [可选抠图+背景填充] → [可选AI增强] → 后期处理 → 保存
 
         Args:
             task: 图片任务
@@ -331,7 +330,7 @@ class ImageService:
         """
         config = config or task.config or ProcessConfig()
 
-        logger.info(f"开始处理任务: {task.id}, 单图模式: {task.is_single_image_mode}")
+        logger.info(f"开始处理任务: {task.id}, 图片数量: {task.image_count}")
         task.mark_processing()
 
         def report_progress(progress: int, message: str) -> None:
@@ -340,15 +339,15 @@ class ImageService:
                 on_progress(progress, message)
 
         try:
-            # 根据任务类型选择处理流程
+            # 根据图片数量选择处理流程
             if task.is_single_image_mode:
-                # 单图模式
+                # 单图模式（1张图片）
                 return await self._process_single_image_task(
                     task, config, report_progress
                 )
             else:
-                # 双图模式
-                return await self._process_dual_image_task(
+                # 多图合成模式（2-3张图片）
+                return await self._process_multi_image_task(
                     task, config, report_progress
                 )
 
@@ -357,57 +356,78 @@ class ImageService:
             task.mark_failed(str(e))
             return task
 
-    async def _process_dual_image_task(
+    async def _process_multi_image_task(
         self,
         task: ImageTask,
         config: ProcessConfig,
         report_progress: Callable[[int, str], None],
     ) -> ImageTask:
-        """处理双图任务（主图 + 商品图）.
+        """处理多图合成任务（2-3张图片）.
         
         执行流程：
-        1. 场景图抠背景
-        2. 添加背景色/AI背景
-        3. AI合成商品到场景（或简单叠加）
+        1. AI 多图合成
+        2. 可选：抠图 + 背景填充
+        3. 可选：AI 增强
         4. 后期处理
         5. 保存输出
         """
-        # Step 1: 对场景图抠背景 (0-20%)
-        report_progress(5, "场景图抠背景处理中")
-        scene_nobg = await self._remove_scene_background(
-            task.background_path,
+        # Step 1: AI 多图合成 (0-50%)
+        report_progress(5, f"AI {task.image_count}图合成中")
+        composite_result = await self._composite_multiple_images(
+            task.image_paths,
             config,
-            lambda p, m: report_progress(int(5 + p * 0.15), m),
+            lambda p, m: report_progress(int(5 + p * 0.45), m),
         )
 
-        # Step 2: 对场景添加背景 (20-30%)
-        report_progress(25, "添加背景")
-        scene_with_bg = await self._apply_background_to_scene(
-            scene_nobg,
-            config,
-            lambda p, m: report_progress(int(25 + p * 0.05), m),
-        )
+        # Step 2: 可选的抠图 + 背景填充 (50-65%)
+        if config.background.enabled:
+            report_progress(52, "抠图处理中")
+            # 保存临时文件用于抠图
+            import tempfile
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+                tmp.write(composite_result)
+                tmp_path = tmp.name
+            
+            composite_result = await self._remove_scene_background(
+                tmp_path,
+                config,
+                lambda p, m: report_progress(int(52 + p * 0.08), m),
+            )
+            
+            report_progress(62, "背景填充")
+            composite_result = await self._apply_background_to_scene(
+                composite_result,
+                config,
+                lambda p, m: report_progress(int(62 + p * 0.03), m),
+            )
+            
+            # 清理临时文件
+            import os
+            os.unlink(tmp_path)
+        else:
+            report_progress(65, "跳过抠图和背景填充")
 
-        # Step 3: AI 合成商品到场景 (30-70%)
-        # 双图模式始终使用 AI 合成，AI 编辑开关只控制单图增强
-        report_progress(35, "AI 合成商品到场景")
-        composite_result = await self._composite_to_scene(
-            scene_with_bg,
-            task.product_path,
-            lambda p, m: report_progress(int(35 + p * 0.35), m),
-            config=config,
-        )
+        # Step 3: 可选的 AI 增强 (65-80%)
+        if config.ai_editing.enabled:
+            report_progress(67, "AI 增强处理中")
+            composite_result = await self._apply_ai_enhance(
+                composite_result,
+                config,
+                lambda p, m: report_progress(int(67 + p * 0.13), m),
+            )
+        else:
+            report_progress(80, "跳过 AI 增强")
 
-        # Step 4: 后期处理 (70-90%)
-        report_progress(75, "添加边框和文字")
+        # Step 4: 后期处理 (80-95%)
+        report_progress(82, "后期处理")
         final_image = await self._apply_final_effects(
             composite_result,
             config,
-            lambda p, m: report_progress(int(75 + p * 0.15), m),
+            lambda p, m: report_progress(int(82 + p * 0.13), m),
         )
 
-        # Step 5: 保存输出 (90-100%)
-        report_progress(95, "保存输出")
+        # Step 5: 保存输出 (95-100%)
+        report_progress(96, "保存输出")
         output_path = await self._save_final_output(
             final_image,
             task,
@@ -417,7 +437,7 @@ class ImageService:
         # 完成
         task.mark_completed(str(output_path))
         report_progress(100, "完成")
-        logger.info(f"双图任务完成: {task.id}")
+        logger.info(f"{task.image_count}图合成任务完成: {task.id}")
 
         return task
 
@@ -427,18 +447,18 @@ class ImageService:
         config: ProcessConfig,
         report_progress: Callable[[int, str], None],
     ) -> ImageTask:
-        """处理单图任务（仅主图）.
+        """处理单图任务（仅1张图片）.
         
         执行流程：
-        1. 加载主图
+        1. 加载图片
         2. 可选：抠图 + 背景填充（如果启用）
         3. 可选：AI 增强（如果启用）
         4. 后期处理
         5. 保存输出
         """
-        # Step 1: 加载主图 (0-10%)
-        report_progress(5, "加载主图")
-        image = load_image(task.background_path)
+        # Step 1: 加载图片 (0-10%)
+        report_progress(5, "加载图片")
+        image = load_image(task.first_image_path)
         image = ensure_rgba(image)
         image_bytes = image_to_bytes(image, format="PNG")
 
@@ -447,7 +467,7 @@ class ImageService:
             # 抠图
             report_progress(10, "抠图处理中")
             image_bytes = await self._remove_scene_background(
-                task.background_path,
+                task.first_image_path,
                 config,
                 lambda p, m: report_progress(int(10 + p * 0.15), m),
             )
@@ -597,6 +617,76 @@ class ImageService:
             on_progress(100, "叠加完成")
 
         return image_to_bytes(background, format="PNG")
+
+    async def _composite_multiple_images(
+        self,
+        image_paths: list,
+        config: ProcessConfig,
+        on_progress: Optional[ProgressCallback] = None,
+    ) -> bytes:
+        """多图 AI 合成（2-3张图片）.
+        
+        使用 AI 将多张图片合成为一张图片。
+        
+        Args:
+            image_paths: 图片路径列表（2-3张）
+            config: 处理配置
+            on_progress: 进度回调
+            
+        Returns:
+            合成后的图片字节数据
+        """
+        if on_progress:
+            on_progress(10, f"加载 {len(image_paths)} 张图片")
+
+        # 加载所有图片
+        images_bytes = []
+        for i, path in enumerate(image_paths):
+            image = load_image(path)
+            image = ensure_rgba(image)
+            image_bytes = image_to_bytes(image, format="PNG")
+            images_bytes.append(image_bytes)
+            
+            if on_progress:
+                progress = 10 + int((i + 1) / len(image_paths) * 20)
+                on_progress(progress, f"加载图{i + 1}")
+
+        if on_progress:
+            on_progress(35, "AI 多图合成中...")
+
+        # 获取合成提示词
+        if config.prompt and config.prompt.get_full_prompt():
+            composite_prompt = config.prompt.get_full_prompt()
+            logger.info(f"使用配置中的提示词: {composite_prompt}")
+        else:
+            # 默认提示词
+            image_refs = "、".join([f"图{i+1}" for i in range(len(image_paths))])
+            composite_prompt = (
+                f"将{image_refs}中的元素自然地合成到一起。"
+                f"合成要求：符合图1的风格、光线、角度，"
+                f"各元素大小适中、位置合理，看上去自然和谐。"
+            )
+            logger.info(f"使用默认提示词: {composite_prompt}")
+
+        try:
+            # 调用 AI 服务多图合成
+            result_bytes = await self.ai_service.provider.composite_images(
+                images=images_bytes,
+                prompt=composite_prompt,
+            )
+            
+            if on_progress:
+                on_progress(100, "多图合成完成")
+            
+            return result_bytes
+            
+        except Exception as e:
+            logger.error(f"AI 多图合成失败: {e}")
+            # 失败时返回第一张图片
+            logger.warning("回退到第一张图片")
+            if on_progress:
+                on_progress(100, "回退到第一张图片")
+            return images_bytes[0]
 
     async def _remove_scene_background(
         self,
@@ -1196,7 +1286,7 @@ class ImageService:
     ) -> Path:
         """保存最终输出（内部方法）."""
         output_path = self._get_output_path(
-            Path(task.background_path),
+            Path(task.first_image_path),
             task.output_path,
             "_final.jpg",
         )

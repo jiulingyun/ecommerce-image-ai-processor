@@ -64,8 +64,8 @@ class TestQueueStats:
 
     def test_from_tasks(self) -> None:
         """测试从任务列表创建."""
-        task1 = ImageTask(background_path="bg1.jpg", product_path="prod1.png")
-        task2 = ImageTask(background_path="bg2.jpg", product_path="prod2.png")
+        task1 = ImageTask(image_paths=["bg1.jpg", "prod1.png"])
+        task2 = ImageTask(image_paths=["bg2.jpg", "prod2.png"])
         task2.mark_completed()
 
         batch_tasks = [
@@ -88,7 +88,7 @@ class TestBatchTask:
 
     def test_create_batch_task(self) -> None:
         """测试创建批量任务."""
-        task = ImageTask(background_path="bg.jpg", product_path="prod.png")
+        task = ImageTask(image_paths=["bg.jpg", "prod.png"])
         batch_task = BatchTask(queue_position=1, task=task)
 
         assert batch_task.queue_position == 1
@@ -98,7 +98,7 @@ class TestBatchTask:
 
     def test_status_property(self) -> None:
         """测试状态属性."""
-        task = ImageTask(background_path="bg.jpg", product_path="prod.png")
+        task = ImageTask(image_paths=["bg.jpg", "prod.png"])
         batch_task = BatchTask(queue_position=1, task=task)
 
         assert batch_task.status == TaskStatus.PENDING
@@ -108,7 +108,7 @@ class TestBatchTask:
 
     def test_progress_property(self) -> None:
         """测试进度属性."""
-        task = ImageTask(background_path="bg.jpg", product_path="prod.png")
+        task = ImageTask(image_paths=["bg.jpg", "prod.png"])
         batch_task = BatchTask(queue_position=1, task=task)
 
         assert batch_task.progress == 0
@@ -118,14 +118,14 @@ class TestBatchTask:
 
     def test_can_retry_false_not_failed(self) -> None:
         """测试非失败任务不可重试."""
-        task = ImageTask(background_path="bg.jpg", product_path="prod.png")
+        task = ImageTask(image_paths=["bg.jpg", "prod.png"])
         batch_task = BatchTask(queue_position=1, task=task)
 
         assert batch_task.can_retry is False
 
     def test_can_retry_true(self) -> None:
         """测试失败任务可重试."""
-        task = ImageTask(background_path="bg.jpg", product_path="prod.png")
+        task = ImageTask(image_paths=["bg.jpg", "prod.png"])
         batch_task = BatchTask(queue_position=1, task=task)
         task.mark_failed("测试错误")
 
@@ -133,7 +133,7 @@ class TestBatchTask:
 
     def test_can_retry_exhausted(self) -> None:
         """测试重试次数用尽."""
-        task = ImageTask(background_path="bg.jpg", product_path="prod.png")
+        task = ImageTask(image_paths=["bg.jpg", "prod.png"])
         batch_task = BatchTask(queue_position=1, task=task, max_retries=2)
 
         task.mark_failed("错误1")
@@ -149,7 +149,7 @@ class TestBatchTask:
 
     def test_increment_retry(self) -> None:
         """测试增加重试计数."""
-        task = ImageTask(background_path="bg.jpg", product_path="prod.png")
+        task = ImageTask(image_paths=["bg.jpg", "prod.png"])
         batch_task = BatchTask(queue_position=1, task=task)
         task.mark_failed("测试错误")
 
@@ -179,8 +179,7 @@ class TestBatchQueue:
         """测试添加任务."""
         queue = BatchQueue()
         batch_task = queue.add_task(
-            background_path="bg.jpg",
-            product_path="prod.png",
+            image_paths=["bg.jpg", "prod.png"],
         )
 
         assert queue.size == 1
@@ -192,8 +191,7 @@ class TestBatchQueue:
 
         for i in range(5):
             queue.add_task(
-                background_path=f"bg{i}.jpg",
-                product_path=f"prod{i}.png",
+                image_paths=[f"bg{i}.jpg", f"prod{i}.png"],
             )
 
         assert queue.size == 5
@@ -205,23 +203,21 @@ class TestBatchQueue:
 
         for i in range(MAX_QUEUE_SIZE):
             queue.add_task(
-                background_path=f"bg{i}.jpg",
-                product_path=f"prod{i}.png",
+                image_paths=[f"bg{i}.jpg", f"prod{i}.png"],
             )
 
         assert queue.is_full is True
 
         with pytest.raises(ValueError, match="队列已满"):
             queue.add_task(
-                background_path="bg_extra.jpg",
-                product_path="prod_extra.png",
+                image_paths=["bg_extra.jpg", "prod_extra.png"],
             )
 
     def test_remove_task(self) -> None:
         """测试移除任务."""
         queue = BatchQueue()
-        task1 = queue.add_task("bg1.jpg", "prod1.png")
-        task2 = queue.add_task("bg2.jpg", "prod2.png")
+        task1 = queue.add_task(image_paths=["bg1.jpg", "prod1.png"])
+        task2 = queue.add_task(image_paths=["bg2.jpg", "prod2.png"])
 
         removed = queue.remove_task(task1.id)
 
@@ -234,7 +230,7 @@ class TestBatchQueue:
     def test_remove_nonexistent_task(self) -> None:
         """测试移除不存在的任务."""
         queue = BatchQueue()
-        queue.add_task("bg.jpg", "prod.png")
+        queue.add_task(image_paths=["bg.jpg", "prod.png"])
 
         removed = queue.remove_task("nonexistent-id")
         assert removed is None
@@ -242,7 +238,7 @@ class TestBatchQueue:
     def test_get_task(self) -> None:
         """测试获取任务."""
         queue = BatchQueue()
-        task = queue.add_task("bg.jpg", "prod.png")
+        task = queue.add_task(image_paths=["bg.jpg", "prod.png"])
 
         found = queue.get_task(task.id)
         assert found is not None
@@ -251,8 +247,8 @@ class TestBatchQueue:
     def test_get_pending_tasks(self) -> None:
         """测试获取待处理任务."""
         queue = BatchQueue()
-        task1 = queue.add_task("bg1.jpg", "prod1.png")
-        task2 = queue.add_task("bg2.jpg", "prod2.png")
+        task1 = queue.add_task(image_paths=["bg1.jpg", "prod1.png"])
+        task2 = queue.add_task(image_paths=["bg2.jpg", "prod2.png"])
         task2.task.mark_completed()
 
         pending = queue.get_pending_tasks()
@@ -262,8 +258,8 @@ class TestBatchQueue:
     def test_get_completed_tasks(self) -> None:
         """测试获取已完成任务."""
         queue = BatchQueue()
-        task1 = queue.add_task("bg1.jpg", "prod1.png")
-        task2 = queue.add_task("bg2.jpg", "prod2.png")
+        task1 = queue.add_task(image_paths=["bg1.jpg", "prod1.png"])
+        task2 = queue.add_task(image_paths=["bg2.jpg", "prod2.png"])
         task2.task.mark_completed()
 
         completed = queue.get_completed_tasks()
@@ -273,7 +269,7 @@ class TestBatchQueue:
     def test_get_failed_tasks(self) -> None:
         """测试获取失败任务."""
         queue = BatchQueue()
-        task = queue.add_task("bg.jpg", "prod.png")
+        task = queue.add_task(image_paths=["bg.jpg", "prod.png"])
         task.task.mark_failed("测试错误")
 
         failed = queue.get_failed_tasks()
@@ -282,7 +278,7 @@ class TestBatchQueue:
     def test_get_retryable_tasks(self) -> None:
         """测试获取可重试任务."""
         queue = BatchQueue()
-        task = queue.add_task("bg.jpg", "prod.png")
+        task = queue.add_task(image_paths=["bg.jpg", "prod.png"])
         task.task.mark_failed("测试错误")
 
         retryable = queue.get_retryable_tasks()
@@ -291,8 +287,8 @@ class TestBatchQueue:
     def test_get_stats(self) -> None:
         """测试获取统计信息."""
         queue = BatchQueue()
-        queue.add_task("bg1.jpg", "prod1.png")
-        task2 = queue.add_task("bg2.jpg", "prod2.png")
+        queue.add_task(image_paths=["bg1.jpg", "prod1.png"])
+        task2 = queue.add_task(image_paths=["bg2.jpg", "prod2.png"])
         task2.task.mark_completed()
 
         stats = queue.get_stats()
@@ -303,8 +299,8 @@ class TestBatchQueue:
     def test_clear(self) -> None:
         """测试清空队列."""
         queue = BatchQueue()
-        queue.add_task("bg1.jpg", "prod1.png")
-        queue.add_task("bg2.jpg", "prod2.png")
+        queue.add_task(image_paths=["bg1.jpg", "prod1.png"])
+        queue.add_task(image_paths=["bg2.jpg", "prod2.png"])
         queue.start()
 
         queue.clear()
@@ -315,7 +311,7 @@ class TestBatchQueue:
     def test_start(self) -> None:
         """测试开始处理."""
         queue = BatchQueue()
-        queue.add_task("bg.jpg", "prod.png")
+        queue.add_task(image_paths=["bg.jpg", "prod.png"])
 
         queue.start()
 
@@ -332,7 +328,7 @@ class TestBatchQueue:
     def test_pause_resume(self) -> None:
         """测试暂停和恢复."""
         queue = BatchQueue()
-        queue.add_task("bg.jpg", "prod.png")
+        queue.add_task(image_paths=["bg.jpg", "prod.png"])
         queue.start()
 
         queue.pause()
@@ -344,7 +340,7 @@ class TestBatchQueue:
     def test_cancel(self) -> None:
         """测试取消处理."""
         queue = BatchQueue()
-        task = queue.add_task("bg.jpg", "prod.png")
+        task = queue.add_task(image_paths=["bg.jpg", "prod.png"])
         queue.start()
 
         queue.cancel()
@@ -355,7 +351,7 @@ class TestBatchQueue:
     def test_mark_completed(self) -> None:
         """测试标记完成."""
         queue = BatchQueue()
-        queue.add_task("bg.jpg", "prod.png")
+        queue.add_task(image_paths=["bg.jpg", "prod.png"])
         queue.start()
 
         queue.mark_completed()
@@ -366,8 +362,8 @@ class TestBatchQueue:
     def test_check_all_finished(self) -> None:
         """测试检查所有任务完成."""
         queue = BatchQueue()
-        task1 = queue.add_task("bg1.jpg", "prod1.png")
-        task2 = queue.add_task("bg2.jpg", "prod2.png")
+        task1 = queue.add_task(image_paths=["bg1.jpg", "prod1.png"])
+        task2 = queue.add_task(image_paths=["bg2.jpg", "prod2.png"])
 
         assert queue.check_all_finished() is False
 
@@ -380,7 +376,7 @@ class TestBatchQueue:
     def test_serialization(self) -> None:
         """测试序列化."""
         queue = BatchQueue()
-        queue.add_task("bg.jpg", "prod.png")
+        queue.add_task(image_paths=["bg.jpg", "prod.png"])
 
         data = queue.to_dict()
 

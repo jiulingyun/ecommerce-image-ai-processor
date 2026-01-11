@@ -28,8 +28,7 @@ class TestTaskListWidgetIntegration:
         qtbot.addWidget(widget)
 
         task = ImageTask(
-            background_path=str(sample_background_image),
-            product_path=str(sample_product_image),
+            image_paths=[str(sample_background_image), str(sample_product_image)],
         )
 
         widget.add_task(task)
@@ -43,8 +42,7 @@ class TestTaskListWidgetIntegration:
         qtbot.addWidget(widget)
 
         task = ImageTask(
-            background_path=str(sample_background_image),
-            product_path=str(sample_product_image),
+            image_paths=[str(sample_background_image), str(sample_product_image)],
         )
         widget.add_task(task)
         widget.remove_task(task.id)
@@ -63,14 +61,13 @@ class TestImagePreviewIntegration:
         qtbot.addWidget(preview)
 
         task = ImageTask(
-            background_path=str(sample_background_image),
-            product_path=str(sample_product_image),
+            image_paths=[str(sample_background_image), str(sample_product_image)],
         )
 
         preview.set_task(task)
 
         assert preview.current_task == task
-        assert preview.is_showing_background
+        assert preview.current_image_index == 0
 
     def test_switch_images(
         self, qtbot, sample_background_image: Path, sample_product_image: Path
@@ -81,16 +78,15 @@ class TestImagePreviewIntegration:
         preview.show()
 
         task = ImageTask(
-            background_path=str(sample_background_image),
-            product_path=str(sample_product_image),
+            image_paths=[str(sample_background_image), str(sample_product_image)],
         )
         preview.set_task(task)
 
-        preview.switch_to_product()
-        assert not preview.is_showing_background
+        preview.switch_to_image(1)
+        assert preview.current_image_index == 1
 
-        preview.switch_to_background()
-        assert preview.is_showing_background
+        preview.switch_to_image(0)
+        assert preview.current_image_index == 0
 
     def test_result_preview(
         self,
@@ -105,8 +101,7 @@ class TestImagePreviewIntegration:
         preview.show()
 
         task = ImageTask(
-            background_path=str(sample_background_image),
-            product_path=str(sample_product_image),
+            image_paths=[str(sample_background_image), str(sample_product_image)],
         )
         preview.set_task(task)
 
@@ -223,13 +218,12 @@ class TestImageTaskModel:
     ):
         """测试任务创建."""
         task = ImageTask(
-            background_path=str(sample_background_image),
-            product_path=str(sample_product_image),
+            image_paths=[str(sample_background_image), str(sample_product_image)],
         )
 
         assert task.id is not None
-        assert task.background_path == str(sample_background_image)
-        assert task.product_path == str(sample_product_image)
+        assert task.image_paths[0] == str(sample_background_image)
+        assert task.image_paths[1] == str(sample_product_image)
         assert task.status == TaskStatus.PENDING
 
     def test_task_status_update(
@@ -237,8 +231,7 @@ class TestImageTaskModel:
     ):
         """测试任务状态更新."""
         task = ImageTask(
-            background_path=str(sample_background_image),
-            product_path=str(sample_product_image),
+            image_paths=[str(sample_background_image), str(sample_product_image)],
         )
 
         task.status = TaskStatus.PROCESSING

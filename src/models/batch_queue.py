@@ -195,7 +195,7 @@ class BatchQueue(BaseModel):
 
     Example:
         >>> queue = BatchQueue()
-        >>> queue.add_task(background_path="bg.jpg", product_path="prod.png")
+        >>> queue.add_task(image_paths=["bg.jpg", "prod.png"])
         >>> stats = queue.get_stats()
         >>> print(f"队列中有 {stats.total} 个任务")
     """
@@ -257,8 +257,7 @@ class BatchQueue(BaseModel):
 
     def add_task(
         self,
-        background_path: str,
-        product_path: str,
+        image_paths: list[str],
         output_path: Optional[str] = None,
         config: Optional[ProcessConfig] = None,
         priority: TaskPriority = TaskPriority.NORMAL,
@@ -266,8 +265,7 @@ class BatchQueue(BaseModel):
         """添加任务到队列.
 
         Args:
-            background_path: 背景图路径
-            product_path: 商品图路径
+            image_paths: 图片路径列表（1-3张图片）
             output_path: 输出路径
             config: 任务配置（优先于全局配置）
             priority: 任务优先级
@@ -283,8 +281,7 @@ class BatchQueue(BaseModel):
 
         # 创建图片任务
         task = ImageTask(
-            background_path=background_path,
-            product_path=product_path,
+            image_paths=image_paths,
             output_path=output_path,
             config=config or self.config,
         )

@@ -89,10 +89,11 @@ def image_service(mock_ai_service: MagicMock) -> ImageService:
 def sample_config() -> ProcessConfig:
     """创建测试用处理配置."""
     return ProcessConfig(
-        background={"color": (255, 255, 255)},
+        background={"enabled": False, "color": (255, 255, 255)},
         border={"enabled": True, "width": 2, "color": (0, 0, 0)},
         text={"enabled": False},
         output={"size": (800, 800), "quality": 85},
+        ai_editing={"enabled": False},
     )
 
 
@@ -255,14 +256,12 @@ class TestProcessTask:
     async def test_process_task_success(
         self,
         image_service: ImageService,
-        sample_background_path: Path,
         sample_image_path: Path,
         sample_config: ProcessConfig,
     ) -> None:
-        """测试成功处理任务."""
+        """测试成功处理任务（单图模式）."""
         task = ImageTask(
-            background_path=str(sample_background_path),
-            product_path=str(sample_image_path),
+            image_paths=[str(sample_image_path)],
             config=sample_config,
         )
 
@@ -276,13 +275,13 @@ class TestProcessTask:
     async def test_process_task_with_progress(
         self,
         image_service: ImageService,
-        sample_background_path: Path,
         sample_image_path: Path,
+        sample_config: ProcessConfig,
     ) -> None:
-        """测试任务处理进度回调."""
+        """测试任务处理进度回调（单图模式）."""
         task = ImageTask(
-            background_path=str(sample_background_path),
-            product_path=str(sample_image_path),
+            image_paths=[str(sample_image_path)],
+            config=sample_config,
         )
 
         progress_updates = []
@@ -302,17 +301,24 @@ class TestProcessTask:
     async def test_process_task_failure(
         self,
         image_service: ImageService,
-        sample_background_path: Path,
         sample_image_path: Path,
+        sample_config: ProcessConfig,
     ) -> None:
-        """测试任务处理失败."""
+        """测试任务处理失败（单图模式）."""
+        # 启用背景处理，这样可以测试 AI 服务失败
+        task_config = ProcessConfig(
+            background={"enabled": True, "color": (255, 255, 255)},
+            border={"enabled": False},
+            text={"enabled": False},
+            ai_editing={"enabled": False},
+        )
         image_service.ai_service.remove_background = AsyncMock(
             side_effect=AIServiceError("AI 错误")
         )
 
         task = ImageTask(
-            background_path=str(sample_background_path),
-            product_path=str(sample_image_path),
+            image_paths=[str(sample_image_path)],
+            config=task_config,
         )
 
         result = await image_service.process_task(task)
