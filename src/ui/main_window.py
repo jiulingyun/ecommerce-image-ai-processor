@@ -697,6 +697,7 @@ class MainWindow(QMainWindow):
         from src.models.process_config import ProcessingMode
         return ProcessConfig(
             mode=processing_mode or ProcessingMode.SIMPLE,
+            ai_editing=process_config.ai_editing,
             prompt=prompt_config,
             background_removal=bg_removal_config,
             background=process_config.background,
@@ -1003,8 +1004,8 @@ class MainWindow(QMainWindow):
         """处理任务添加.
 
         Args:
-            background_path: 背景图路径
-            product_path: 商品图路径
+            background_path: 主图路径（必填）
+            product_path: 商品图路径（可选，空字符串表示单图模式）
         """
         # 检查队列是否已满
         if self._queue_count >= MAX_QUEUE_SIZE:
@@ -1015,10 +1016,10 @@ class MainWindow(QMainWindow):
             )
             return
 
-        # 创建任务
+        # 创建任务（product_path 为空时传入 None）
         task = ImageTask(
             background_path=background_path,
-            product_path=product_path,
+            product_path=product_path if product_path else None,
         )
 
         # 保存任务
@@ -1035,11 +1036,19 @@ class MainWindow(QMainWindow):
         if self._image_pair_panel:
             self._image_pair_panel.set_queue_count(len(self._tasks))
 
-        # 发送信号
-        self.images_imported.emit([background_path, product_path])
+        # 发送信号（单图模式时只发送主图路径）
+        imported_paths = [background_path]
+        if product_path:
+            imported_paths.append(product_path)
+        self.images_imported.emit(imported_paths)
 
-        self.show_status_message(f"已添加任务: {task.background_filename}")
-        logger.info(f"添加任务: {task.id}")
+        # 状态提示
+        if task.is_single_image_mode:
+            self.show_status_message(f"已添加单图任务: {task.background_filename}")
+            logger.info(f"添加单图任务: {task.id}")
+        else:
+            self.show_status_message(f"已添加双图任务: {task.background_filename}")
+            logger.info(f"添加双图任务: {task.id}")
 
     def _on_task_selected(self, task: ImageTask) -> None:
         """处理任务选中.

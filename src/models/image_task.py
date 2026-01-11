@@ -29,10 +29,14 @@ class ImageTask(BaseModel):
     表示一个待处理的图片任务，包含输入图片路径、输出路径、
     处理配置和状态信息。
 
+    支持两种模式：
+    - 双图模式：同时提供 background_path 和 product_path，进行图片合成
+    - 单图模式：仅提供 background_path（主图），进行单图处理/增强
+
     Attributes:
         id: 任务唯一标识符
-        background_path: 背景/场景图路径
-        product_path: 商品图路径
+        background_path: 主图/背景/场景图路径（必填）
+        product_path: 商品图路径（可选，用于 AI 合成）
         output_path: 输出文件路径
         config: 处理配置
         status: 任务状态
@@ -44,8 +48,8 @@ class ImageTask(BaseModel):
     """
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    background_path: str = Field(..., description="背景/场景图路径")
-    product_path: str = Field(..., description="商品图路径")
+    background_path: str = Field(..., description="主图/背景/场景图路径")
+    product_path: Optional[str] = Field(default=None, description="商品图路径（可选，用于 AI 合成）")
     output_path: Optional[str] = Field(default=None, description="输出文件路径")
     config: Optional[ProcessConfig] = Field(
         default=None, description="处理配置"
@@ -59,13 +63,21 @@ class ImageTask(BaseModel):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     completed_at: Optional[datetime] = Field(default=None)
 
-    @field_validator("background_path", "product_path")
+    @field_validator("background_path")
     @classmethod
-    def validate_path(cls, v: str) -> str:
-        """验证路径格式."""
+    def validate_background_path(cls, v: str) -> str:
+        """验证主图路径格式."""
         if not v or not v.strip():
-            raise ValueError("路径不能为空")
+            raise ValueError("主图路径不能为空")
         return v.strip()
+
+    @field_validator("product_path")
+    @classmethod
+    def validate_product_path(cls, v: Optional[str]) -> Optional[str]:
+        """验证商品图路径格式（可选）."""
+        if v is not None and v.strip():
+            return v.strip()
+        return None
 
     def update_status(
         self,
@@ -151,13 +163,20 @@ class ImageTask(BaseModel):
         )
 
     @property
+    def is_single_image_mode(self) -> bool:
+        """是否为单图模式（无商品图）."""
+        return self.product_path is None
+
+    @property
     def background_filename(self) -> str:
-        """获取背景图文件名."""
+        """获取主图/背景图文件名."""
         return Path(self.background_path).name
 
     @property
-    def product_filename(self) -> str:
-        """获取商品图文件名."""
+    def product_filename(self) -> Optional[str]:
+        """获取商品图文件名（单图模式返回 None）."""
+        if self.product_path is None:
+            return None
         return Path(self.product_path).name
 
     def to_dict(self) -> dict:

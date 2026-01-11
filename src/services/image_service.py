@@ -22,6 +22,8 @@ from PIL import Image
 from src.models.api_config import APIConfig
 from src.models.image_task import ImageTask, TaskStatus
 from src.models.process_config import (
+    AIEditingConfig,
+    AIEditingMode,
     BackgroundConfig,
     BackgroundMode,
     BorderConfig,
@@ -310,12 +312,14 @@ class ImageService:
     ) -> ImageTask:
         """处理完整的图片任务.
 
-        执行新的处理流程：
-        1. 场景图抠背景（去除场景背景，保留场景主体）
-        2. 对场景添加自定义背景色
-        3. AI合成商品到处理后的场景
-        4. 后期处理（边框/文字）- 在AI合成之后应用
-        5. 保存输出
+        支持两种处理模式：
+        
+        双图模式（有商品图）：
+        1. 场景图抠背景→ 2. 添加背景色/AI背景 → 3. AI合成商品 → 4. 后期处理 → 5. 保存
+        
+        单图模式（无商品图）：
+        - AI开启: 加载主图 → AI增强 → 后期处理 → 保存
+        - AI关闭: 加载主图 → 后期处理 → 保存
 
         Args:
             task: 图片任务
@@ -327,7 +331,7 @@ class ImageService:
         """
         config = config or task.config or ProcessConfig()
 
-        logger.info(f"开始处理任务: {task.id}")
+        logger.info(f"开始处理任务: {task.id}, 单图模式: {task.is_single_image_mode}")
         task.mark_processing()
 
         def report_progress(progress: int, message: str) -> None:
@@ -336,58 +340,249 @@ class ImageService:
                 on_progress(progress, message)
 
         try:
-            # Step 1: 对场景图抠背景 (0-20%)
-            report_progress(5, "场景图抠背景处理中")
-            scene_nobg = await self._remove_scene_background(
-                task.background_path,
-                config,
-                lambda p, m: report_progress(int(5 + p * 0.15), m),
-            )
-
-            # Step 2: 对场景添加自定义背景色 (20-30%)
-            report_progress(25, "添加自定义背景")
-            scene_with_bg = await self._apply_background_to_scene(
-                scene_nobg,
-                config,
-                lambda p, m: report_progress(int(25 + p * 0.05), m),
-            )
-
-            # Step 3: AI合成 - 将商品合成到处理后的场景 (30-70%)
-            report_progress(35, "AI合成商品到场景")
-            composite_result = await self._composite_to_scene(
-                scene_with_bg,  # 传入处理后的场景图（bytes）
-                task.product_path,  # 商品图路径
-                lambda p, m: report_progress(int(35 + p * 0.35), m),
-                config=config,
-            )
-
-            # Step 4: 后期处理 - 对合成结果添加边框/文字 (70-90%)
-            report_progress(75, "添加边框和文字")
-            final_image = await self._apply_final_effects(
-                composite_result,
-                config,
-                lambda p, m: report_progress(int(75 + p * 0.15), m),
-            )
-
-            # Step 5: 保存输出 (90-100%)
-            report_progress(95, "保存输出")
-            output_path = await self._save_final_output(
-                final_image,
-                task,
-                config,
-            )
-
-            # 完成
-            task.mark_completed(str(output_path))
-            report_progress(100, "完成")
-            logger.info(f"任务完成: {task.id}")
-
-            return task
+            # 根据任务类型选择处理流程
+            if task.is_single_image_mode:
+                # 单图模式
+                return await self._process_single_image_task(
+                    task, config, report_progress
+                )
+            else:
+                # 双图模式
+                return await self._process_dual_image_task(
+                    task, config, report_progress
+                )
 
         except Exception as e:
             logger.exception(f"任务处理失败: {task.id}")
             task.mark_failed(str(e))
             return task
+
+    async def _process_dual_image_task(
+        self,
+        task: ImageTask,
+        config: ProcessConfig,
+        report_progress: Callable[[int, str], None],
+    ) -> ImageTask:
+        """处理双图任务（主图 + 商品图）.
+        
+        执行流程：
+        1. 场景图抠背景
+        2. 添加背景色/AI背景
+        3. AI合成商品到场景（或简单叠加）
+        4. 后期处理
+        5. 保存输出
+        """
+        # Step 1: 对场景图抠背景 (0-20%)
+        report_progress(5, "场景图抠背景处理中")
+        scene_nobg = await self._remove_scene_background(
+            task.background_path,
+            config,
+            lambda p, m: report_progress(int(5 + p * 0.15), m),
+        )
+
+        # Step 2: 对场景添加背景 (20-30%)
+        report_progress(25, "添加背景")
+        scene_with_bg = await self._apply_background_to_scene(
+            scene_nobg,
+            config,
+            lambda p, m: report_progress(int(25 + p * 0.05), m),
+        )
+
+        # Step 3: 合成商品到场景 (30-70%)
+        if config.ai_editing.enabled:
+            # AI 合成模式
+            report_progress(35, "AI 合成商品到场景")
+            composite_result = await self._composite_to_scene(
+                scene_with_bg,
+                task.product_path,
+                lambda p, m: report_progress(int(35 + p * 0.35), m),
+                config=config,
+            )
+        else:
+            # 简单叠加模式
+            report_progress(35, "简单叠加商品")
+            composite_result = await self._simple_composite(
+                scene_with_bg,
+                task.product_path,
+                lambda p, m: report_progress(int(35 + p * 0.35), m),
+            )
+
+        # Step 4: 后期处理 (70-90%)
+        report_progress(75, "添加边框和文字")
+        final_image = await self._apply_final_effects(
+            composite_result,
+            config,
+            lambda p, m: report_progress(int(75 + p * 0.15), m),
+        )
+
+        # Step 5: 保存输出 (90-100%)
+        report_progress(95, "保存输出")
+        output_path = await self._save_final_output(
+            final_image,
+            task,
+            config,
+        )
+
+        # 完成
+        task.mark_completed(str(output_path))
+        report_progress(100, "完成")
+        logger.info(f"双图任务完成: {task.id}")
+
+        return task
+
+    async def _process_single_image_task(
+        self,
+        task: ImageTask,
+        config: ProcessConfig,
+        report_progress: Callable[[int, str], None],
+    ) -> ImageTask:
+        """处理单图任务（仅主图）.
+        
+        执行流程：
+        - AI开启: 加载主图 → AI增强 → 后期处理 → 保存
+        - AI关闭: 加载主图 → 后期处理 → 保存
+        """
+        # Step 1: 加载主图 (0-20%)
+        report_progress(10, "加载主图")
+        image = load_image(task.background_path)
+        image = ensure_rgba(image)
+        image_bytes = image_to_bytes(image, format="PNG")
+
+        # Step 2: 可选的 AI 增强 (20-60%)
+        if config.ai_editing.enabled:
+            report_progress(25, "AI 增强处理中")
+            image_bytes = await self._apply_ai_enhance(
+                image_bytes,
+                config,
+                lambda p, m: report_progress(int(25 + p * 0.35), m),
+            )
+        else:
+            report_progress(60, "跳过 AI 增强")
+
+        # Step 3: 后期处理 (60-90%)
+        report_progress(65, "后期处理")
+        final_image = await self._apply_final_effects(
+            image_bytes,
+            config,
+            lambda p, m: report_progress(int(65 + p * 0.25), m),
+        )
+
+        # Step 4: 保存输出 (90-100%)
+        report_progress(95, "保存输出")
+        output_path = await self._save_final_output(
+            final_image,
+            task,
+            config,
+        )
+
+        # 完成
+        task.mark_completed(str(output_path))
+        report_progress(100, "完成")
+        logger.info(f"单图任务完成: {task.id}")
+
+        return task
+
+    async def _apply_ai_enhance(
+        self,
+        image_bytes: bytes,
+        config: ProcessConfig,
+        on_progress: Optional[ProgressCallback] = None,
+    ) -> bytes:
+        """对图片应用 AI 增强处理.
+        
+        Args:
+            image_bytes: 输入图片字节数据
+            config: 处理配置
+            on_progress: 进度回调
+            
+        Returns:
+            增强后的图片字节数据
+        """
+        if on_progress:
+            on_progress(20, "准备 AI 增强")
+
+        # 获取增强提示词
+        enhance_prompt = config.ai_editing.get_effective_enhance_prompt()
+        logger.info(f"AI 增强提示词: {enhance_prompt}")
+
+        if on_progress:
+            on_progress(50, "AI 增强处理中...")
+
+        try:
+            result_bytes = await self.ai_service.edit_image(
+                image_bytes,
+                enhance_prompt,
+            )
+            
+            if on_progress:
+                on_progress(100, "AI 增强完成")
+            
+            return result_bytes
+            
+        except Exception as e:
+            logger.error(f"AI 增强失败: {e}")
+            # 失败时返回原图
+            logger.warning("回退到原图")
+            if on_progress:
+                on_progress(100, "回退到原图")
+            return image_bytes
+
+    async def _simple_composite(
+        self,
+        background_bytes: bytes,
+        product_path: str,
+        on_progress: Optional[ProgressCallback] = None,
+    ) -> bytes:
+        """简单图层叠加（非 AI）.
+        
+        将商品图简单叠加到背景图中心位置。
+        
+        Args:
+            background_bytes: 背景图字节数据
+            product_path: 商品图路径
+            on_progress: 进度回调
+            
+        Returns:
+            合成后的图片字节数据
+        """
+        if on_progress:
+            on_progress(20, "加载商品图")
+
+        # 加载背景图和商品图
+        background = bytes_to_image(background_bytes)
+        product = load_image(product_path)
+        product = ensure_rgba(product)
+
+        if on_progress:
+            on_progress(50, "叠加商品图")
+
+        # 计算居中位置
+        bg_width, bg_height = background.size
+        prod_width, prod_height = product.size
+
+        # 如果商品图超过背景图尺寸，进行缩放
+        max_size = min(bg_width, bg_height) * 0.8
+        if prod_width > max_size or prod_height > max_size:
+            ratio = max_size / max(prod_width, prod_height)
+            new_size = (int(prod_width * ratio), int(prod_height * ratio))
+            product = product.resize(new_size, Image.Resampling.LANCZOS)
+            prod_width, prod_height = product.size
+
+        # 计算居中位置
+        x = (bg_width - prod_width) // 2
+        y = (bg_height - prod_height) // 2
+
+        # 合成
+        if background.mode != "RGBA":
+            background = background.convert("RGBA")
+        
+        # 使用 alpha 通道进行叠加
+        background.paste(product, (x, y), product if product.mode == "RGBA" else None)
+
+        if on_progress:
+            on_progress(100, "叠加完成")
+
+        return image_to_bytes(background, format="PNG")
 
     async def _remove_scene_background(
         self,

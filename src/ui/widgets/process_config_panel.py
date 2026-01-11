@@ -33,6 +33,9 @@ from PyQt6.QtWidgets import (
 
 from src.models.process_config import (
     AI_BACKGROUND_PRESETS,
+    AI_ENHANCE_PRESETS,
+    AIEditingConfig,
+    AIEditingMode,
     BackgroundConfig,
     BackgroundMode,
     BorderConfig,
@@ -567,10 +570,147 @@ class BorderConfigWidget(QGroupBox):
 
 
 
+class AIEditingConfigWidget(QGroupBox):
+    """AI 编辑配置子面板.
+    
+    控制 AI 编辑功能的启用/禁用以及单图增强预设。
+    """
+
+    config_changed = pyqtSignal(object)  # AIEditingConfig
+
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
+        super().__init__("AI 图片编辑", parent)
+        self._config = AIEditingConfig()
+        self._is_updating = False
+        self._setup_ui()
+        self._connect_signals()
+
+    def _setup_ui(self) -> None:
+        layout = QVBoxLayout(self)
+        layout.setSpacing(8)
+
+        # 启用开关
+        self._enabled_checkbox = QCheckBox("启用 AI 编辑")
+        self._enabled_checkbox.setChecked(True)
+        self._enabled_checkbox.setToolTip(
+            "双图模式：AI 将商品合成到主图\n"
+            "单图模式：AI 对主图进行增强处理"
+        )
+        layout.addWidget(self._enabled_checkbox)
+
+        # 单图增强设置容器
+        self._enhance_container = QWidget()
+        enhance_layout = QVBoxLayout(self._enhance_container)
+        enhance_layout.setContentsMargins(0, 0, 0, 0)
+        enhance_layout.setSpacing(8)
+
+        # 说明标签
+        enhance_hint = QLabel("单图模式下的 AI 增强效果：")
+        enhance_hint.setProperty("hint", True)
+        enhance_layout.addWidget(enhance_hint)
+
+        # 增强预设选择
+        preset_layout = QHBoxLayout()
+        preset_label = QLabel("预设效果:")
+        preset_layout.addWidget(preset_label)
+
+        self._enhance_preset_combo = QComboBox()
+        for key, info in AI_ENHANCE_PRESETS.items():
+            self._enhance_preset_combo.addItem(info["name"], key)
+        preset_layout.addWidget(self._enhance_preset_combo, 1)
+        enhance_layout.addLayout(preset_layout)
+
+        # 自定义提示词输入
+        prompt_label = QLabel("自定义提示词:")
+        enhance_layout.addWidget(prompt_label)
+
+        self._enhance_prompt_input = QPlainTextEdit()
+        self._enhance_prompt_input.setPlaceholderText("描述你想要的 AI 增强效果...")
+        self._enhance_prompt_input.setMaximumHeight(60)
+        # 设置默认提示词
+        default_prompt = AI_ENHANCE_PRESETS.get("optimize_lighting", {}).get("prompt", "")
+        self._enhance_prompt_input.setPlainText(default_prompt)
+        enhance_layout.addWidget(self._enhance_prompt_input)
+
+        layout.addWidget(self._enhance_container)
+
+    def _connect_signals(self) -> None:
+        self._enabled_checkbox.toggled.connect(self._on_config_changed)
+        self._enhance_preset_combo.currentIndexChanged.connect(self._on_preset_changed)
+        self._enhance_prompt_input.textChanged.connect(self._on_prompt_changed)
+
+    def _on_preset_changed(self, index: int) -> None:
+        """增强预设选择变更."""
+        if self._is_updating:
+            return
+        preset_key = self._enhance_preset_combo.currentData()
+        preset_info = AI_ENHANCE_PRESETS.get(preset_key, {})
+        prompt = preset_info.get("prompt", "")
+        
+        # 如果不是自定义，自动填充提示词
+        if preset_key != "custom":
+            self._is_updating = True
+            self._enhance_prompt_input.setPlainText(prompt)
+            self._is_updating = False
+        else:
+            # 自定义模式清空提示词
+            self._is_updating = True
+            self._enhance_prompt_input.setPlainText("")
+            self._is_updating = False
+        
+        self._rebuild_config()
+        self._emit_config_changed()
+
+    def _on_prompt_changed(self) -> None:
+        """提示词变更."""
+        if self._is_updating:
+            return
+        self._rebuild_config()
+        self._emit_config_changed()
+
+    def _on_config_changed(self) -> None:
+        if self._is_updating:
+            return
+        self._rebuild_config()
+        self._emit_config_changed()
+
+    def _rebuild_config(self) -> None:
+        """根据 UI 状态重建配置."""
+        self._config = AIEditingConfig(
+            enabled=self._enabled_checkbox.isChecked(),
+            mode=AIEditingMode.COMPOSITE,  # 默认合成模式，实际会根据任务类型自动切换
+            enhance_preset=self._enhance_preset_combo.currentData() or "optimize_lighting",
+            enhance_prompt=self._enhance_prompt_input.toPlainText(),
+        )
+
+    def _emit_config_changed(self) -> None:
+        self.config_changed.emit(self._config)
+
+    def get_config(self) -> AIEditingConfig:
+        return self._config
+
+    def set_config(self, config: AIEditingConfig) -> None:
+        self._is_updating = True
+        self._config = config
+        self._enabled_checkbox.setChecked(config.enabled)
+
+        # 设置增强预设
+        index = self._enhance_preset_combo.findData(config.enhance_preset)
+        if index >= 0:
+            self._enhance_preset_combo.setCurrentIndex(index)
+
+        # 设置提示词
+        self._enhance_prompt_input.setPlainText(
+            config.enhance_prompt or config.get_effective_enhance_prompt()
+        )
+
+        self._is_updating = False
+
+
 class ProcessConfigPanel(QFrame):
     """处理参数配置面板.
 
-    提供背景、边框、文字等后期处理参数的统一配置界面。
+    提供 AI 编辑、背景、边框等后期处理参数的统一配置界面。
 
     Signals:
         config_changed: 配置变更信号，参数为 ProcessConfig 对象
@@ -600,6 +740,10 @@ class ProcessConfigPanel(QFrame):
         title_label.setProperty("heading", True)
         layout.addWidget(title_label)
 
+        # AI 编辑配置
+        self._ai_editing_widget = AIEditingConfigWidget()
+        layout.addWidget(self._ai_editing_widget)
+
         # 背景配置
         self._background_widget = BackgroundConfigWidget()
         layout.addWidget(self._background_widget)
@@ -609,11 +753,23 @@ class ProcessConfigPanel(QFrame):
         layout.addWidget(self._border_widget)
 
     def _connect_signals(self) -> None:
+        self._ai_editing_widget.config_changed.connect(self._on_ai_editing_changed)
         self._background_widget.config_changed.connect(self._on_background_changed)
         self._border_widget.config_changed.connect(self._on_border_changed)
 
+    def _on_ai_editing_changed(self, config: AIEditingConfig) -> None:
+        self._config = ProcessConfig(
+            ai_editing=config,
+            prompt=self._config.prompt,
+            background=self._config.background,
+            border=self._config.border,
+            output=self._config.output,
+        )
+        self.config_changed.emit(self._config)
+
     def _on_background_changed(self, config: BackgroundConfig) -> None:
         self._config = ProcessConfig(
+            ai_editing=self._config.ai_editing,
             prompt=self._config.prompt,
             background=config,
             border=self._config.border,
@@ -623,6 +779,7 @@ class ProcessConfigPanel(QFrame):
 
     def _on_border_changed(self, config: BorderConfig) -> None:
         self._config = ProcessConfig(
+            ai_editing=self._config.ai_editing,
             prompt=self._config.prompt,
             background=self._config.background,
             border=config,
@@ -637,8 +794,13 @@ class ProcessConfigPanel(QFrame):
     def set_config(self, config: ProcessConfig) -> None:
         """设置处理配置."""
         self._config = config
+        self._ai_editing_widget.set_config(config.ai_editing)
         self._background_widget.set_config(config.background)
         self._border_widget.set_config(config.border)
+
+    def get_ai_editing_config(self) -> AIEditingConfig:
+        """获取 AI 编辑配置."""
+        return self._ai_editing_widget.get_config()
 
     def get_background_config(self) -> BackgroundConfig:
         """获取背景配置."""

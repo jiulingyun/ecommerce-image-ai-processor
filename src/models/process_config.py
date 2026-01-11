@@ -384,6 +384,168 @@ BACKGROUND_MODE_NAMES: dict[BackgroundMode, str] = {
 }
 
 
+# ===================
+# AI 编辑配置
+# ===================
+
+
+class AIEditingMode(str, Enum):
+    """AI 编辑模式枚举."""
+
+    COMPOSITE = "composite"  # 合成模式（双图合成）
+    ENHANCE = "enhance"  # 增强模式（单图增强）
+
+
+# AI 编辑模式中文名称
+AI_EDITING_MODE_NAMES: dict[AIEditingMode, str] = {
+    AIEditingMode.COMPOSITE: "AI 合成",
+    AIEditingMode.ENHANCE: "AI 增强",
+}
+
+
+# AI 单图增强预设提示词
+AI_ENHANCE_PRESETS: dict[str, dict[str, str]] = {
+    "optimize_lighting": {
+        "name": "优化光影",
+        "prompt": "优化图片的光影效果，使产品更加立体通透，保持原有色彩和细节",
+    },
+    "clean_background": {
+        "name": "清理背景",
+        "prompt": "清理图片背景杂物和瑕疵，保持产品主体清晰完整",
+    },
+    "enhance_details": {
+        "name": "增强细节",
+        "prompt": "增强产品细节，提高图片清晰度和质感，使产品更加精致",
+    },
+    "adjust_color": {
+        "name": "调整色彩",
+        "prompt": "优化图片色彩，使颜色更加鲜艳自然，提升视觉吸引力",
+    },
+    "studio_effect": {
+        "name": "摄影棚效果",
+        "prompt": "添加专业摄影棚灯光效果，均匀柔和的照明，提升产品档次感",
+    },
+    "custom": {
+        "name": "自定义",
+        "prompt": "",
+    },
+}
+
+
+class AIEditingConfig(BaseModel):
+    """AI 编辑配置.
+
+    控制是否使用 AI 进行图片编辑，以及编辑模式。
+
+    Attributes:
+        enabled: 是否启用 AI 编辑
+        mode: AI 编辑模式（合成或增强）
+        enhance_preset: 增强模式预设名称
+        enhance_prompt: 增强模式自定义提示词
+
+    Example:
+        >>> config = AIEditingConfig(enabled=True, mode=AIEditingMode.ENHANCE)
+        >>> config.get_effective_enhance_prompt()
+        '优化图片的光影效果，使产品更加立体通透...'
+    """
+
+    enabled: bool = Field(
+        default=True,
+        description="是否启用 AI 编辑",
+    )
+    mode: AIEditingMode = Field(
+        default=AIEditingMode.COMPOSITE,
+        description="AI 编辑模式",
+    )
+    enhance_preset: str = Field(
+        default="optimize_lighting",
+        description="增强模式预设名称",
+    )
+    enhance_prompt: str = Field(
+        default="",
+        max_length=500,
+        description="增强模式自定义提示词",
+    )
+
+    def is_composite_mode(self) -> bool:
+        """检查是否为合成模式."""
+        return self.mode == AIEditingMode.COMPOSITE
+
+    def is_enhance_mode(self) -> bool:
+        """检查是否为增强模式."""
+        return self.mode == AIEditingMode.ENHANCE
+
+    def get_effective_enhance_prompt(self) -> str:
+        """获取实际生效的增强提示词.
+
+        如果有自定义提示词则返回自定义提示词，
+        否则返回预设对应的提示词。
+
+        Returns:
+            增强提示词字符串
+        """
+        # 优先使用自定义提示词
+        if self.enhance_prompt:
+            return self.enhance_prompt
+        # 使用预设提示词
+        preset_info = AI_ENHANCE_PRESETS.get(self.enhance_preset, {})
+        return preset_info.get("prompt", "优化图片的光影效果，使产品更加立体通透")
+
+    @classmethod
+    def for_composite(cls) -> "AIEditingConfig":
+        """创建合成模式配置."""
+        return cls(enabled=True, mode=AIEditingMode.COMPOSITE)
+
+    @classmethod
+    def for_enhance(cls, preset: str = "optimize_lighting") -> "AIEditingConfig":
+        """创建增强模式配置.
+
+        Args:
+            preset: 增强预设名称
+
+        Returns:
+            AIEditingConfig 实例
+        """
+        return cls(enabled=True, mode=AIEditingMode.ENHANCE, enhance_preset=preset)
+
+    @classmethod
+    def disabled(cls) -> "AIEditingConfig":
+        """创建禁用配置."""
+        return cls(enabled=False)
+
+    @classmethod
+    def get_enhance_presets(cls) -> list[dict]:
+        """获取所有增强预设（供 UI 使用）.
+
+        Returns:
+            增强预设信息列表
+        """
+        return [
+            {
+                "key": key,
+                "name": info["name"],
+                "prompt": info["prompt"],
+            }
+            for key, info in AI_ENHANCE_PRESETS.items()
+        ]
+
+    @classmethod
+    def get_editing_modes(cls) -> list[dict]:
+        """获取所有编辑模式（供 UI 使用）.
+
+        Returns:
+            编辑模式信息列表
+        """
+        return [
+            {
+                "value": mode.value,
+                "mode": mode,
+                "name": AI_EDITING_MODE_NAMES[mode],
+            }
+            for mode in AIEditingMode
+        ]
+
+
 # AI 背景预设提示词
 AI_BACKGROUND_PRESETS: dict[str, dict[str, str]] = {
     "clean_white": {
@@ -1583,11 +1745,17 @@ class TemplateRenderConfig(BaseModel):
 class ProcessConfig(BaseModel):
     """图片处理配置.
 
-    包含 AI 提示词、抠图、背景、边框、文字、模板和输出的完整配置。
+    包含 AI 编辑、提示词、抠图、背景、边框、文字、模板和输出的完整配置。
 
     支持两种处理模式：
     - 简单模式 (SIMPLE)：使用传统的 text 配置添加文字水印
     - 模板模式 (TEMPLATE)：使用模板系统渲染多图层内容
+
+    AI 编辑模式：
+    - 双图模式 + AI 开启：使用 AI 合成商品到场景
+    - 双图模式 + AI 关闭：简单图层叠加
+    - 单图模式 + AI 开启：AI 增强单图（优化光影/调整等）
+    - 单图模式 + AI 关闭：直接后期处理
 
     Example:
         >>> # 简单模式
@@ -1599,12 +1767,17 @@ class ProcessConfig(BaseModel):
         >>> config = ProcessConfig(mode=ProcessingMode.TEMPLATE)
         >>> config.template.enabled = True
         >>> config.template.template_id = "promo_banner"
+        >>>
+        >>> # 单图增强模式
+        >>> config = ProcessConfig()
+        >>> config.ai_editing = AIEditingConfig.for_enhance("optimize_lighting")
     """
 
     mode: ProcessingMode = Field(
         default=ProcessingMode.SIMPLE,
         description="处理模式：简单模式或模板模式",
     )
+    ai_editing: AIEditingConfig = Field(default_factory=AIEditingConfig)
     prompt: AIPromptConfig = Field(default_factory=AIPromptConfig)
     background_removal: BackgroundRemovalConfig = Field(default_factory=BackgroundRemovalConfig)
     background: BackgroundConfig = Field(default_factory=BackgroundConfig)

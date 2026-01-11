@@ -36,10 +36,12 @@ logger = setup_logger(__name__)
 class ImagePairPanel(QFrame):
     """图片配对面板.
 
-    提供背景图和商品图的配对选择界面。
+    提供主图和商品图的配对选择界面。
+    支持单图模式（仅主图）和双图模式（主图 + 商品图）。
 
     Signals:
         task_added: 任务添加信号，参数为 (background_path, product_path)
+                    product_path 可能为空字符串表示单图模式
         pair_changed: 配对状态变化信号
 
     Example:
@@ -47,7 +49,7 @@ class ImagePairPanel(QFrame):
         >>> panel.task_added.connect(on_task_added)
     """
 
-    task_added = pyqtSignal(str, str)  # background_path, product_path
+    task_added = pyqtSignal(str, str)  # background_path, product_path (可为空)
     pair_changed = pyqtSignal()
 
     def __init__(
@@ -81,15 +83,25 @@ class ImagePairPanel(QFrame):
         return self._prod_drop_zone.file_path
 
     @property
+    def has_main_image(self) -> bool:
+        """是否有主图（最低要求）."""
+        return self._bg_drop_zone.has_file
+
+    @property
     def is_pair_complete(self) -> bool:
-        """配对是否完整."""
+        """配对是否完整（双图模式）."""
         return self._bg_drop_zone.has_file and self._prod_drop_zone.has_file
 
     @property
+    def is_single_image_mode(self) -> bool:
+        """是否为单图模式（仅有主图，无商品图）."""
+        return self._bg_drop_zone.has_file and not self._prod_drop_zone.has_file
+
+    @property
     def can_add_task(self) -> bool:
-        """是否可以添加任务."""
+        """是否可以添加任务（有主图即可）."""
         return (
-            self.is_pair_complete
+            self.has_main_image
             and self._current_queue_count < MAX_QUEUE_SIZE
         )
 
@@ -115,7 +127,7 @@ class ImagePairPanel(QFrame):
         layout.addWidget(title_label)
 
         # 说明
-        hint_label = QLabel("将背景图和商品图配对后添加到处理队列")
+        hint_label = QLabel("添加主图即可创建任务，商品图可选（用于 AI 合成）")
         hint_label.setProperty("hint", True)
         layout.addWidget(hint_label)
 
@@ -125,10 +137,10 @@ class ImagePairPanel(QFrame):
         drop_zones_layout.setContentsMargins(0, 0, 0, 0)
         drop_zones_layout.setSpacing(16)
 
-        # 背景图拖入区
+        # 主图拖入区（必填）
         self._bg_drop_zone = DropZone(
-            title="背景/场景图",
-            hint="拖拽背景图到此处\n或点击选择\n\n(模特图、场景图等)",
+            title="主图/场景图",
+            hint="拖拽图片到此处\n或点击选择\n\n(必填，模特图、场景图等)",
         )
         drop_zones_layout.addWidget(self._bg_drop_zone)
 
@@ -143,10 +155,10 @@ class ImagePairPanel(QFrame):
         arrow_label.setFixedWidth(40)
         drop_zones_layout.addWidget(arrow_label)
 
-        # 商品图拖入区
+        # 商品图拖入区（可选）
         self._prod_drop_zone = DropZone(
-            title="商品图",
-            hint="拖拽商品图到此处\n或点击选择\n\n(商品Logo、标签等)",
+            title="商品图（可选）",
+            hint="拖拽商品图到此处\n或点击选择\n\n(可选，用于 AI 合成)",
         )
         drop_zones_layout.addWidget(self._prod_drop_zone)
 
@@ -259,7 +271,7 @@ class ImagePairPanel(QFrame):
 
     def _update_button_state(self) -> None:
         """更新按钮状态."""
-        # 添加按钮：配对完整且队列未满
+        # 添加按钮：有主图且队列未满
         can_add = self.can_add_task
         self._add_task_btn.setEnabled(can_add)
 
@@ -268,12 +280,14 @@ class ImagePairPanel(QFrame):
         self._clear_pair_btn.setEnabled(has_any)
 
         # 更新添加按钮提示
-        if not self.is_pair_complete:
-            self._add_task_btn.setToolTip("请先选择背景图和商品图")
+        if not self.has_main_image:
+            self._add_task_btn.setToolTip("请先选择主图")
         elif self._current_queue_count >= MAX_QUEUE_SIZE:
             self._add_task_btn.setToolTip(f"队列已满（最多{MAX_QUEUE_SIZE}个任务）")
+        elif self.is_single_image_mode:
+            self._add_task_btn.setToolTip("单图模式：将对主图进行处理")
         else:
-            self._add_task_btn.setToolTip("添加当前配对到处理队列")
+            self._add_task_btn.setToolTip("双图模式：将商品合成到主图")
 
     # ========================
     # 事件处理
@@ -298,8 +312,8 @@ class ImagePairPanel(QFrame):
     
     def _on_file_added(self) -> None:
         """文件添加后的处理."""
-        # 如果配对完成，聚焦到添加按钮以便快捷键操作
-        if self.is_pair_complete:
+        # 如果可以添加任务，聚焦到添加按钮以便快捷键操作
+        if self.can_add_task:
             self._add_task_btn.setFocus()
 
     def _on_pair_changed(self) -> None:
@@ -309,11 +323,11 @@ class ImagePairPanel(QFrame):
 
     def _on_add_task(self) -> None:
         """添加任务按钮点击."""
-        if not self.is_pair_complete:
+        if not self.has_main_image:
             QMessageBox.warning(
                 self,
-                "配对不完整",
-                "请先选择背景图和商品图。",
+                "缺少主图",
+                "请先选择主图。",
             )
             return
 
@@ -327,11 +341,14 @@ class ImagePairPanel(QFrame):
             return
 
         bg_path = self.background_path
-        prod_path = self.product_path
+        prod_path = self.product_path or ""  # 单图模式时为空字符串
 
-        if bg_path and prod_path:
+        if bg_path:
             self.task_added.emit(bg_path, prod_path)
-            logger.info(f"添加任务: {bg_path} + {prod_path}")
+            if prod_path:
+                logger.info(f"添加双图任务: {bg_path} + {prod_path}")
+            else:
+                logger.info(f"添加单图任务: {bg_path}")
 
             # 清空配对，准备下一个（尊重固定状态）
             self.clear_pair()
