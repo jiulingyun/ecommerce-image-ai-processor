@@ -589,12 +589,18 @@ class AIEditingConfigWidget(QGroupBox):
         layout = QVBoxLayout(self)
         layout.setSpacing(8)
 
-        # 启用开关
-        self._enabled_checkbox = QCheckBox("启用 AI 编辑")
+        # 说明文案
+        hint_label = QLabel("单图模式下可启用 AI 增强（双图模式始终使用 AI 合成）")
+        hint_label.setProperty("hint", True)
+        hint_label.setWordWrap(True)
+        layout.addWidget(hint_label)
+
+        # 启用开关（仅控制单图模式的 AI 增强）
+        self._enabled_checkbox = QCheckBox("单图模式启用 AI 增强")
         self._enabled_checkbox.setChecked(True)
         self._enabled_checkbox.setToolTip(
-            "双图模式：AI 将商品合成到主图\n"
-            "单图模式：AI 对主图进行增强处理"
+            "单图模式：勾选后 AI 将对主图进行增强处理\n"
+            "双图模式：始终使用 AI 合成，此开关不影响"
         )
         layout.addWidget(self._enabled_checkbox)
 
@@ -604,8 +610,8 @@ class AIEditingConfigWidget(QGroupBox):
         enhance_layout.setContentsMargins(0, 0, 0, 0)
         enhance_layout.setSpacing(8)
 
-        # 说明标签
-        enhance_hint = QLabel("单图模式下的 AI 增强效果：")
+        # 增强效果标签
+        enhance_hint = QLabel("增强效果选择：")
         enhance_hint.setProperty("hint", True)
         enhance_layout.addWidget(enhance_hint)
 

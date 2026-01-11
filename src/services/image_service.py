@@ -388,24 +388,15 @@ class ImageService:
             lambda p, m: report_progress(int(25 + p * 0.05), m),
         )
 
-        # Step 3: 合成商品到场景 (30-70%)
-        if config.ai_editing.enabled:
-            # AI 合成模式
-            report_progress(35, "AI 合成商品到场景")
-            composite_result = await self._composite_to_scene(
-                scene_with_bg,
-                task.product_path,
-                lambda p, m: report_progress(int(35 + p * 0.35), m),
-                config=config,
-            )
-        else:
-            # 简单叠加模式
-            report_progress(35, "简单叠加商品")
-            composite_result = await self._simple_composite(
-                scene_with_bg,
-                task.product_path,
-                lambda p, m: report_progress(int(35 + p * 0.35), m),
-            )
+        # Step 3: AI 合成商品到场景 (30-70%)
+        # 双图模式始终使用 AI 合成，AI 编辑开关只控制单图增强
+        report_progress(35, "AI 合成商品到场景")
+        composite_result = await self._composite_to_scene(
+            scene_with_bg,
+            task.product_path,
+            lambda p, m: report_progress(int(35 + p * 0.35), m),
+            config=config,
+        )
 
         # Step 4: 后期处理 (70-90%)
         report_progress(75, "添加边框和文字")
