@@ -1745,17 +1745,15 @@ class TemplateRenderConfig(BaseModel):
 class ProcessConfig(BaseModel):
     """图片处理配置.
 
-    包含 AI 编辑、提示词、抠图、背景、边框、文字、模板和输出的完整配置。
+    包含 AI 增强、提示词、抠图、背景、边框、文字、模板和输出的完整配置。
 
     支持两种处理模式：
     - 简单模式 (SIMPLE)：使用传统的 text 配置添加文字水印
     - 模板模式 (TEMPLATE)：使用模板系统渲染多图层内容
 
-    AI 编辑模式：
-    - 双图模式 + AI 开启：使用 AI 合成商品到场景
-    - 双图模式 + AI 关闭：简单图层叠加
-    - 单图模式 + AI 开启：AI 增强单图（优化光影/调整等）
-    - 单图模式 + AI 关闭：直接后期处理
+    图片处理流程：
+    - 单图（1张）：[可选抠图+背景填充] → [可选AI增强] → 后期处理 → 输出
+    - 多图（2-3张）：AI多图合成 → [可选抠图+背景填充] → [可选AI增强] → 后期处理 → 输出
 
     Example:
         >>> # 简单模式
@@ -1768,7 +1766,7 @@ class ProcessConfig(BaseModel):
         >>> config.template.enabled = True
         >>> config.template.template_id = "promo_banner"
         >>>
-        >>> # 单图增强模式
+        >>> # AI 增强模式
         >>> config = ProcessConfig()
         >>> config.ai_editing = AIEditingConfig.for_enhance("optimize_lighting")
     """

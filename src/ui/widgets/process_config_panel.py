@@ -571,15 +571,15 @@ class BorderConfigWidget(QGroupBox):
 
 
 class AIEditingConfigWidget(QGroupBox):
-    """AI 编辑配置子面板.
+    """AI 增强配置子面板.
     
-    控制 AI 编辑功能的启用/禁用以及单图增强预设。
+    控制 AI 增强功能的启用/禁用以及增强预设。
     """
 
     config_changed = pyqtSignal(object)  # AIEditingConfig
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
-        super().__init__("AI 图片编辑", parent)
+        super().__init__("AI 增强", parent)
         self._config = AIEditingConfig()
         self._is_updating = False
         self._setup_ui()
@@ -590,17 +590,16 @@ class AIEditingConfigWidget(QGroupBox):
         layout.setSpacing(8)
 
         # 说明文案
-        hint_label = QLabel("单图模式下可启用 AI 增强（双图模式始终使用 AI 合成）")
+        hint_label = QLabel("启用后 AI 将对图片进行增强处理")
         hint_label.setProperty("hint", True)
         hint_label.setWordWrap(True)
         layout.addWidget(hint_label)
 
-        # 启用开关（仅控制单图模式的 AI 增强）
-        self._enabled_checkbox = QCheckBox("单图模式启用 AI 增强")
+        # 启用开关
+        self._enabled_checkbox = QCheckBox("启用 AI 增强")
         self._enabled_checkbox.setChecked(True)
         self._enabled_checkbox.setToolTip(
-            "单图模式：勾选后 AI 将对主图进行增强处理\n"
-            "双图模式：始终使用 AI 合成，此开关不影响"
+            "勾选后 AI 将对图片进行增强处理"
         )
         layout.addWidget(self._enabled_checkbox)
 
