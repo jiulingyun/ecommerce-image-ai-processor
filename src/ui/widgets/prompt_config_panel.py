@@ -1,4 +1,4 @@
-"""AI 提示词配置面板组件."""
+"""AI 合成配置面板组件."""
 
 from __future__ import annotations
 
@@ -32,9 +32,9 @@ logger = setup_logger(__name__)
 
 
 class PromptConfigPanel(QFrame):
-    """AI 提示词配置面板.
+    """AI 合成配置面板.
 
-    提供 AI 提示词配置界面，包括模板选择、自定义编辑和位置提示。
+    提供 AI 合成配置界面，包括提示词模板选择、自定义编辑和位置提示。
 
     Signals:
         config_changed: 配置变更信号，参数为 AIPromptConfig 对象
@@ -65,7 +65,7 @@ class PromptConfigPanel(QFrame):
         layout.setSpacing(8)
 
         # 标题
-        title_label = QLabel("AI 提示词配置")
+        title_label = QLabel("AI 合成配置")
         title_label.setProperty("heading", True)
         layout.addWidget(title_label)
 
