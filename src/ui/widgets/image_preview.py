@@ -210,6 +210,15 @@ class ImagePreview(QFrame):
             self._preview_mode = PreviewMode.BACKGROUND
             self._bg_radio.setChecked(True)
             self._result_radio.hide()
+            
+            # 单图模式下隐藏商品图选项
+            if task.is_single_image_mode:
+                self._prod_radio.hide()
+                self._bg_radio.setText("原图")
+            else:
+                self._prod_radio.show()
+                self._bg_radio.setText("背景图")
+            
             self._switch_container.show()
 
             # 如果任务有结果路径，加载结果
@@ -300,10 +309,17 @@ class ImagePreview(QFrame):
         # 获取图片路径
         if self._preview_mode == PreviewMode.BACKGROUND:
             image_path = self._current_task.background_path
-            image_type = "背景图"
+            # 单图模式显示为"原图"
+            image_type = "原图" if self._current_task.is_single_image_mode else "背景图"
         else:
             image_path = self._current_task.product_path
             image_type = "商品图"
+            # 单图模式没有商品图，回退到背景图
+            if image_path is None:
+                self._preview_mode = PreviewMode.BACKGROUND
+                self._bg_radio.setChecked(True)
+                image_path = self._current_task.background_path
+                image_type = "原图"
 
         # 加载图片
         try:
