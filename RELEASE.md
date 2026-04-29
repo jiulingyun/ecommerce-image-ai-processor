@@ -11,6 +11,13 @@
 1. 项目已推送到 GitHub
 2. 本地已安装 git
 3. 有推送权限
+4. 已在 GitHub 仓库 `Secrets and variables > Actions` 配置以下 macOS 发布密钥：
+   - `APPLE_CERTIFICATE_BASE64`（Developer ID Application 证书 `.p12` 的 base64）
+   - `APPLE_CERTIFICATE_PASSWORD`（`.p12` 密码）
+   - `APPLE_SIGNING_IDENTITY`（例如 `Developer ID Application: Your Name (TEAMID)`）
+   - `APPLE_ID`（Apple ID 邮箱）
+   - `APPLE_APP_SPECIFIC_PASSWORD`（Apple ID 的 app-specific password）
+   - `APPLE_TEAM_ID`（Apple Developer Team ID）
 
 ### 发布步骤
 
@@ -61,8 +68,12 @@ git commit -m "Release v1.0.1"
 
 3. 构建内容包括：
    - `ecommerce-image-processor-windows-v1.0.1.zip` - Windows 版本
-   - `ecommerce-image-processor-macos-v1.0.1.zip` - macOS 版本
+   - `ecommerce-image-processor-macos-v1.0.1.zip` - macOS 版本（已签名 + 已公证）
    - `ecommerce-image-processor-linux-v1.0.1.tar.gz` - Linux 版本
+
+macOS 包说明：
+- 仅支持 Apple Silicon（arm64）
+- 最低系统版本 macOS 11.0
 
 ## 🛠️ 本地测试打包
 
@@ -160,7 +171,8 @@ excludes = [
 A: 
 1. 检查 GitHub Actions 日志查看具体错误
 2. 确保 `requirements.txt` 包含所有依赖
-3. 检查代码在目标平台上的兼容性
+3. 检查 macOS 发布密钥是否已正确配置
+4. 检查代码在目标平台上的兼容性
 
 ### Q: 如何删除已发布的 Release？
 

@@ -19,7 +19,9 @@
 
 from __future__ import annotations
 
+import logging
 import os
+import threading
 from enum import Enum, auto
 from pathlib import Path
 from typing import Optional
@@ -794,13 +796,38 @@ class MainWindow(QMainWindow):
         )
 
     def _kill_process_and_exit(self, exit_code: int = 0) -> None:
-        """硬退出应用进程，避免 UI 卡死."""
-        try:
-            app = QApplication.instance()
-            if app:
-                app.quit()
-        finally:
-            os._exit(exit_code)
+        """优先安全退出，必要时保留延迟兜底."""
+        fallback_delay_s = 5.0
+        graceful_stopped = True
+
+        if self._queue_controller:
+            graceful_stopped = self._queue_controller.stop(timeout_ms=3000)
+
+        app = QApplication.instance()
+        fallback_timer: Optional[threading.Timer] = None
+
+        if not graceful_stopped:
+            logger.error("后台线程仍未完全退出，将先请求应用正常关闭，并保留延迟兜底")
+            fallback_timer = threading.Timer(
+                fallback_delay_s,
+                lambda: os._exit(exit_code),
+            )
+            fallback_timer.daemon = True
+            fallback_timer.start()
+
+        if app and fallback_timer is not None:
+            app.aboutToQuit.connect(fallback_timer.cancel)
+
+        logging.shutdown()
+
+        if app:
+            app.exit(exit_code)
+            app.quit()
+            if graceful_stopped:
+                return
+            return
+
+        os._exit(exit_code)
 
     def _on_cancel_watch_timeout(self) -> None:
         """取消长时间未结束时提示强制结束."""

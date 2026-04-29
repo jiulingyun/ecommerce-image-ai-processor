@@ -1,0 +1,2089 @@
+{'81d243bd2c585b0f4821__mypyc.cpython-39-darwin.so': bytearray(b'\xf0\x06\xbc\x0e'
+                                                               b'Md\xfd\xb1'
+                                                               b'\x8c\xfd\xb8\xbe'
+                                                               b'\xff\xd7\x90J'
+                                                               b'X\xc8/\xba'),
+ 'PIL/.dylibs/libXau.6.0.0.dylib': bytearray(b'\x19pIC\xce\xd3\x9d '
+                                             b'h\x08\x03\xfbP\xf0w\xbc'
+                                             b'\xad^Q\x9f'),
+ 'PIL/.dylibs/libbrotlicommon.1.1.0.dylib': bytearray(b'j]!\xef\xcdS\xae\xd1'
+                                                      b'QX\x97\xb9\x88X\x08\xc2'
+                                                      b'\x0c\x81|,'),
+ 'PIL/.dylibs/libbrotlidec.1.1.0.dylib': bytearray(b'\xb9\xd4\xca\x16A\n&\xd2'
+                                                   b'\x7f\xb0\x83E\x04\xee\xb3%'
+                                                   b'+LxI'),
+ 'PIL/.dylibs/libfreetype.6.dylib': bytearray(b'\x8d\xf7\x1f3\xedC\x1c\xf4'
+                                              b'\x1e\x0b\x1a\xe4\\\x89\xd4\xe2'
+                                              b'\\\x02Xk'),
+ 'PIL/.dylibs/libharfbuzz.0.dylib': bytearray(b'\xabL\xdb\x94pR\xde\xa0'
+                                              b'\xe69\x99\xf30E\xfdR'
+                                              b'\x83\x01\x93)'),
+ 'PIL/.dylibs/libjpeg.62.4.0.dylib': bytearray(b'Y(f\xe0\t\xd3\x0b"'
+                                               b'e\xae\xcf\x96\xbcp\xc10I ,\x9a'),
+ 'PIL/.dylibs/liblcms2.2.dylib': bytearray(b'\x9cV\xf6\xc7\xf0\x16w8'
+                                           b'L\xb5\x0c\xdes\xd2*8\xad\x0b\xc2e'),
+ 'PIL/.dylibs/liblzma.5.dylib': bytearray(b'&\x86o3k\x83\x18\x1c\xb9\xce\xf1j'
+                                          b'N<\xa7l\xeb\x0c\xa9\xd2'),
+ 'PIL/.dylibs/libopenjp2.2.5.2.dylib': bytearray(b"\x8a]\x07'y*y%N7\x0c\xea"
+                                                 b'\xa9\x01mDey\x1d\x95'),
+ 'PIL/.dylibs/libpng16.16.dylib': bytearray(b"g2]Hjz\x9a\xbf'9\xce\xa2s\xfacQ"
+                                            b'\xa3m\xfd\x05'),
+ 'PIL/.dylibs/libsharpyuv.0.dylib': bytearray(b'\x95\x00t1(.\nZ\xc0uoM'
+                                              b'\xe5\x05\xc6\x97'
+                                              b'\x89\x88\xe2\x8a'),
+ 'PIL/.dylibs/libtiff.6.dylib': bytearray(b'\xe7r\xc0Fk\x83\x1a\xe2'
+                                          b'h\xdf\xcd\x17\xeel|kD\xcf\xb3\x85'),
+ 'PIL/.dylibs/libwebp.7.dylib': bytearray(b'\xc7\xed\xed\x15\xb0\x89R\xb0'
+                                          b'\x1c\xe1_`q\x98\xa7\xc0EJs\xc2'),
+ 'PIL/.dylibs/libwebpdemux.2.dylib': bytearray(b'\xbd\xc2\x7f)\xb7:\xe9M'
+                                               b's\x8bP\x84\xb7\x17\x182"\xa1&}'),
+ 'PIL/.dylibs/libwebpmux.3.dylib': bytearray(b'\x9f\xafw\x93\xb8\x02k\xa5'
+                                             b'lB\xd0\x1e\xe6\xcc\xa9\x95'
+                                             b'\x08H)\xde'),
+ 'PIL/.dylibs/libxcb.1.1.0.dylib': bytearray(b'\xdd\x8f\xf0D\xeb\x13\x18P'
+                                             b'\x8e|\x90=k\xf0\xfa.'
+                                             b'\x8fh\x1c\xe1'),
+ 'PIL/.dylibs/libz.1.3.1.dylib': bytearray(b'\x06A\xc2\x9a\xaf\xf7*\xc2'
+                                           b':\x18\xb9N\xf9Q\xb9\x8b'
+                                           b"\x15\xb6\xda'"),
+ 'PIL/__dot__dylibs/libXau.6.0.0.dylib': bytearray(b'\x19pIC\xce\xd3\x9d '
+                                                   b'h\x08\x03\xfbP\xf0w\xbc'
+                                                   b'\xad^Q\x9f'),
+ 'PIL/__dot__dylibs/libbrotlicommon.1.1.0.dylib': bytearray(b'j]!\xef'
+                                                            b'\xcdS\xae\xd1'
+                                                            b'QX\x97\xb9'
+                                                            b'\x88X\x08\xc2'
+                                                            b'\x0c\x81|,'),
+ 'PIL/__dot__dylibs/libbrotlidec.1.1.0.dylib': bytearray(b'\xb9\xd4\xca\x16'
+                                                         b'A\n&\xd2'
+                                                         b'\x7f\xb0\x83E'
+                                                         b'\x04\xee\xb3%+LxI'),
+ 'PIL/__dot__dylibs/libfreetype.6.dylib': bytearray(b'\x8d\xf7\x1f3'
+                                                    b'\xedC\x1c\xf4'
+                                                    b'\x1e\x0b\x1a\xe4'
+                                                    b'\\\x89\xd4\xe2\\\x02Xk'),
+ 'PIL/__dot__dylibs/libharfbuzz.0.dylib': bytearray(b'\xabL\xdb\x94pR\xde\xa0'
+                                                    b'\xe69\x99\xf30E\xfdR'
+                                                    b'\x83\x01\x93)'),
+ 'PIL/__dot__dylibs/libjpeg.62.4.0.dylib': bytearray(b'Y(f\xe0\t\xd3\x0b"'
+                                                     b'e\xae\xcf\x96\xbcp\xc10'
+                                                     b'I ,\x9a'),
+ 'PIL/__dot__dylibs/liblcms2.2.dylib': bytearray(b'\x9cV\xf6\xc7\xf0\x16w8'
+                                                 b'L\xb5\x0c\xdes\xd2*8'
+                                                 b'\xad\x0b\xc2e'),
+ 'PIL/__dot__dylibs/liblzma.5.dylib': bytearray(b'&\x86o3k\x83\x18\x1c'
+                                                b'\xb9\xce\xf1jN<\xa7l'
+                                                b'\xeb\x0c\xa9\xd2'),
+ 'PIL/__dot__dylibs/libopenjp2.2.5.2.dylib': bytearray(b"\x8a]\x07'y*y%"
+                                                       b'N7\x0c\xea\xa9\x01mD'
+                                                       b'ey\x1d\x95'),
+ 'PIL/__dot__dylibs/libpng16.16.dylib': bytearray(b"g2]Hjz\x9a\xbf'9\xce\xa2"
+                                                  b's\xfacQ\xa3m\xfd\x05'),
+ 'PIL/__dot__dylibs/libsharpyuv.0.dylib': bytearray(b'\x95\x00t1(.\nZ\xc0uoM'
+                                                    b'\xe5\x05\xc6\x97'
+                                                    b'\x89\x88\xe2\x8a'),
+ 'PIL/__dot__dylibs/libtiff.6.dylib': bytearray(b'\xe7r\xc0Fk\x83\x1a\xe2'
+                                                b'h\xdf\xcd\x17\xeel|k'
+                                                b'D\xcf\xb3\x85'),
+ 'PIL/__dot__dylibs/libwebp.7.dylib': bytearray(b'\xc7\xed\xed\x15\xb0\x89R\xb0'
+                                                b'\x1c\xe1_`q\x98\xa7\xc0'
+                                                b'EJs\xc2'),
+ 'PIL/__dot__dylibs/libwebpdemux.2.dylib': bytearray(b'\xbd\xc2\x7f)\xb7:\xe9M'
+                                                     b's\x8bP\x84\xb7\x17\x182'
+                                                     b'"\xa1&}'),
+ 'PIL/__dot__dylibs/libwebpmux.3.dylib': bytearray(b'\x9f\xafw\x93\xb8\x02k\xa5'
+                                                   b'lB\xd0\x1e\xe6\xcc\xa9\x95'
+                                                   b'\x08H)\xde'),
+ 'PIL/__dot__dylibs/libxcb.1.1.0.dylib': bytearray(b'\xdd\x8f\xf0D\xeb\x13\x18P'
+                                                   b'\x8e|\x90=k\xf0\xfa.'
+                                                   b'\x8fh\x1c\xe1'),
+ 'PIL/__dot__dylibs/libz.1.3.1.dylib': bytearray(b'\x06A\xc2\x9a\xaf\xf7*\xc2'
+                                                 b':\x18\xb9N\xf9Q\xb9\x8b'
+                                                 b"\x15\xb6\xda'"),
+ 'PIL/_imaging.cpython-39-darwin.so': bytearray(b'3G\xe499F\xe2\x1c'
+                                                b'\x0c\x98\xe9\xc7'
+                                                b'\xc1\x05\x8b\xd3'
+                                                b'\xf7\xed\xa1\x98'),
+ 'PIL/_imagingcms.cpython-39-darwin.so': bytearray(b'\xa9\xd0\xed\x16'
+                                                   b'\xb5|\x96\x0b_\x89TV'
+                                                   b'\x11\xc3\x0bNc\x14>A'),
+ 'PIL/_imagingft.cpython-39-darwin.so': bytearray(b'\xdb\xcft\xedv\xdc\x15Z'
+                                                  b'\x1e~\x9a\\\x05\xd4\xea\x92'
+                                                  b'*\xce\xbaU'),
+ 'PIL/_imagingmath.cpython-39-darwin.so': bytearray(b'\x80\x88\xda\xaf'
+                                                    b'\xd2X\x1a\xd6'
+                                                    b'\x83M\xde\x98'
+                                                    b'\xaf\xb7@\xb3SD;\x02'),
+ 'PIL/_imagingtk.cpython-39-darwin.so': bytearray(b'R\xee\xa00\xf3>\x84\xe4'
+                                                  b'\xb0\x02 sK\xf7\xed\x1c'
+                                                  b'0\xfdD\xcf'),
+ 'PIL/_webp.cpython-39-darwin.so': bytearray(b'\x12\x05\xea\x7fj\xccn\xe3'
+                                             b'\xc4x\x9f\xbb\xa0\xa5\xf1u'
+                                             b'\xdb6\xe7\xa6'),
+ 'PyQt6/Qt6/lib/QtBluetooth.framework/Versions/A/QtBluetooth': bytearray(b'"\xd4\r\x06'
+                                                                         b'Xe\x96\x0e'
+                                                                         b'\x88$\x10\xbe'
+                                                                         b'\x0ci\xcf\xc1'
+                                                                         b'8-\x17w'),
+ 'PyQt6/Qt6/lib/QtConcurrent.framework/Versions/A/QtConcurrent': bytearray(b'\x13\xda\x14%'
+                                                                           b'{\\bJ'
+                                                                           b'\xa0\xcd\x9f\x96'
+                                                                           b'qE^\x18'
+                                                                           b'\xa0\x01j\xfd'),
+ 'PyQt6/Qt6/lib/QtCore.framework/Versions/A/QtCore': bytearray(b'ZD\x9c\xee'
+                                                               b'\xff\x17`\xb7'
+                                                               b'\x94\x94\xc4N'
+                                                               b'A;\x9f]'
+                                                               b'k\x84\xc7\\'),
+ 'PyQt6/Qt6/lib/QtDBus.framework/Versions/A/QtDBus': bytearray(b'\xe4\xba$\xb9'
+                                                               b'\xbeZJ\xfe'
+                                                               b'\xdf\x87\xa9j'
+                                                               b'Tzx\x01'
+                                                               b'\x9d?\xff\x0c'),
+ 'PyQt6/Qt6/lib/QtDesigner.framework/Versions/A/QtDesigner': bytearray(b'\xde\xdf\x9f\xe7'
+                                                                       b'\x14\xe1\xaa\x7f'
+                                                                       b'\xc7KU\xe7'
+                                                                       b'\x01\xd4U\xc1'
+                                                                       b'?Q\xd9\xac'),
+ 'PyQt6/Qt6/lib/QtGui.framework/Versions/A/QtGui': bytearray(b'>\x92)\xc7'
+                                                             b'\xbc\xa0\x9aa'
+                                                             b'8\x02\x89D'
+                                                             b'\xc3\xb3\x95\xd0'
+                                                             b'~,\xb6\x93'),
+ 'PyQt6/Qt6/lib/QtHelp.framework/Versions/A/QtHelp': bytearray(b'\xebx5\xa6'
+                                                               b'<n\x9e\x94'
+                                                               b'TXB\x81'
+                                                               b'\x1c\xd9\xb7\xa2'
+                                                               b'\x06<\xb2\xa0'),
+ 'PyQt6/Qt6/lib/QtLabsFolderListModel.framework/Versions/A/QtLabsFolderListModel': bytearray(b"\x1a'\xc5P"
+                                                                                             b'IA\xfe\xf3'
+                                                                                             b'\x9b]\x0e\xc2'
+                                                                                             b'Z\xf6Y\xab'
+                                                                                             b'\xdf<0j'),
+ 'PyQt6/Qt6/lib/QtMultimedia.framework/Versions/A/QtMultimedia': bytearray(b"'\x7fM\x89"
+                                                                           b't\xf8h\x9f'
+                                                                           b'\xe1\xea\x14\xfd'
+                                                                           b'\xba\xd2G)'
+                                                                           b'\xed\xe4@p'),
+ 'PyQt6/Qt6/lib/QtMultimediaQuick.framework/Versions/A/QtMultimediaQuick': bytearray(b'\xcd\xbap)'
+                                                                                     b"[\x8f}'"
+                                                                                     b'\xc1S\xd7\x94'
+                                                                                     b'\x89\xc7\xf5^'
+                                                                                     b'i\xed0('),
+ 'PyQt6/Qt6/lib/QtMultimediaWidgets.framework/Versions/A/QtMultimediaWidgets': bytearray(b'E\x95]\xfe'
+                                                                                         b'\r\xa7\x15\xb3'
+                                                                                         b'\x11\xe8\xc1g'
+                                                                                         b'\xaf\x80\xfe\r'
+                                                                                         b'S\xd0\xe9\x19'),
+ 'PyQt6/Qt6/lib/QtNetwork.framework/Versions/A/QtNetwork': bytearray(b'\x1a/\xab\xef'
+                                                                     b'MQLD'
+                                                                     b'\xe6\x1e\xad\xd5'
+                                                                     b'\xd2\xef\xa4e'
+                                                                     b'\xbb>\xfc\x8c'),
+ 'PyQt6/Qt6/lib/QtNfc.framework/Versions/A/QtNfc': bytearray(b'\x04\x9dY\xdf'
+                                                             b'4\xcc\x8cZ'
+                                                             b'KKI\x87\x14$XB'
+                                                             b'R\x8e\xc91'),
+ 'PyQt6/Qt6/lib/QtOpenGL.framework/Versions/A/QtOpenGL': bytearray(b'\xbf`\x9e\xab'
+                                                                   b'\xb5\x13S\x00'
+                                                                   b'\xe3\xca\xaa\x15'
+                                                                   b'\x9a \xf0X'
+                                                                   b'l\x9am\xfe'),
+ 'PyQt6/Qt6/lib/QtOpenGLWidgets.framework/Versions/A/QtOpenGLWidgets': bytearray(b'\xee\xf6\xf7\xe0'
+                                                                                 b'\xe5\xe7\x05\xad'
+                                                                                 b'R\xf7\xa8r'
+                                                                                 b'\xb3(\xff\xc4'
+                                                                                 b'wc\xcb\xb4'),
+ 'PyQt6/Qt6/lib/QtPdf.framework/Versions/A/QtPdf': bytearray(b'\x8a\x9b\xe8\xd5'
+                                                             b'\xf8X\xd2O'
+                                                             b'\xf8\xebu\r'
+                                                             b'\xd1l\x80\\'
+                                                             b']X\xd0\xe1'),
+ 'PyQt6/Qt6/lib/QtPdfQuick.framework/Versions/A/QtPdfQuick': bytearray(b'\x02T\xbfb'
+                                                                       b'\xc6\xc5:G'
+                                                                       b'\xaa5\x94\x1c'
+                                                                       b'&\x18\xf4h'
+                                                                       b'\x1b\xd9\x1cF'),
+ 'PyQt6/Qt6/lib/QtPdfWidgets.framework/Versions/A/QtPdfWidgets': bytearray(b'\x88\x1a\x84\x90'
+                                                                           b'\xf2\xd4\xa7H'
+                                                                           b'\x88\x12?P'
+                                                                           b'\x08^\x1b~'
+                                                                           b'3\x1f\x98\x9d'),
+ 'PyQt6/Qt6/lib/QtPositioning.framework/Versions/A/QtPositioning': bytearray(b'\x08\xed^\x19'
+                                                                             b'\xab\xc6tZ'
+                                                                             b'w=;\x99'
+                                                                             b't\n8U'
+                                                                             b'\xfbi-7'),
+ 'PyQt6/Qt6/lib/QtPositioningQuick.framework/Versions/A/QtPositioningQuick': bytearray(b'p\xd8\x97['
+                                                                                       b'\x8a\x02\xfe\xcf'
+                                                                                       b'\xdb\xdbX\x8c'
+                                                                                       b'\xae\xae\xa5!'
+                                                                                       b'p\xf9\xc5\xa0'),
+ 'PyQt6/Qt6/lib/QtPrintSupport.framework/Versions/A/QtPrintSupport': bytearray(b'\x9b\xa9^\xb0'
+                                                                               b'\xe9`pY'
+                                                                               b'\t!\x84\xc1'
+                                                                               b'\xde\xb8\xab\x89'
+                                                                               b'\x89\x07\x8f\x9b'),
+ 'PyQt6/Qt6/lib/QtQml.framework/Versions/A/QtQml': bytearray(b'\xf0\xe05z'
+                                                             b'2\xdb\xd0\x03'
+                                                             b'l\xfe\xeaU'
+                                                             b'W \xe0\r'
+                                                             b'?\xdf\xa91'),
+ 'PyQt6/Qt6/lib/QtQmlMeta.framework/Versions/A/QtQmlMeta': bytearray(b'\xae\x1b\xee\xcc'
+                                                                     b'\x86XL\xa7'
+                                                                     b'Z<\xee\x0e'
+                                                                     b'\xeb\xf9\xe6|'
+                                                                     b'\xf9\xbbTV'),
+ 'PyQt6/Qt6/lib/QtQmlModels.framework/Versions/A/QtQmlModels': bytearray(b'\xb03\xd75'
+                                                                         b'\x9d\xbd`\xc7'
+                                                                         b'\xf6\x8d\x896'
+                                                                         b'\xc6\x95X\xcc'
+                                                                         b'E\x86\xfaG'),
+ 'PyQt6/Qt6/lib/QtQmlWorkerScript.framework/Versions/A/QtQmlWorkerScript': bytearray(b'\x08a\x85\xf0'
+                                                                                     b'\x98\xba(\xec'
+                                                                                     b'K=\xea('
+                                                                                     b'\xb88\x82\x8e'
+                                                                                     b'`\x14\xbd\xe1'),
+ 'PyQt6/Qt6/lib/QtQuick.framework/Versions/A/QtQuick': bytearray(b'\n\xa5c\x97'
+                                                                 b'i\x06t\xdf'
+                                                                 b'\xe8?\x82\xf7'
+                                                                 b'j\xac\x85\xd5'
+                                                                 b'\xe8W?~'),
+ 'PyQt6/Qt6/lib/QtQuick3D.framework/Versions/A/QtQuick3D': bytearray(b'\xad\xf3aI'
+                                                                     b'\xbciE\x96'
+                                                                     b'fQ_\x1f'
+                                                                     b'\xa4\xa4\x86\xc5'
+                                                                     b'\xc7\x04WM'),
+ 'PyQt6/Qt6/lib/QtQuick3DAssetImport.framework/Versions/A/QtQuick3DAssetImport': bytearray(b'\x99}D\xb5'
+                                                                                           b't>9n'
+                                                                                           b'\xbf\xcf\xaeu'
+                                                                                           b'y0S\xd8'
+                                                                                           b'\xf5y\x86!'),
+ 'PyQt6/Qt6/lib/QtQuick3DAssetUtils.framework/Versions/A/QtQuick3DAssetUtils': bytearray(b'\x17\xd0\xd9\x1d'
+                                                                                         b'\xf4\xb2-c'
+                                                                                         b'&-\xddU'
+                                                                                         b'\xc4\t;h'
+                                                                                         b'd\x00\xa6\xc4'),
+ 'PyQt6/Qt6/lib/QtQuick3DEffects.framework/Versions/A/QtQuick3DEffects': bytearray(b'(\xe9\xe1V'
+                                                                                   b'\x99\x83\xac\xb6'
+                                                                                   b'%\xfc\xf4l'
+                                                                                   b'>\xbf\x84\x0c'
+                                                                                   b'\x95\xe1\x10\x8b'),
+ 'PyQt6/Qt6/lib/QtQuick3DHelpers.framework/Versions/A/QtQuick3DHelpers': bytearray(b'"G\x02\xd3'
+                                                                                   b'\xa2\xb3r\xc2'
+                                                                                   b'\xafG\x15l'
+                                                                                   b'$gf\xd2'
+                                                                                   b'+\xffv\xa8'),
+ 'PyQt6/Qt6/lib/QtQuick3DHelpersImpl.framework/Versions/A/QtQuick3DHelpersImpl': bytearray(b'\x17\x1b\xf9j'
+                                                                                           b'E\x9e\xcfx'
+                                                                                           b'\xa6D\xacc'
+                                                                                           b'G\xd2\xbc\xec'
+                                                                                           b'!"7H'),
+ 'PyQt6/Qt6/lib/QtQuick3DParticles.framework/Versions/A/QtQuick3DParticles': bytearray(b's\x18\xf7~'
+                                                                                       b'\x15\xff\x8b\xf9'
+                                                                                       b'\xeb\xa8\x90#'
+                                                                                       b'\xb6p\x8fj'
+                                                                                       b'b\x1d\xa5\x9f'),
+ 'PyQt6/Qt6/lib/QtQuick3DPhysics.framework/Versions/A/QtQuick3DPhysics': bytearray(b'\x87\x1d\x06N'
+                                                                                   b'\xb2\xd3D\x92'
+                                                                                   b'\xa0 ,w'
+                                                                                   b'\x8d\x0eo^'
+                                                                                   b'\x18el0'),
+ 'PyQt6/Qt6/lib/QtQuick3DPhysicsHelpers.framework/Versions/A/QtQuick3DPhysicsHelpers': bytearray(b'rK\xe3v'
+                                                                                                 b'\xea\xb6\xb2\x18'
+                                                                                                 b'\xff\xb7\x96^'
+                                                                                                 b'\x9eLx\xf4'
+                                                                                                 b'\x9d\x96\xf0\xed'),
+ 'PyQt6/Qt6/lib/QtQuick3DRuntimeRender.framework/Versions/A/QtQuick3DRuntimeRender': bytearray(b'\x89\x17\xa6\xb9'
+                                                                                               b'\xf1Z\xe3\xb9'
+                                                                                               b'\xac\xe1\x1ee'
+                                                                                               b'\xd18y\xf8'
+                                                                                               b'\x85}C\xba'),
+ 'PyQt6/Qt6/lib/QtQuick3DSpatialAudio.framework/Versions/A/QtQuick3DSpatialAudio': bytearray(b'\x9d\xa7\xc5\xd1'
+                                                                                             b'\x14c\xaf\xb4'
+                                                                                             b'N\x9a\x17`'
+                                                                                             b'h\x0e>\xc2'
+                                                                                             b'\xdez\x9ea'),
+ 'PyQt6/Qt6/lib/QtQuick3DUtils.framework/Versions/A/QtQuick3DUtils': bytearray(b'=\xa6I\xfb'
+                                                                               b'\xd5AA\xbd'
+                                                                               b'\x8d`i\xaf'
+                                                                               b'2\x07n\x06'
+                                                                               b'>\x11~\xe8'),
+ 'PyQt6/Qt6/lib/QtQuick3DXr.framework/Versions/A/QtQuick3DXr': bytearray(b'B\xce\xe2\xcb'
+                                                                         b'1\x06:\xfb'
+                                                                         b'\xb9zO\xa0'
+                                                                         b'GPd\xa1'
+                                                                         b'\x0c\xbf`&'),
+ 'PyQt6/Qt6/lib/QtQuickControls2.framework/Versions/A/QtQuickControls2': bytearray(b'\x7fp"\xaa'
+                                                                                   b's\x8e(\xc7'
+                                                                                   b'\xd2\xdf",'
+                                                                                   b'\x88d\x99\x97'
+                                                                                   b'R\xc6\xdc\x97'),
+ 'PyQt6/Qt6/lib/QtQuickControls2Basic.framework/Versions/A/QtQuickControls2Basic': bytearray(b'\xe2\xb9]\x80'
+                                                                                             b'\x82\xeb#r'
+                                                                                             b':\x0b\xc5\xa6'
+                                                                                             b'bd\x94\xb9'
+                                                                                             b'O.\x8e\x91'),
+ 'PyQt6/Qt6/lib/QtQuickControls2BasicStyleImpl.framework/Versions/A/QtQuickControls2BasicStyleImpl': bytearray(b'\xed@?I'
+                                                                                                               b'\x80\x9a\xe6\xd4'
+                                                                                                               b'+\x8a\x8en'
+                                                                                                               b'g\x1a\x84\xa5'
+                                                                                                               b'\xb2\x11\x04o'),
+ 'PyQt6/Qt6/lib/QtQuickControls2Fusion.framework/Versions/A/QtQuickControls2Fusion': bytearray(b'\xa8\x0b\xbe\x1e'
+                                                                                               b'ta\x0et'
+                                                                                               b'g\xf7\xfd\r'
+                                                                                               b'(\x11\r\xb8'
+                                                                                               b'i$=\xa0'),
+ 'PyQt6/Qt6/lib/QtQuickControls2FusionStyleImpl.framework/Versions/A/QtQuickControls2FusionStyleImpl': bytearray(b'\x94\xf9\xcc\xf8'
+                                                                                                                 b'o\xf8\x94\xe9'
+                                                                                                                 b'^W}\x15'
+                                                                                                                 b'\x8e"\x9b\x8e'
+                                                                                                                 b'\xb8\xff\x11\xd1'),
+ 'PyQt6/Qt6/lib/QtQuickControls2IOSStyleImpl.framework/Versions/A/QtQuickControls2IOSStyleImpl': bytearray(b'z\xcb\x98H'
+                                                                                                           b'\xa5:\xba\x02'
+                                                                                                           b'\x02\x17\x00\xfb'
+                                                                                                           b'\xb7M\xa7\xf1'
+                                                                                                           b'*{\xd2\x04'),
+ 'PyQt6/Qt6/lib/QtQuickControls2Imagine.framework/Versions/A/QtQuickControls2Imagine': bytearray(b'\xad\x1c\xec\xc9'
+                                                                                                 b'W=\xe8\xdc'
+                                                                                                 b'\x17\xdeJ\xa9'
+                                                                                                 b'*\xa4\xbbM'
+                                                                                                 b'\xd9\xad\x895'),
+ 'PyQt6/Qt6/lib/QtQuickControls2ImagineStyleImpl.framework/Versions/A/QtQuickControls2ImagineStyleImpl': bytearray(b'\x1a\x03N\r'
+                                                                                                                   b'&\x1e\x04\xef'
+                                                                                                                   b'\x98 \xcda'
+                                                                                                                   b'\xacx\xc2\xc5'
+                                                                                                                   b'P\x15n\x88'),
+ 'PyQt6/Qt6/lib/QtQuickControls2Impl.framework/Versions/A/QtQuickControls2Impl': bytearray(b'u;\xad\x10'
+                                                                                           b'M\xd4\xdc4'
+                                                                                           b'\x11\x9d\xe9c'
+                                                                                           b'\xb2\x1cfW'
+                                                                                           b'\xc5{\x91\xf7'),
+ 'PyQt6/Qt6/lib/QtQuickControls2MacOSStyleImpl.framework/Versions/A/QtQuickControls2MacOSStyleImpl': bytearray(b'\xf9\xf1\xda\xdb'
+                                                                                                               b'\x12{\xd1\x9b'
+                                                                                                               b'\xc9\xb9\x99\x89'
+                                                                                                               b'\xf1v\xec\x8f'
+                                                                                                               b'zl\xd5\xe2'),
+ 'PyQt6/Qt6/lib/QtQuickControls2Material.framework/Versions/A/QtQuickControls2Material': bytearray(b'g\xf6E\x80'
+                                                                                                   b'f\xea\x15\x18'
+                                                                                                   b'b\xb7\xce\xc7'
+                                                                                                   b'b\x1d\xe4\x81'
+                                                                                                   b'RW\xd5\xa5'),
+ 'PyQt6/Qt6/lib/QtQuickControls2MaterialStyleImpl.framework/Versions/A/QtQuickControls2MaterialStyleImpl': bytearray(b'\xf4\n\xe3\x17'
+                                                                                                                     b'\xf7#&A'
+                                                                                                                     b'Z\xce\x15\x15'
+                                                                                                                     b'C\xdeQ\xc1'
+                                                                                                                     b'\xc4\x9dS\xb7'),
+ 'PyQt6/Qt6/lib/QtQuickControls2Universal.framework/Versions/A/QtQuickControls2Universal': bytearray(b'\xd0\\\xf57'
+                                                                                                     b'\x07\xf8\xa6\xa5'
+                                                                                                     b"\xb6{\xc5'"
+                                                                                                     b'\xf1`\x89j'
+                                                                                                     b'S\xcb\xf3\xe5'),
+ 'PyQt6/Qt6/lib/QtQuickControls2UniversalStyleImpl.framework/Versions/A/QtQuickControls2UniversalStyleImpl': bytearray(b'N)\x94H'
+                                                                                                                       b'r\xe9\xc9\x85'
+                                                                                                                       b'\xefk]\xfb'
+                                                                                                                       b'W\xeb\xf3}'
+                                                                                                                       b'\x85 r\t'),
+ 'PyQt6/Qt6/lib/QtQuickDialogs2.framework/Versions/A/QtQuickDialogs2': bytearray(b'\x96\x10\xe2\xa0'
+                                                                                 b'\xd8>\xe9\x82'
+                                                                                 b'\xd5\x93\xf4F'
+                                                                                 b'\x8e_\x14_'
+                                                                                 b'\xad\x03\xa6*'),
+ 'PyQt6/Qt6/lib/QtQuickDialogs2QuickImpl.framework/Versions/A/QtQuickDialogs2QuickImpl': bytearray(b'\x88C2V'
+                                                                                                   b'\x11r\xac\xef'
+                                                                                                   b'\xddQ\x1d\xd2'
+                                                                                                   b'`\xb0\\\x8f'
+                                                                                                   b'\xd3)\x80\xc1'),
+ 'PyQt6/Qt6/lib/QtQuickDialogs2Utils.framework/Versions/A/QtQuickDialogs2Utils': bytearray(b'l\xcf\x10\xd9'
+                                                                                           b'\x96O\xa1\xef'
+                                                                                           b'\x90c\x85\xcf'
+                                                                                           b"'\xb6i\x12"
+                                                                                           b'\x94%\xbf\x88'),
+ 'PyQt6/Qt6/lib/QtQuickEffects.framework/Versions/A/QtQuickEffects': bytearray(b'&\x8b\xbe\xbd'
+                                                                               b'JW\xeb\t'
+                                                                               b'l\xb7\xca\x89'
+                                                                               b'e\x14\xcb['
+                                                                               b'\xf5\xc4\nt'),
+ 'PyQt6/Qt6/lib/QtQuickLayouts.framework/Versions/A/QtQuickLayouts': bytearray(b'\x19\x8c\xc5^'
+                                                                               b'\x8f\x18\xb9\xbb'
+                                                                               b'\x1a\xee\x01^'
+                                                                               b'\x85SY\x16'
+                                                                               b'\x0b\xc26\xa0'),
+ 'PyQt6/Qt6/lib/QtQuickParticles.framework/Versions/A/QtQuickParticles': bytearray(b'\x1cca\xc7'
+                                                                                   b'\xde-\x86\xfa'
+                                                                                   b'\x8f\xc2\xfa\xa7'
+                                                                                   b"\xbb';\xc2"
+                                                                                   b'\xdf_#\xfa'),
+ 'PyQt6/Qt6/lib/QtQuickShapes.framework/Versions/A/QtQuickShapes': bytearray(b'\xc4\xa3\x90S'
+                                                                             b'\xce\xa3\r\x94'
+                                                                             b'\xd9\x9bsZ'
+                                                                             b'b\x95\x83\x9a'
+                                                                             b'\x95U\x01\xa6'),
+ 'PyQt6/Qt6/lib/QtQuickTemplates2.framework/Versions/A/QtQuickTemplates2': bytearray(b'f\x01?\x96'
+                                                                                     b'4&p\xaf'
+                                                                                     b'\\\x83\x16\x86'
+                                                                                     b'WE\xf6\xfa'
+                                                                                     b'\x9cj\x93\x7f'),
+ 'PyQt6/Qt6/lib/QtQuickTest.framework/Versions/A/QtQuickTest': bytearray(b'\x1auW\x1e'
+                                                                         b'\xb4?w\x80'
+                                                                         b'\xea\xe5\xd9\x17'
+                                                                         b'D\x8c\x8b\xde'
+                                                                         b'\x1d\x1a{\x9c'),
+ 'PyQt6/Qt6/lib/QtQuickTimeline.framework/Versions/A/QtQuickTimeline': bytearray(b'\x9c\x84\x82v'
+                                                                                 b'\x99h\xd2\xf8'
+                                                                                 b'\r-3g'
+                                                                                 b'\xbc\x00\x11\x87'
+                                                                                 b'u\x93T\xcb'),
+ 'PyQt6/Qt6/lib/QtQuickTimelineBlendTrees.framework/Versions/A/QtQuickTimelineBlendTrees': bytearray(b'",\x065'
+                                                                                                     b'\xd6\xba\xae\xc8'
+                                                                                                     b'P\x01\\\xb3'
+                                                                                                     b'\xbc\x8f\xa3I'
+                                                                                                     b'J\xbe\xbd\x08'),
+ 'PyQt6/Qt6/lib/QtQuickVectorImage.framework/Versions/A/QtQuickVectorImage': bytearray(b'6k\x05\xc3'
+                                                                                       b"'\x91ZE"
+                                                                                       b'\xc2\xc1\xe4\xd9'
+                                                                                       b"\xdf\xcc\x16'"
+                                                                                       b'\xc5\x1e\x9ck'),
+ 'PyQt6/Qt6/lib/QtQuickVectorImageGenerator.framework/Versions/A/QtQuickVectorImageGenerator': bytearray(b'\xf7\xf4\xd2\xc9'
+                                                                                                         b'\x82\xdf\x99s'
+                                                                                                         b'#\xf2|Z'
+                                                                                                         b'\xe7\x1fd\xac'
+                                                                                                         b'\x1eE\xaf\xc1'),
+ 'PyQt6/Qt6/lib/QtQuickWidgets.framework/Versions/A/QtQuickWidgets': bytearray(b'\x9c\xe8\xe3%'
+                                                                               b' \x9e\xe7P'
+                                                                               b'<\xdb\xac\r'
+                                                                               b'\xfe?\xb0U'
+                                                                               b'`\xbdE\xac'),
+ 'PyQt6/Qt6/lib/QtRemoteObjects.framework/Versions/A/QtRemoteObjects': bytearray(b'\xf4\x01\xb5\xcb'
+                                                                                 b'f/l\x17'
+                                                                                 b'\xc4CkI'
+                                                                                 b'\x94\xf7\xbeo'
+                                                                                 b'bu\x01@'),
+ 'PyQt6/Qt6/lib/QtRemoteObjectsQml.framework/Versions/A/QtRemoteObjectsQml': bytearray(b'Y\xbc+w'
+                                                                                       b'\xab\xa4\x02\x9b'
+                                                                                       b'?\x08\xee\x0b'
+                                                                                       b'V\xdbx\x8c'
+                                                                                       b'*\x7fV\xcb'),
+ 'PyQt6/Qt6/lib/QtSensors.framework/Versions/A/QtSensors': bytearray(b'\xc8\x11\x07q'
+                                                                     b's\x042\x0e'
+                                                                     b'.\x9e1@'
+                                                                     b'\xd63,x'
+                                                                     b'\xd2\x9d%\x8d'),
+ 'PyQt6/Qt6/lib/QtSensorsQuick.framework/Versions/A/QtSensorsQuick': bytearray(b'C\xba\xb6\xe5'
+                                                                               b'\xa7\x0c\xac\xc3'
+                                                                               b'!\xd0#7'
+                                                                               b'\x06\xac\xb4U'
+                                                                               b'.E\xcc\xe6'),
+ 'PyQt6/Qt6/lib/QtSerialPort.framework/Versions/A/QtSerialPort': bytearray(b'\xe4~\xa6\xe8'
+                                                                           b'\x8e\x03\xd0e'
+                                                                           b'\xffI\xcb)'
+                                                                           b'\xf0\xadr\xfe'
+                                                                           b'\x84\x15\xe7?'),
+ 'PyQt6/Qt6/lib/QtShaderTools.framework/Versions/A/QtShaderTools': bytearray(b'\xce\xc9\xb8E'
+                                                                             b'\x9ev\xbe*'
+                                                                             b'\xf2\x91\x1f\x8b'
+                                                                             b'8\\o\x82'
+                                                                             b'\x94\x87\xdf\x06'),
+ 'PyQt6/Qt6/lib/QtSpatialAudio.framework/Versions/A/QtSpatialAudio': bytearray(b'\x1c\xfe\x1d\x1c'
+                                                                               b'\xcd\x1e&C'
+                                                                               b'N\xaa\xef\x9b'
+                                                                               b'\x92{\xdc\x9b'
+                                                                               b'r\xb5\xdb\x9e'),
+ 'PyQt6/Qt6/lib/QtSql.framework/Versions/A/QtSql': bytearray(b'\xe3\xf2\xcd\xe2'
+                                                             b'z\x0b)\xf8'
+                                                             b'3\x0b\xc5\x1f'
+                                                             b'/7\xb0C'
+                                                             b'\x98u\xfc\x14'),
+ 'PyQt6/Qt6/lib/QtStateMachine.framework/Versions/A/QtStateMachine': bytearray(b'~\xed\xc8V'
+                                                                               b'\x83\xa2\x8fS'
+                                                                               b'\t\xe1z\xd5'
+                                                                               b'\xed\xdb\xd0{'
+                                                                               b'\x01\xa6\xf5O'),
+ 'PyQt6/Qt6/lib/QtStateMachineQml.framework/Versions/A/QtStateMachineQml': bytearray(b'\n\x14\xc2\xf3'
+                                                                                     b'h\x03\xd6\xcc'
+                                                                                     b'\xec8\xaf\x8a'
+                                                                                     b'\xfc.\xe0\x15'
+                                                                                     b'\xdf\xd7R4'),
+ 'PyQt6/Qt6/lib/QtSvg.framework/Versions/A/QtSvg': bytearray(b'}4-\xab'
+                                                             b'\xc3\xe8\xc4\xc6'
+                                                             b'\xd37+\xcb'
+                                                             b'\xb4\n\xf7w'
+                                                             b'o\xf6q]'),
+ 'PyQt6/Qt6/lib/QtSvgWidgets.framework/Versions/A/QtSvgWidgets': bytearray(b'\xf2}\x9e\xac'
+                                                                           b'\xd0\xf1~ '
+                                                                           b'k\x07\x95\xcb'
+                                                                           b'=\x8c\xe9\xf6'
+                                                                           b'R\x1f\xc7\x9b'),
+ 'PyQt6/Qt6/lib/QtTest.framework/Versions/A/QtTest': bytearray(b'\xa9\xa3FT'
+                                                               b' \xe8\x087'
+                                                               b'\xf1O[/'
+                                                               b'\xf4F\x03\xa0'
+                                                               b'\xf0[b\xe6'),
+ 'PyQt6/Qt6/lib/QtTextToSpeech.framework/Versions/A/QtTextToSpeech': bytearray(b'\xbe\xd4\x87\xc7'
+                                                                               b'\x06\xf5\x8e\xdd'
+                                                                               b'\x81Eom'
+                                                                               b'<M\xb5\xa5'
+                                                                               b'\xc9\xfaT\xfb'),
+ 'PyQt6/Qt6/lib/QtWebChannel.framework/Versions/A/QtWebChannel': bytearray(b'CY\xaf.'
+                                                                           b'\x81\x8a\xb4}'
+                                                                           b'\xc3\x82(/'
+                                                                           b'\x0f")\xd2'
+                                                                           b'\x0b\xb2u\xe6'),
+ 'PyQt6/Qt6/lib/QtWebChannelQuick.framework/Versions/A/QtWebChannelQuick': bytearray(b'e\xc2\xcba'
+                                                                                     b'\xbe\xcd\x0b\xe3'
+                                                                                     b'\xc8\xe3\x9b8'
+                                                                                     b'h\xb5J\x1f'
+                                                                                     b'\xcf\xa6"\x9c'),
+ 'PyQt6/Qt6/lib/QtWebSockets.framework/Versions/A/QtWebSockets': bytearray(b'\x98F\x1d\x13'
+                                                                           b'\xec0\xb2\x80'
+                                                                           b'\t\xff\xcc|'
+                                                                           b'\xbd\x18\x8f3'
+                                                                           b'{\xd5\xa5p'),
+ 'PyQt6/Qt6/lib/QtWidgets.framework/Versions/A/QtWidgets': bytearray(b'F\xc4(z'
+                                                                     b'#\xaacv'
+                                                                     b'-rX#'
+                                                                     b'y:\x82\xea'
+                                                                     b'\xe6\xd3\x1dd'),
+ 'PyQt6/Qt6/lib/QtXml.framework/Versions/A/QtXml': bytearray(b'\x80\xa6\x96\xda'
+                                                             b'\x18\x9c\x90\r'
+                                                             b'\x86W\x1aS'
+                                                             b'\xfdi\x9bc'
+                                                             b']\x1c\xbc\x84'),
+ 'PyQt6/Qt6/lib/libavcodec.61.dylib': bytearray(b'\x83\xd7\xc2\x8bt\xd8za'
+                                                b'\xbct\x9e\x1d\x8fG\x00J'
+                                                b'\xdam\xfb\xc0'),
+ 'PyQt6/Qt6/lib/libavformat.61.dylib': bytearray(b'\xc2Y\x19\xdd\xdb/\xb6\x9d'
+                                                 b'\xe5\x8b\xa24\xa4\n\x8d\x89'
+                                                 b'\xc6vik'),
+ 'PyQt6/Qt6/lib/libavutil.59.dylib': bytearray(b's\x0b0X\xf8\xd1\x0c\xd5'
+                                               b' \x8b3\xd0|LI\xac\x9c\t1t'),
+ 'PyQt6/Qt6/lib/libswresample.5.dylib': bytearray(b'\x9a}#K\xf1\xde\xa0E'
+                                                  b'.\xc2\xad\xb4'
+                                                  b'\xa1\x8f\x90\xcc2C.\xb6'),
+ 'PyQt6/Qt6/lib/libswscale.8.dylib': bytearray(b'\xe6\xbah\xa36\xb7T)>&\xddb'
+                                               b'/M%udZy\xeb'),
+ 'PyQt6/Qt6/plugins/assetimporters/libassimp.dylib': bytearray(b'OH\x08\t'
+                                                               b'\xd8\xc4k\xd6'
+                                                               b'\xa1\xc3\x82h'
+                                                               b'6\x1a\x9b\x8c'
+                                                               b' M\n\x0c'),
+ 'PyQt6/Qt6/plugins/generic/libqtuiotouchplugin.dylib': bytearray(b'\x1bT\x88\x7f'
+                                                                  b'\xfene\x96'
+                                                                  b'\xa74\x01c'
+                                                                  b'\\\x929\xad'
+                                                                  b'F\xfak0'),
+ 'PyQt6/Qt6/plugins/geometryloaders/libdefaultgeometryloader.dylib': bytearray(b'E\xd1\x96\x80'
+                                                                               b'\x9c\xcf\x82\x88'
+                                                                               b'\x03\x8f\xd3\xa9'
+                                                                               b'\xff\xd4\xcd\x0e'
+                                                                               b'"\xca\xb8x'),
+ 'PyQt6/Qt6/plugins/geometryloaders/libgltfgeometryloader.dylib': bytearray(b'\x8f\x14\xd59'
+                                                                            b'\x1d8\xd0\xe7'
+                                                                            b'\xf6.QA'
+                                                                            b'\r\x88\xd0\xfc'
+                                                                            b'?C\x13\xeb'),
+ 'PyQt6/Qt6/plugins/help/libhelpplugin.dylib': bytearray(b'\xc5\x8e\xe9\x89'
+                                                         b'\xee\x8e\xed\xc7'
+                                                         b'\xb8\xf1\xaa|'
+                                                         b'd\xea\xe5\x12'
+                                                         b'\x8c7\xce^'),
+ 'PyQt6/Qt6/plugins/iconengines/libqsvgicon.dylib': bytearray(b'E\x88\x03B'
+                                                              b'd\xb7D\xf1'
+                                                              b'\x19h\x8e!'
+                                                              b'\xe1\x134\xb5'
+                                                              b')3\xc8H'),
+ 'PyQt6/Qt6/plugins/imageformats/libqgif.dylib': bytearray(b'\xb38\xa8#<{DU'
+                                                           b'\x93\x00q\x03'
+                                                           b'\x15\x1e\n&'
+                                                           b'\xbe\xb0\xc5\xbf'),
+ 'PyQt6/Qt6/plugins/imageformats/libqicns.dylib': bytearray(b'\x96GJ\xa6'
+                                                            b'\xaf\xa1\x1b\xbb'
+                                                            b'\xf9w\xc6\xb1'
+                                                            b'z\xc0\xdc\xc5'
+                                                            b'\xe8\x8d\x01\xe3'),
+ 'PyQt6/Qt6/plugins/imageformats/libqico.dylib': bytearray(b'\xa4\x8c\x1f&'
+                                                           b'r\x11j\t'
+                                                           b'\x9cn\x81\xb9'
+                                                           b'Q\x12S\x89'
+                                                           b'\x844\xc5\x1e'),
+ 'PyQt6/Qt6/plugins/imageformats/libqjpeg.dylib': bytearray(b'\xb96U\x0c'
+                                                            b'9\x19\x7fu'
+                                                            b'\x85\xabw\xd8'
+                                                            b'\xac\x9eY\xd7'
+                                                            b'b>\xd7\xdf'),
+ 'PyQt6/Qt6/plugins/imageformats/libqmacheif.dylib': bytearray(b'2\x90\x98\xed'
+                                                               b'\x97[el'
+                                                               b'\xacD\x93\x90'
+                                                               b'\xbe\xdc \x0c'
+                                                               b'Lf\x7fv'),
+ 'PyQt6/Qt6/plugins/imageformats/libqmacjp2.dylib': bytearray(b'e\x1d9\xa9'
+                                                              b'\x81C\xde\x7f'
+                                                              b'\xaf.\xe8\xe9'
+                                                              b'S\xa1]\x89'
+                                                              b' }\x81B'),
+ 'PyQt6/Qt6/plugins/imageformats/libqpdf.dylib': bytearray(b'\x08\x82\xb2t'
+                                                           b'H\x82\x0e<'
+                                                           b'\xf3)\x94\xb3'
+                                                           b';\xf5\xae\xc5'
+                                                           b'\x9c4V\xa8'),
+ 'PyQt6/Qt6/plugins/imageformats/libqsvg.dylib': bytearray(b'\xe8\xb0\xf3E'
+                                                           b'\t\xfd}\x1f'
+                                                           b'\xd7\xacr@'
+                                                           b'\x11\x04\xd1\xb2'
+                                                           b'\xe7\x01\xfb\x8e'),
+ 'PyQt6/Qt6/plugins/imageformats/libqtga.dylib': bytearray(b'\xf5\xae8Q'
+                                                           b':\x17\x98{'
+                                                           b'\x05\xfc\x98\x10'
+                                                           b'<\x14\xab$'
+                                                           b'^\x91\xb3\xe8'),
+ 'PyQt6/Qt6/plugins/imageformats/libqtiff.dylib': bytearray(b'[#\xcbv\xda%|\xb2'
+                                                            b'0\x03v\x0c'
+                                                            b'\xaa\xfb\x17P'
+                                                            b'\xfb\x0fY\x07'),
+ 'PyQt6/Qt6/plugins/imageformats/libqwbmp.dylib': bytearray(b'\xe2\xe9\xfeb'
+                                                            b'_\xf4\x89^'
+                                                            b'\xbc\xfc\xf6E'
+                                                            b'g\xc9#C'
+                                                            b'#\x03\xcf\x99'),
+ 'PyQt6/Qt6/plugins/imageformats/libqwebp.dylib': bytearray(b'\xf3g\x84p'
+                                                            b',R\x02\xcf'
+                                                            b"\xcd\xe9'\x9f"
+                                                            b'\xef\xb7\xc5\xa1'
+                                                            b'\x8a+\xf7\x97'),
+ 'PyQt6/Qt6/plugins/multimedia/libdarwinmediaplugin.dylib': bytearray(b'\x0c\x86I\x83'
+                                                                      b'\xbc\x89\xea\x8c'
+                                                                      b'\x8f;\x06I'
+                                                                      b'\x03oT\xa4'
+                                                                      b'\x0bu\r^'),
+ 'PyQt6/Qt6/plugins/multimedia/libffmpegmediaplugin.dylib': bytearray(b'1\xd3\xed\x10'
+                                                                      b'J\xe4!\xf7'
+                                                                      b'\x06rO\x10'
+                                                                      b'm\xb6\xf5F'
+                                                                      b'\xfe\xdb6\xf9'),
+ 'PyQt6/Qt6/plugins/networkinformation/libqapplenetworkinformation.dylib': bytearray(b'\xf5\xc0\xe7\xda'
+                                                                                     b'xQ^\xd3'
+                                                                                     b'mH:R'
+                                                                                     b'\xf4T@*'
+                                                                                     b'\xcf\xed\xe6a'),
+ 'PyQt6/Qt6/plugins/permissions/objects-RelWithDebInfo/QDarwinBluetoothPermissionPlugin_init/QDarwinBluetoothPermissionPlugin_init.cpp.o': bytearray(b'\xde\x99\xb59'
+                                                                                                                                                     b'\xd8\x9f=\x1d'
+                                                                                                                                                     b'\xf6_\x82\xd6'
+                                                                                                                                                     b'z\x8c#\x9f'
+                                                                                                                                                     b'&\x8b\xc4\xea'),
+ 'PyQt6/Qt6/plugins/permissions/objects-RelWithDebInfo/QDarwinCalendarPermissionPlugin_init/QDarwinCalendarPermissionPlugin_init.cpp.o': bytearray(b'\xd5=\x1de'
+                                                                                                                                                   b'\xda\x19\xa6{'
+                                                                                                                                                   b'w\x95\x13\xb1'
+                                                                                                                                                   b'\xef\xed\xd1)'
+                                                                                                                                                   b'\xcbh\x10I'),
+ 'PyQt6/Qt6/plugins/permissions/objects-RelWithDebInfo/QDarwinCameraPermissionPlugin_init/QDarwinCameraPermissionPlugin_init.cpp.o': bytearray(b'm\xe8if'
+                                                                                                                                               b'LO~m'
+                                                                                                                                               b'\x8ei\xd6^'
+                                                                                                                                               b'\xa2\xfb\x05r'
+                                                                                                                                               b'j\xda,\xde'),
+ 'PyQt6/Qt6/plugins/permissions/objects-RelWithDebInfo/QDarwinContactsPermissionPlugin_init/QDarwinContactsPermissionPlugin_init.cpp.o': bytearray(b'\xdf9AJ'
+                                                                                                                                                   b'\x9a:\xdc\x88'
+                                                                                                                                                   b'bX\xea\xa8'
+                                                                                                                                                   b'D\x18\xad\x9e'
+                                                                                                                                                   b'\xb2w\xe2\xea'),
+ 'PyQt6/Qt6/plugins/permissions/objects-RelWithDebInfo/QDarwinLocationPermissionPlugin_init/QDarwinLocationPermissionPlugin_init.cpp.o': bytearray(b'\xdc\xb1f\xb4'
+                                                                                                                                                   b'\xa61*\xf2'
+                                                                                                                                                   b'vzy\x1d'
+                                                                                                                                                   b'\xcaVJh'
+                                                                                                                                                   b'B\xb1\xb7x'),
+ 'PyQt6/Qt6/plugins/permissions/objects-RelWithDebInfo/QDarwinMicrophonePermissionPlugin_init/QDarwinMicrophonePermissionPlugin_init.cpp.o': bytearray(b'\x9a\xe5\xadk'
+                                                                                                                                                       b'6&\xa4\xb7'
+                                                                                                                                                       b'\x07\x0f\xf5\x8c'
+                                                                                                                                                       b'a\xe1\xf0\xaf'
+                                                                                                                                                       b'9\x8b\xd7]'),
+ 'PyQt6/Qt6/plugins/platforms/libqcocoa.dylib': bytearray(b'\x9c\xcf\xa1\xe5'
+                                                          b'\xe3\x8aG\xa0'
+                                                          b'e\x98\x0e\x19'
+                                                          b'Q\x9a*\xc8J\xa5\\.'),
+ 'PyQt6/Qt6/plugins/platforms/libqminimal.dylib': bytearray(b'\xb18&\x9c'
+                                                            b'L\xd4\xfaO'
+                                                            b'v\xfb$\xca'
+                                                            b'\xb9S\x1a\xa5'
+                                                            b'\x08\x1a\x12\xcd'),
+ 'PyQt6/Qt6/plugins/platforms/libqoffscreen.dylib': bytearray(b'\x1c\x84\xef1'
+                                                              b'\x18@x\xb0'
+                                                              b'\x80G\xf2\xda'
+                                                              b'E\x1a\xd8l'
+                                                              b'o\xea\x83\x9c'),
+ 'PyQt6/Qt6/plugins/position/libqtposition_cl.dylib': bytearray(b'`\xe3\xaf\xcc'
+                                                                b'\xffZ\t\x12'
+                                                                b'\xbe/l\xde'
+                                                                b'\xa4\x10\xdd-'
+                                                                b'\x98\xe3Q\x7f'),
+ 'PyQt6/Qt6/plugins/position/libqtposition_nmea.dylib': bytearray(b'P\x9ee\x8d'
+                                                                  b'\xda"\xdc{'
+                                                                  b'\x94\xb9H\x9a'
+                                                                  b'\xed\x02\xc0\x9a'
+                                                                  b'\xef\x7fY;'),
+ 'PyQt6/Qt6/plugins/position/libqtposition_positionpoll.dylib': bytearray(b'\x86\t\x81U'
+                                                                          b'"\xda\xffN'
+                                                                          b'|\xcd\xbbg'
+                                                                          b'\xda\xe4\xf1e'
+                                                                          b'\x0c\xbdQ\xaf'),
+ 'PyQt6/Qt6/plugins/qmllint/libqdslintplugin.dylib': bytearray(b'\xa5J\x8ac'
+                                                               b'\x88F\xd4\x91'
+                                                               b']\x084\xb0'
+                                                               b'\xca\x80\xf0E'
+                                                               b'\x0b\xaf~\xcc'),
+ 'PyQt6/Qt6/plugins/qmllint/libquicklintplugin.dylib': bytearray(b'g\x8eh5'
+                                                                 b'=i^\x1d'
+                                                                 b'\x9d=\xec\xfd'
+                                                                 b'\xcaC\na'
+                                                                 b'"*\xa4\xa5'),
+ 'PyQt6/Qt6/plugins/qmlls/libqmllsquickplugin.dylib': bytearray(b'~*A\x87'
+                                                                b'\x9e\xa3\x8f\x96'
+                                                                b'\xaby\xaeg'
+                                                                b'\xf3;\xe9\x17'
+                                                                b'1\xb0W\xf3'),
+ 'PyQt6/Qt6/plugins/renderers/libopenglrenderer.dylib': bytearray(b'\xd6\xeeLQ'
+                                                                  b'\x84\x87\xd5\x1e'
+                                                                  b'(\xdd&\xfe'
+                                                                  b'Qj\xeb\x8c'
+                                                                  b'\xd1\x84\xc8\x83'),
+ 'PyQt6/Qt6/plugins/renderers/librhirenderer.dylib': bytearray(b'\x11\x85c\xe8'
+                                                               b'M\xef(\xce'
+                                                               b'\xc9\xa8=\x82'
+                                                               b'\x8a}kL'
+                                                               b'\x92\xae4\x8e'),
+ 'PyQt6/Qt6/plugins/renderplugins/libscene2d.dylib': bytearray(b'\xb4&\xb3\x02'
+                                                               b'\x97K\xbap'
+                                                               b'\x8c\xfa\xd6\x9a'
+                                                               b'\x94\xdcD\xf0'
+                                                               b'\x85\xd3S\x8f'),
+ 'PyQt6/Qt6/plugins/sceneparsers/libassimpsceneimport.dylib': bytearray(b'\xc5\xeb\xb1q'
+                                                                        b'tZ\x9e\x15'
+                                                                        b'\xb1\x8e\xeb&'
+                                                                        b'S]A\x97'
+                                                                        b'\xfb$\x84\xda'),
+ 'PyQt6/Qt6/plugins/sceneparsers/libgltfsceneexport.dylib': bytearray(b'\x01,\xe3\x98'
+                                                                      b'w\xcdb\xe9'
+                                                                      b'\xad(v^'
+                                                                      b'-\xe5\xa7\xd8'
+                                                                      b'\x9e\xbc?\xc8'),
+ 'PyQt6/Qt6/plugins/sceneparsers/libgltfsceneimport.dylib': bytearray(b'\x97\xb8\xc1\x88'
+                                                                      b'\xd5\x00\xddG'
+                                                                      b'y\xba*\x8b'
+                                                                      b'\xf7\x1c\x91\xb7'
+                                                                      b'\xac\xdc\xb5S'),
+ 'PyQt6/Qt6/plugins/scxmldatamodel/libqscxmlecmascriptdatamodel.dylib': bytearray(b'e\xef\x066'
+                                                                                  b'\x93\\\xd8\x0b'
+                                                                                  b'\xc9\xf7\x00<'
+                                                                                  b'/m.['
+                                                                                  b'\x89 \xdfs'),
+ 'PyQt6/Qt6/plugins/sensors/libqtsensors_generic.dylib': bytearray(b'\xd8\xcd"-'
+                                                                   b'\x04\x95\x8bZ'
+                                                                   b'\xb3\xf0\x16\xdf'
+                                                                   b'\xd8\x90}\xcb'
+                                                                   b'\xfe\xb5Y\x9c'),
+ 'PyQt6/Qt6/plugins/sqldrivers/libqsqlite.dylib': bytearray(b'jN4P\xf6\xda\xfd3'
+                                                            b'\xc7~<\x81'
+                                                            b'\xa7=}\xa2'
+                                                            b'\x80_\xc4 '),
+ 'PyQt6/Qt6/plugins/sqldrivers/libqsqlmimer.dylib': bytearray(b'\xc4\x84\xc6\x04'
+                                                              b'\xf2b\xe1\xaf'
+                                                              b']m\xfda'
+                                                              b'~\xd3\xa8\xd4'
+                                                              b'@\xbf\x91\n'),
+ 'PyQt6/Qt6/plugins/sqldrivers/libqsqlodbc.dylib': bytearray(b'\xba\xd1\xd0\xa5'
+                                                             b'\xa3\x91*\x94'
+                                                             b' \xb2\x84\xba'
+                                                             b'*\xa8=o'
+                                                             b'\xa8\xf7\xc3,'),
+ 'PyQt6/Qt6/plugins/sqldrivers/libqsqlpsql.dylib': bytearray(b'(\xddt\xf2'
+                                                             b'\x1e\xbe\xdc\x13'
+                                                             b'\x8c\x0c{~'
+                                                             b'\xb3\xd0\x00\x0e'
+                                                             b'\xb9\x17\x12\xb4'),
+ 'PyQt6/Qt6/plugins/styles/libqmacstyle.dylib': bytearray(b'Abk\xdc'
+                                                          b'{\xed\x86\x9f'
+                                                          b'l\x8d\xe2p9C%GXlsG'),
+ 'PyQt6/Qt6/plugins/texttospeech/libqtexttospeech_mock.dylib': bytearray(b'\x00\x81\x87\xe5'
+                                                                         b'\xe0\x0cU?'
+                                                                         b'\xb6}l\xca'
+                                                                         b'_\xe3\xb4\xc7'
+                                                                         b'\\VsN'),
+ 'PyQt6/Qt6/plugins/texttospeech/libqtexttospeech_speechdarwin.dylib': bytearray(b'\x0b\xbd\x9a\xa4'
+                                                                                 b'S\x1dK\x90'
+                                                                                 b'#\x96"\xcf'
+                                                                                 b'\xd5\x9d\xed\xe5'
+                                                                                 b'c\xab\x104'),
+ 'PyQt6/Qt6/plugins/tls/libqcertonlybackend.dylib': bytearray(b'\xdeZ\xb0\xa9'
+                                                              b'\xa8\x15>\xac'
+                                                              b'\xe5\xce\xf1\x9e'
+                                                              b'm\x98yn'
+                                                              b'\xc4*\x8d"'),
+ 'PyQt6/Qt6/plugins/tls/libqopensslbackend.dylib': bytearray(b'\xd1\x07\xc7\x07'
+                                                             b'9\x84\xba\x1f'
+                                                             b'x?\x8c\xee'
+                                                             b'\t^\xee$'
+                                                             b'\x97z\x07j'),
+ 'PyQt6/Qt6/plugins/tls/libqsecuretransportbackend.dylib': bytearray(b'\x18\xec\xd5\x98'
+                                                                     b'j,H\xdc'
+                                                                     b'\xc3\xb0\x91\xc9'
+                                                                     b'OE\xd4\x83'
+                                                                     b':C\xbc\xd6'),
+ 'PyQt6/Qt6/plugins/webview/libqtwebview_darwin.dylib': bytearray(b'\xb2\xdd\x0c\xf7'
+                                                                  b'\xe1\x14q1'
+                                                                  b'?`\xa9\xca'
+                                                                  b'\x9d\xd3\xaa\xb1'
+                                                                  b'5=\xaa\xb9'),
+ 'PyQt6/Qt6/plugins/webview/libqtwebview_webengine.dylib': bytearray(b'j\xe2c]'
+                                                                     b'2Gvn'
+                                                                     b'\x8f)\xa8\xb6'
+                                                                     b'Q\x0b\xa9\xf8'
+                                                                     b'\x91\x01n\xbe'),
+ 'PyQt6/Qt6/qml/QtCore/libqtqmlcoreplugin.dylib': bytearray(b'\x10^,\r'
+                                                            b'o-\x9a\xdb'
+                                                            b'\xa2\xb4\xc1Y'
+                                                            b'.#\xcf\xf5:=|\x0c'),
+ 'PyQt6/Qt6/qml/QtMultimedia/libquickmultimediaplugin.dylib': bytearray(b'^\xe3Vf'
+                                                                        b'L\x87\x8d+'
+                                                                        b'({?\x7f'
+                                                                        b'\xad\xb2\xbf\xf2'
+                                                                        b'\xc6*dS'),
+ 'PyQt6/Qt6/qml/QtNetwork/libqmlnetworkplugin.dylib': bytearray(b'\x85\xe3\x14@'
+                                                                b'\\\x15\xb4\x9c'
+                                                                b'\x8eqVk'
+                                                                b'|_H\x97'
+                                                                b'\x94\xff2\xbb'),
+ 'PyQt6/Qt6/qml/QtPositioning/libpositioningquickplugin.dylib': bytearray(b'\xced\\\xf2'
+                                                                          b'\x82 \x18\x92'
+                                                                          b'\xdb\x19\x15\\'
+                                                                          b'"\x11\xca\r'
+                                                                          b'a\xc5\xf2\xa7'),
+ 'PyQt6/Qt6/qml/QtQml/Models/libmodelsplugin.dylib': bytearray(b'\x96|lS'
+                                                               b'\x9c\x10c"'
+                                                               b'[_\x94\xb1'
+                                                               b'\x0b\xcf2\x1d'
+                                                               b'\xd2\x0f\xfdn'),
+ 'PyQt6/Qt6/qml/QtQml/StateMachine/libqtqmlstatemachineplugin.dylib': bytearray(b'\xed\xc2\xea\xb3'
+                                                                                b'\x04\x1d/u'
+                                                                                b'A\x07\x82\x8d'
+                                                                                b'\xb0\xd9:\xce'
+                                                                                b'\xc0\xd0\xe1C'),
+ 'PyQt6/Qt6/qml/QtQml/WorkerScript/libworkerscriptplugin.dylib': bytearray(b'\xd7a\x99\xc2'
+                                                                           b'\x92 =p'
+                                                                           b'\xf9\x1ck7'
+                                                                           b'\xa9\x90\\\x90'
+                                                                           b'\x85\x0c\xbb\xee'),
+ 'PyQt6/Qt6/qml/QtQml/XmlListModel/libqmlxmllistmodelplugin.dylib': bytearray(b'\x8f\xdew\xda'
+                                                                              b'\xb8{\xf1\x07'
+                                                                              b'#\xb6\x91\xac'
+                                                                              b'v\x01\x8dz'
+                                                                              b's\xa5\xc7\xf9'),
+ 'PyQt6/Qt6/qml/QtQml/libqmlplugin.dylib': bytearray(b",\xcd\x83'\xf7\x9dn\xc9"
+                                                     b'\xa0\xd6e?\xda\x90\xbcX'
+                                                     b'\xd7\xb8\xbc\xe0'),
+ 'PyQt6/Qt6/qml/QtQuick/Controls/Basic/impl/libqtquickcontrols2basicstyleimplplugin.dylib': bytearray(b'\xb0\x96\xd0f'
+                                                                                                      b'=5\x8e\xf4'
+                                                                                                      b'\xb4\x86I\xc6'
+                                                                                                      b'\xb2\x1c{\xfe'
+                                                                                                      b'\xf2!\xd30'),
+ 'PyQt6/Qt6/qml/QtQuick/Controls/Basic/libqtquickcontrols2basicstyleplugin.dylib': bytearray(b'\x8d\xe0i:'
+                                                                                             b'\xf8\xed\x99\x91'
+                                                                                             b'\xed,\xedO'
+                                                                                             b'P\x89\x1b~'
+                                                                                             b'4p\x10:'),
+ 'PyQt6/Qt6/qml/QtQuick/Controls/FluentWinUI3/impl/libqtquickcontrols2fluentwinui3styleimplplugin.dylib': bytearray(b'[\xb7\xe8\x1b'
+                                                                                                                    b'\xa8\xf8_3'
+                                                                                                                    b'g)\xcc\x8f'
+                                                                                                                    b'\xd8\x81\xb2r'
+                                                                                                                    b'\x8796\x9a'),
+ 'PyQt6/Qt6/qml/QtQuick/Controls/FluentWinUI3/libqtquickcontrols2fluentwinui3styleplugin.dylib': bytearray(b'\x8f\\Eq'
+                                                                                                           b'\x8e\xd2\xe6\x1c'
+                                                                                                           b'\xe7\xca\x97\xa8'
+                                                                                                           b'_+\xad.'
+                                                                                                           b'g\xb8\xdey'),
+ 'PyQt6/Qt6/qml/QtQuick/Controls/Fusion/impl/libqtquickcontrols2fusionstyleimplplugin.dylib': bytearray(b'2\x97\xf5='
+                                                                                                        b'\xf0\xb7\xf7\xff'
+                                                                                                        b'\xdazd\xe9'
+                                                                                                        b'\x0f3\x95o'
+                                                                                                        b'N\x05L\xde'),
+ 'PyQt6/Qt6/qml/QtQuick/Controls/Fusion/libqtquickcontrols2fusionstyleplugin.dylib': bytearray(b'*\x0f\xd6:'
+                                                                                               b'\xfde3\xa8'
+                                                                                               b'\xd6\xe8\xba*'
+                                                                                               b'[\xedj\xc0'
+                                                                                               b'T`5\xe7'),
+ 'PyQt6/Qt6/qml/QtQuick/Controls/Imagine/impl/libqtquickcontrols2imaginestyleimplplugin.dylib': bytearray(b'\x90\x05\xfc\x1d'
+                                                                                                          b'G\\\xaf\xcf'
+                                                                                                          b'\xfdN\x10\x8f'
+                                                                                                          b'%\xd4Cg'
+                                                                                                          b'\xbb\x90\xe9\x9a'),
+ 'PyQt6/Qt6/qml/QtQuick/Controls/Imagine/libqtquickcontrols2imaginestyleplugin.dylib': bytearray(b'\x9cG\xa3\xa2'
+                                                                                                 b'U\x95\xd7^'
+                                                                                                 b'R\xe2\x15\x9b'
+                                                                                                 b'\x9acb\x89'
+                                                                                                 b'\x84:\xfe]'),
+ 'PyQt6/Qt6/qml/QtQuick/Controls/Material/impl/libqtquickcontrols2materialstyleimplplugin.dylib': bytearray(b'\x80\xc9s4'
+                                                                                                            b'\xbfxB\xd8'
+                                                                                                            b'\x14\x06\xfd\x91'
+                                                                                                            b'\xa6\xd7\x7f\x95'
+                                                                                                            b'\xb1\x8b\x07\x04'),
+ 'PyQt6/Qt6/qml/QtQuick/Controls/Material/libqtquickcontrols2materialstyleplugin.dylib': bytearray(b'\xfc\x1a\x9f\x97'
+                                                                                                   b'E\xa0\x1c\xc0'
+                                                                                                   b'\x88\x0c]\x14'
+                                                                                                   b'+l\x97#'
+                                                                                                   b'\xe0\x81~D'),
+ 'PyQt6/Qt6/qml/QtQuick/Controls/Universal/impl/libqtquickcontrols2universalstyleimplplugin.dylib': bytearray(b'\x8bw8.'
+                                                                                                              b'\xb2\xb1\xf0\xc8'
+                                                                                                              b'C\xbbZ\xef'
+                                                                                                              b'<\x14\x1do'
+                                                                                                              b'\x1a\xa5%F'),
+ 'PyQt6/Qt6/qml/QtQuick/Controls/Universal/libqtquickcontrols2universalstyleplugin.dylib': bytearray(b'_PF?'
+                                                                                                     b'C\xb0\xa2\x86'
+                                                                                                     b'\xd6\xc5\x8aE'
+                                                                                                     b'"\xe9\xf7?'
+                                                                                                     b"\xc0'\xa0\x0e"),
+ 'PyQt6/Qt6/qml/QtQuick/Controls/iOS/impl/libqtquickcontrols2iosstyleimplplugin.dylib': bytearray(b'j\xc5\x1dJ'
+                                                                                                  b'j\xc3\r}'
+                                                                                                  b',\xd4%t'
+                                                                                                  b'\xa4\xef\x86m'
+                                                                                                  b'\x9b\xfd-\x04'),
+ 'PyQt6/Qt6/qml/QtQuick/Controls/iOS/libqtquickcontrols2iosstyleplugin.dylib': bytearray(b'P\x1c\xd6\x13'
+                                                                                         b'\x821%/'
+                                                                                         b'+_<\xa1'
+                                                                                         b'D\xcf;+'
+                                                                                         b'k0\xfe\xc5'),
+ 'PyQt6/Qt6/qml/QtQuick/Controls/impl/libqtquickcontrols2implplugin.dylib': bytearray(b'f\x99\xab='
+                                                                                      b'\x1c\x17\xa8\xcc'
+                                                                                      b'\xf8\xfa\xec\xad'
+                                                                                      b"'>\xfa\xcb"
+                                                                                      b'\xb6Xm\xbd'),
+ 'PyQt6/Qt6/qml/QtQuick/Controls/libqtquickcontrols2plugin.dylib': bytearray(b'\xf9\xc7\x84%'
+                                                                             b'\xd9\t\x0fp'
+                                                                             b'g\xbag\xc8'
+                                                                             b'\xfdF\x85J'
+                                                                             b'\xaa\x144@'),
+ 'PyQt6/Qt6/qml/QtQuick/Controls/macOS/impl/libqtquickcontrols2macosstyleimplplugin.dylib': bytearray(b'V\xef\xa7\xb5'
+                                                                                                      b'rQ\x9dv'
+                                                                                                      b'\xcc$h\r'
+                                                                                                      b'\xc5\xd2\xfa\xfe'
+                                                                                                      b'^\xd0\x00v'),
+ 'PyQt6/Qt6/qml/QtQuick/Controls/macOS/libqtquickcontrols2macosstyleplugin.dylib': bytearray(b'P\xf4[\xe0'
+                                                                                             b'\xab\x8cC!'
+                                                                                             b'L\x9f9.'
+                                                                                             b'F\xb6\xac\x95'
+                                                                                             b'G\x04$O'),
+ 'PyQt6/Qt6/qml/QtQuick/Dialogs/libqtquickdialogsplugin.dylib': bytearray(b'\xfdj\x10&'
+                                                                          b'I\xc5\x1e\x00'
+                                                                          b'\xde\xfa\xedt'
+                                                                          b'\x81\xd2\x9c\xf0'
+                                                                          b'\xb2}//'),
+ 'PyQt6/Qt6/qml/QtQuick/Dialogs/quickimpl/libqtquickdialogs2quickimplplugin.dylib': bytearray(b'$\xb1L*'
+                                                                                              b'\xb4e(\xf7'
+                                                                                              b'\x11ck\x94'
+                                                                                              b'"\xd8\xc3\x98'
+                                                                                              b'P\xfc\xf5)'),
+ 'PyQt6/Qt6/qml/QtQuick/Effects/libeffectsplugin.dylib': bytearray(b'\x01\xbf\xffz'
+                                                                   b'\xd9[5\xbd'
+                                                                   b'\xe5\xe3\xaa\xd3'
+                                                                   b'\x01\xaa\xad\xf7'
+                                                                   b'atN\xdd'),
+ 'PyQt6/Qt6/qml/QtQuick/Layouts/libqquicklayoutsplugin.dylib': bytearray(b'\x85\xda[\xb4'
+                                                                         b'\xc8\x87\xb5@'
+                                                                         b'!\xf3\x0e\x8d'
+                                                                         b'\xe4-.\xec'
+                                                                         b'\x1d\x03\xfd>'),
+ 'PyQt6/Qt6/qml/QtQuick/LocalStorage/libqmllocalstorageplugin.dylib': bytearray(b'\xa8\xc6p~'
+                                                                                b'\x10\xec\x10='
+                                                                                b'#\xa27\xc0'
+                                                                                b'B\xbb\xb6\xcd'
+                                                                                b'\x9e\xe4\x9d\xfd'),
+ 'PyQt6/Qt6/qml/QtQuick/NativeStyle/libqtquickcontrols2nativestyleplugin.dylib': bytearray(b'\xeb9h\xe0'
+                                                                                           b'\x88\xdfcU'
+                                                                                           b'~k\xfb\xcc'
+                                                                                           b'"\x07I\xa5'
+                                                                                           b'\xa7K\xce\x10'),
+ 'PyQt6/Qt6/qml/QtQuick/Particles/libparticlesplugin.dylib': bytearray(b'\x05\x80\xf6\xc1'
+                                                                       b'\xd3\xa4\x1aD'
+                                                                       b'S\x8d\xb0\xea'
+                                                                       b'\x8eu\xba\xdb'
+                                                                       b'\xc9\xb3`\xe4'),
+ 'PyQt6/Qt6/qml/QtQuick/Pdf/libpdfquickplugin.dylib': bytearray(b'\xb8\xbe\xc3G'
+                                                                b"'6\x15\x99"
+                                                                b'\xb2\x05\x87\x9b'
+                                                                b'\xa7\x9fdi'
+                                                                b'\xbdp)S'),
+ 'PyQt6/Qt6/qml/QtQuick/Scene2D/libqtquickscene2dplugin.dylib': bytearray(b'\xc8\xcd"\xa7'
+                                                                          b'?J\xfd\xe1'
+                                                                          b'0\xf6\xc4U'
+                                                                          b'\x12\x1ej\xb3'
+                                                                          b',\xf9O\xd3'),
+ 'PyQt6/Qt6/qml/QtQuick/Scene3D/libqtquickscene3dplugin.dylib': bytearray(b'\x84\x97\xffi'
+                                                                          b'K\xe6\xd6\x86'
+                                                                          b'\x9a\x05\xd6\xa3'
+                                                                          b'\x01\x87V)'
+                                                                          b'\xf6C\x1a#'),
+ 'PyQt6/Qt6/qml/QtQuick/Shapes/DesignHelpers/libqtquickshapesdesignhelpersplugin.dylib': bytearray(b'E\xc8\xc5\xf5'
+                                                                                                   b'=\xec\xb2\xc6'
+                                                                                                   b'\xb7\xd5\xff\x1b'
+                                                                                                   b'\x8e\x13\x05\xbd'
+                                                                                                   b'\xe6\xcd\x03F'),
+ 'PyQt6/Qt6/qml/QtQuick/Shapes/libqmlshapesplugin.dylib': bytearray(b'\x86\xe6\xc2\xba'
+                                                                    b'\tD\xe8j'
+                                                                    b'D\x1b\xabs'
+                                                                    b'\xc9\xcb\x1cf'
+                                                                    b'\x07k\xf5\xe1'),
+ 'PyQt6/Qt6/qml/QtQuick/Templates/libqtquicktemplates2plugin.dylib': bytearray(b'\x08#\xa2-'
+                                                                               b'\xfbv\x88\xcb'
+                                                                               b'\xe1\x9dpk'
+                                                                               b'\xe9V\xcaR'
+                                                                               b'\xfa\xc3\xb1\xb0'),
+ 'PyQt6/Qt6/qml/QtQuick/Timeline/BlendTrees/libqtquicktimelineblendtreesplugin.dylib': bytearray(b'&F\xdaT'
+                                                                                                 b'\x8f7\xb4u'
+                                                                                                 b'\x07\x04\x0e\xfa'
+                                                                                                 b'TU\xa7\x83'
+                                                                                                 b'G\x9b\x08\x8f'),
+ 'PyQt6/Qt6/qml/QtQuick/Timeline/libqtquicktimelineplugin.dylib': bytearray(b'\r\x02\xa2\xf4'
+                                                                            b'\xde\xc9fe'
+                                                                            b'\x8cm\x98\xaf'
+                                                                            b'\xe2\xbdPh'
+                                                                            b'$\n\xcbq'),
+ 'PyQt6/Qt6/qml/QtQuick/VectorImage/Helpers/libqquickvectorimagehelpersplugin.dylib': bytearray(b'\x84\xad\xd9\xe8'
+                                                                                                b'\x12\x12\x0fO'
+                                                                                                b'\xd4A\x00\x04'
+                                                                                                b'q\x02G\xed'
+                                                                                                b'\xdd\xb2j?'),
+ 'PyQt6/Qt6/qml/QtQuick/VectorImage/libqquickvectorimageplugin.dylib': bytearray(b'\xf6\xd5\xc2\xbe'
+                                                                                 b'LHL\xf2'
+                                                                                 b'\x07\xe9\x15\xb2'
+                                                                                 b'\x7f\x9awx'
+                                                                                 b'\xf2\x86_Z'),
+ 'PyQt6/Qt6/qml/QtQuick/Window/libquickwindowplugin.dylib': bytearray(b']I\x0c\xe8'
+                                                                      b'\xab\x96\t\xff'
+                                                                      b"l'V\xfe"
+                                                                      b'\xb3\xaf\xf8h'
+                                                                      b'\xcf\xff\xc7*'),
+ 'PyQt6/Qt6/qml/QtQuick/libqtquick2plugin.dylib': bytearray(b'\xf9\xc8G\xaa'
+                                                            b'\x03\x8dB\xf2'
+                                                            b'\x83\x02\x03j'
+                                                            b'.\xf3\x07u'
+                                                            b'\x85\xf0\x0b\xd8'),
+ 'PyQt6/Qt6/qml/QtQuick/tooling/libquicktoolingplugin.dylib': bytearray(b'\xac\xf8\xb2\xa7'
+                                                                        b'\xed\xff\x18F'
+                                                                        b'\xedO\xb6\x11'
+                                                                        b'\x03~\xae\xba'
+                                                                        b'\xc1m\x18\xa7'),
+ 'PyQt6/Qt6/qml/QtQuick3D/AssetUtils/libqtquick3dassetutilsplugin.dylib': bytearray(b'\xe8\xe7a5'
+                                                                                    b'\xc1\xfd\x8a\xf4'
+                                                                                    b'\xf0\x9d\xa2\xf6'
+                                                                                    b's\xae\xf3\x8f'
+                                                                                    b'\xae\x94\x03\x13'),
+ 'PyQt6/Qt6/qml/QtQuick3D/Effects/libqtquick3deffectplugin.dylib': bytearray(b'\xce\xc0\xfa\x18'
+                                                                             b'\x8cN\xd7\xd6'
+                                                                             b'#\xe4\xd4D'
+                                                                             b'\xe7\x92\x1b\x8c'
+                                                                             b'N\xf09\x8a'),
+ 'PyQt6/Qt6/qml/QtQuick3D/Helpers/impl/libqtquick3dhelpersimplplugin.dylib': bytearray(b'+T\xb5u'
+                                                                                       b'cM\x81\xae'
+                                                                                       b'L\xe9\x11\x91'
+                                                                                       b'\xe0\xdd\xee&'
+                                                                                       b'\xea\xd3\xd9Z'),
+ 'PyQt6/Qt6/qml/QtQuick3D/Helpers/libqtquick3dhelpersplugin.dylib': bytearray(b'\xa4D<\xcb'
+                                                                              b'\x1a\x1f!f'
+                                                                              b'/V\xc4w'
+                                                                              b'P\xe1sb'
+                                                                              b'\xe8D\xacc'),
+ 'PyQt6/Qt6/qml/QtQuick3D/ParticleEffects/libqtquick3dparticleeffectsplugin.dylib': bytearray(b'\x9d;p\xd9'
+                                                                                              b'^>Q^'
+                                                                                              b'\xdaZ\x91\xa4'
+                                                                                              b'(\x91eO'
+                                                                                              b'\xa2\x89\xc7}'),
+ 'PyQt6/Qt6/qml/QtQuick3D/Particles3D/libqtquick3dparticles3dplugin.dylib': bytearray(b'^\xcd\xf4\xba'
+                                                                                      b'\xeb{\xfc\xb5'
+                                                                                      b'Y\xfb\x07\xa9'
+                                                                                      b'?c\x80\x1c'
+                                                                                      b'\x0c\xf3QG'),
+ 'PyQt6/Qt6/qml/QtQuick3D/Physics/Helpers/libqtquick3dphysicshelpersplugin.dylib': bytearray(b'\xee}\x13\xb5'
+                                                                                             b'\xbb\t\xebZ'
+                                                                                             b'\x08\x825_'
+                                                                                             b'K\xccA\xb6'
+                                                                                             b'\x02\xe5\xd2\x9f'),
+ 'PyQt6/Qt6/qml/QtQuick3D/Physics/libqquick3dphysicsplugin.dylib': bytearray(b'B~]\x8f'
+                                                                             b'M\\;\xb8'
+                                                                             b'%\xbe\xd5h'
+                                                                             b'A\xc2\xceB'
+                                                                             b'\x15\xf8\xeei'),
+ 'PyQt6/Qt6/qml/QtQuick3D/SpatialAudio/libquick3dspatialaudioplugin.dylib': bytearray(b'q\x1a\xca/'
+                                                                                      b'y\x0c\xa3\x9c'
+                                                                                      b'\xf2\xabo%'
+                                                                                      b'\xf1\xa2ej'
+                                                                                      b'%DF\xfd'),
+ 'PyQt6/Qt6/qml/QtQuick3D/Xr/libquick3dxrplugin.dylib': bytearray(b'cd\x03\x93'
+                                                                  b'\xd4{\x8c\xc3'
+                                                                  b'YJ-\xcf'
+                                                                  b'\x88\xac\x87\xf4'
+                                                                  b'\xafm\x81\xda'),
+ 'PyQt6/Qt6/qml/QtQuick3D/libqquick3dplugin.dylib': bytearray(b'a\xd6\xe6c'
+                                                              b'\xb4Ys='
+                                                              b'\xa4\x84\xf5\xf5'
+                                                              b'\x13\xd0\xfb:'
+                                                              b'\xde\x11z\x12'),
+ 'PyQt6/Qt6/qml/QtRemoteObjects/libdeclarative_remoteobjectsplugin.dylib': bytearray(b'\xac\xd7\x160'
+                                                                                     b'\x08\x15\xf7\xa6'
+                                                                                     b'=\xe0\xa4\x9c'
+                                                                                     b'o\x90\xea1'
+                                                                                     b'R\x02\xe2\xbe'),
+ 'PyQt6/Qt6/qml/QtSensors/libsensorsquickplugin.dylib': bytearray(b'\x9a\x9c\x14\x80'
+                                                                  b'X\x8f2\x95'
+                                                                  b'`\x8d?8'
+                                                                  b'\xfe\x82v\x00'
+                                                                  b'\x18\x0e\xc3\x1a'),
+ 'PyQt6/Qt6/qml/QtTest/libquicktestplugin.dylib': bytearray(b'\xb3F\xca\xf4'
+                                                            b'\xae\x96\xdb\x17'
+                                                            b'0\x9d\xc1\t'
+                                                            b'\x82X\xb1\xdc'
+                                                            b'&\x10\x84\xad'),
+ 'PyQt6/Qt6/qml/QtTextToSpeech/libtexttospeechqmlplugin.dylib': bytearray(b'\xff\xb6\xb5\xfd'
+                                                                          b'\xac\xa3\x1a\xdd'
+                                                                          b'\xa9\xabH\x9e'
+                                                                          b'\x1f\x12\xba\xec'
+                                                                          b'\xc1\xa1(\xe5'),
+ 'PyQt6/Qt6/qml/QtWebChannel/libwebchannelquickplugin.dylib': bytearray(b'\x16\xee\x05\xb7'
+                                                                        b'\x19M\xa1\x9f'
+                                                                        b'G]%I'
+                                                                        b'\xba\xd4\xec\\'
+                                                                        b'\xd2\xc1\xf4\xea'),
+ 'PyQt6/Qt6/qml/QtWebSockets/libqmlwebsocketsplugin.dylib': bytearray(b'\x95\x98\xcay'
+                                                                      b'\x9dn*\xe9'
+                                                                      b'B\x1b\xe5j'
+                                                                      b'\xcc\xd5\x88J'
+                                                                      b'\x90\xdb\xfdf'),
+ 'PyQt6/QtBluetooth.abi3.so': bytearray(b'\x89\xea\xc6\x92@QQMtzW;'
+                                        b'\xcb\xe1\xf8\x8a=d\xcc\xd0'),
+ 'PyQt6/QtCore.abi3.so': bytearray(b'\xc0B\xa6S\xf9\xdb$V0\x998F\x0c\xba&\x8a'
+                                   b'\xee\xa7g\x0b'),
+ 'PyQt6/QtDBus.abi3.so': bytearray(b'\xee\x90e@\\\\\xc3\xb9\xe2\x0b}\xdc'
+                                   b'\x05bO\xc0N\x04\xdb\x85'),
+ 'PyQt6/QtDesigner.abi3.so': bytearray(b'\x15\x91\x7f\x07V\x1a\xefl\x84"\x11*'
+                                       b'_\x9c\xc1\xda\x7f\xb59o'),
+ 'PyQt6/QtGui.abi3.so': bytearray(b'Q:MP\xea<8\x1f\xa1\x03!R\x8f\x024*'
+                                  b'\x1a\xb7\xec7'),
+ 'PyQt6/QtHelp.abi3.so': bytearray(b'\xfe\x0b\xea\xd3gW\xda\x80]\x0f\xce^'
+                                   b'~\x05\x1a\x98\x1d{\xe8\\'),
+ 'PyQt6/QtMultimedia.abi3.so': bytearray(b'\x067\xdf\xfaV\x19?\xe2w\xd9\xec3'
+                                         b'[h\x97\xfc\\\x08\xa3s'),
+ 'PyQt6/QtMultimediaWidgets.abi3.so': bytearray(b'\xd4w\x03\x8fh\xd4\x03\xa1'
+                                                b'F\xebrD\x9f\x86\x97\xed'
+                                                b'z\xabq\xca'),
+ 'PyQt6/QtNetwork.abi3.so': bytearray(b'\x10\xa4|\xaf\xef\xb7\xf4\x82;\xd3\xb37'
+                                      b'8\x1f}\xce)\xdf\xe3\x15'),
+ 'PyQt6/QtNfc.abi3.so': bytearray(b'8\x07\xb0^\x83\xeb+ni h\xd0\x02\xb9U\xb5'
+                                  b'}\x8fwR'),
+ 'PyQt6/QtOpenGL.abi3.so': bytearray(b'.\xda\xd8O\xcb!\xaf\xc8\x8d\xa5\xe4:'
+                                     b'\xaeq<\x01\xc7\xd8\x81x'),
+ 'PyQt6/QtOpenGLWidgets.abi3.so': bytearray(b'\x9a(\x7f"\xe2f\xf1RY\xab9\x85'
+                                            b'\xff\xb7\xe17]\x12\xabE'),
+ 'PyQt6/QtPdf.abi3.so': bytearray(b'4\x9b\x14\x9f~g"\xf7K\x14\xd6{br\xacc'
+                                  b'\x18\xfc3\xa5'),
+ 'PyQt6/QtPdfWidgets.abi3.so': bytearray(b'JK\xcc\xee\xa7\xf5\xa3\x81w3G\xd6'
+                                         b'y\xba\x887\xe9\x1cX\xde'),
+ 'PyQt6/QtPositioning.abi3.so': bytearray(b'\xf2g\xdeW\xe5\xa1\xb8\xca'
+                                          b'\xfe\x81\x1c\xd4\xd7\xd5\x02!'
+                                          b'\xad\xfe\xe3\xad'),
+ 'PyQt6/QtPrintSupport.abi3.so': bytearray(b'D4 t\xf9\x06\xf1\xd3\x90\x16\x1e\r'
+                                           b'RGMR\xe2J\x0c\xcd'),
+ 'PyQt6/QtQml.abi3.so': bytearray(b'4\xd8\x93O\x1d\x02\x14\x11n\x97D\xae'
+                                  b'\x01\xbf\x87+\xcf\xbdX\xbf'),
+ 'PyQt6/QtQuick.abi3.so': bytearray(b'<\xb4\x14W&"\x87L\xf3\x0ft\x1f&/\x99\xbc'
+                                    b'B\xf0\xb1\xef'),
+ 'PyQt6/QtQuick3D.abi3.so': bytearray(b'\xfb\xb9\xe0\x9a\x05@\x1b\xd8\x99=\xa5i'
+                                      b'\xb2UJ"\xe9^\xe2\xf6'),
+ 'PyQt6/QtQuickWidgets.abi3.so': bytearray(b'W(\x1c\x82\x15\x80g\xd9'
+                                           b'\xa4J\xc6\x95\xd5n\xa2\xfc'
+                                           b'b\x81\xfdu'),
+ 'PyQt6/QtRemoteObjects.abi3.so': bytearray(b'\x0cK1/y\xcc\x93e3\xfc\x98\x91'
+                                            b"\x9d\x085e\xf1%\xcd'"),
+ 'PyQt6/QtSensors.abi3.so': bytearray(b"[S\xf0\x18\xdel\x07\x1e\x8c\x93'\xef"
+                                      b'oU\xda\xb7\xbe\x89\xc9\xe0'),
+ 'PyQt6/QtSerialPort.abi3.so': bytearray(b'Yl\xeb]`6\x0b\xb8;\x7fgU'
+                                         b'\xa6\xa8\x942\xa4`\xaf\xa2'),
+ 'PyQt6/QtSpatialAudio.abi3.so': bytearray(b'\x89\x89\x85\x15\x0e\xcf(x'
+                                           b'\xe4/\x8af\x0e\xa3U;1\x81\xd1:'),
+ 'PyQt6/QtSql.abi3.so': bytearray(b'\x8e_\x08ZaMC\xa5\xa3&\x88s\x87\xa2\xc9\x9a'
+                                  b'\x19WJ)'),
+ 'PyQt6/QtStateMachine.abi3.so': bytearray(b'\xa9\x07\xee\xa4\x1a\x83\xe7,'
+                                           b'P\x05\x0c\x1fB0)\x1f3\xfb\x92\x87'),
+ 'PyQt6/QtSvg.abi3.so': bytearray(b'\xb2\x95?K\x83\x80S \xb6X\x9b/1\xeefu'
+                                  b'\xd4\x87\x96}'),
+ 'PyQt6/QtSvgWidgets.abi3.so': bytearray(b'\x17dg\xc6\x9aX\x94}\xd7C\x8br'
+                                         b'^\xd2\xccYq\x975\xf5'),
+ 'PyQt6/QtTest.abi3.so': bytearray(b'\xb60\x16\x16\x10\xb3=w\xad\x11\x9e\xe9'
+                                   b'\xa9\x0c\x06\xb7\xb2\x1eOn'),
+ 'PyQt6/QtTextToSpeech.abi3.so': bytearray(b'_7\r\xf5\x11\x84\xc0=\xdb4\xf76'
+                                           b'%\x9e\x99M\x9d\x1a\xc4&'),
+ 'PyQt6/QtWebChannel.abi3.so': bytearray(b"\xde7\xc6\\\xcb[a\xddd\x0f'N"
+                                         b'_\xa7\xe7\xe4\xddb\x1b\xfe'),
+ 'PyQt6/QtWebSockets.abi3.so': bytearray(b'g\xc2\rV\xc8[8\xc3\x15\xc6A\xff'
+                                         b't%\xb7\x99L\xf7\xf0r'),
+ 'PyQt6/QtWidgets.abi3.so': bytearray(b'\xd1\xd6\xe7\xb6!J7WN\xc7{\xf6'
+                                      b'o\x95\x05\x9d\xde\xfe\x97\x99'),
+ 'PyQt6/QtXml.abi3.so': bytearray(b'\xab\xaf:Av)\x00\xb2#{\x00\xf0\xb8!\x8d\xc5'
+                                  b'\x8f\x8b\x00\xaf'),
+ 'PyQt6/sip.cpython-39-darwin.so': bytearray(b'`\xb0B\xf1V\x08\x12\xb1'
+                                             b'\x96\xbc\xc4\xa7p\xcdjg'
+                                             b'\xb0\x8f\xa0\xcb'),
+ 'Python3.framework/Versions/3.9/Python3': bytearray(b'\xff\xd0\xd6\x90'
+                                                     b"\xe9\x19@'KD\x90\xd0"
+                                                     b'\xe6\x1b\xe5\xab'
+                                                     b'\xaa\xf6\x9eD'),
+ '_cffi_backend.cpython-39-darwin.so': bytearray(b'd\x89\xba\xacOC\xe4&'
+                                                 b'\xb2\x8f\x00\x1a'
+                                                 b'\x94\x0fD\xdb'
+                                                 b'\x03\xa3\xa0\xa7'),
+ 'aiohttp/_http_parser.cpython-39-darwin.so': bytearray(b'Mq\x1cj\x957\xb7\x94'
+                                                        b'\xbe\xcd\x06\x07'
+                                                        b'\xed\xea\xf0\x01'
+                                                        b'\xc9X\xc2\xea'),
+ 'aiohttp/_http_writer.cpython-39-darwin.so': bytearray(b'\xd5\x99\xe7\xdf'
+                                                        b'\xceQ\xde\x8c'
+                                                        b'\xfa\xc8\x8a\xb7'
+                                                        b'\xe9\x9c\x15n'
+                                                        b'\x96\xd2\x14\xe6'),
+ 'aiohttp/_websocket/mask.cpython-39-darwin.so': bytearray(b'k\x9d\x8b\xed'
+                                                           b'\x97\xf2\xa7\x96'
+                                                           b'\x1e\xa4al'
+                                                           b'\x12\x94A\x84'
+                                                           b'>\x87\xcf\x0c'),
+ 'aiohttp/_websocket/reader_c.cpython-39-darwin.so': bytearray(b'rK\xc2\xff'
+                                                               b'J\xe8\xe3\x1f'
+                                                               b'\xae\x93\xd5L'
+                                                               b'#\\S\x93'
+                                                               b'&\xe8ei'),
+ 'charset_normalizer/cd.cpython-39-darwin.so': bytearray(b'*-\x0epP#Si'
+                                                         b':\xa9c\xde'
+                                                         b'\xe0I\x9b\x19'
+                                                         b';\x17\x9a%'),
+ 'charset_normalizer/md.cpython-39-darwin.so': bytearray(b'W\xc9\x103'
+                                                         b'\xfa\x07t\xf17K\x1e*'
+                                                         b"\xa4\x13'\x12"
+                                                         b'Y\xca\xef\xb9'),
+ 'cryptography/hazmat/bindings/_rust.abi3.so': bytearray(b'\xae\xb3\x94.'
+                                                         b'\xb8\xc1\xfb\xf1'
+                                                         b'\xb62\xb0\x10'
+                                                         b'\x9a\xa2\x86\\'
+                                                         b'\xda%xB'),
+ 'frozenlist/_frozenlist.cpython-39-darwin.so': bytearray(b'\xb7\x95\xd7\x93'
+                                                          b'C9R>?\x12`,'
+                                                          b'\x8d\xa3EQ\xaabS-'),
+ 'jiter/jiter.cpython-39-darwin.so': bytearray(b'\xfc\xadIH\xb48+CQ\xf7\xbb\x9c'
+                                               b'r\xf68\x12\x8f\xced}'),
+ 'librt/internal.cpython-39-darwin.so': bytearray(b'{\x93\xf8X\xe5W=\x17'
+                                                  b'F>\x05\xde/\xe3\xca\x06'
+                                                  b'\xbb\xb0I\x88'),
+ 'multidict/_multidict.cpython-39-darwin.so': bytearray(b'H\xcb%\xf2b\xafx\xdc'
+                                                        b'\xfa\xf2V\xa1RM[\xe7'
+                                                        b'\xb3\xdd\x83\x81'),
+ 'mypy/__init__.cpython-39-darwin.so': bytearray(b'X\x9e\x9b\xe7i-7\xcc'
+                                                 b'\x11\xb0o\x98\xe4\x16l\xee'
+                                                 b'\xe1\xe0(\xb6'),
+ 'mypy/applytype.cpython-39-darwin.so': bytearray(b'\x92\x9d\x8fG\xa6})\xcb'
+                                                  b'q\x1ed>X\xa2\xae\xaf'
+                                                  b'\xc1\x99,\xef'),
+ 'mypy/argmap.cpython-39-darwin.so': bytearray(b"\xd4#\x85\xff\xf5'\xe8\xb3"
+                                               b'\xcfq2O\xa1\xd0xl+\x9d\x8f$'),
+ 'mypy/binder.cpython-39-darwin.so': bytearray(b'3\x0f\xfa\x8d\x0e\x85\xcf\xa2'
+                                               b'& \xb6\x8d\x8e%/K\xf1/\x06\xa7'),
+ 'mypy/cache.cpython-39-darwin.so': bytearray(b'\xaa\x85:j\x12\x98\x90\x85'
+                                              b'\xd3\xd8\xee\xf3'
+                                              b'\x07\xca\xcd\xdf\x99f\xa4\x96'),
+ 'mypy/checker.cpython-39-darwin.so': bytearray(b'T\xf0\xa4\x82\x12\xe5\xca\x95'
+                                                b"u'\xe8v\x94y\x17Wi\x10\xb0_"),
+ 'mypy/checker_shared.cpython-39-darwin.so': bytearray(b'\xcamp,R%S,\xe2\xddM '
+                                                       b'=HH\xb8\x98\xf1w8'),
+ 'mypy/checker_state.cpython-39-darwin.so': bytearray(b'rT\x9b\xf1\xf9\x15q\xc5'
+                                                      b'\xb1S\xbe\xa1'
+                                                      b'.\xbd\xa9\xcdz\xd3 \xd4'),
+ 'mypy/checkexpr.cpython-39-darwin.so': bytearray(b'z\x97\x7f\xee'
+                                                  b'\x84\x8d\x96\xb2'
+                                                  b'\xb6\xad\xf3\xc5'
+                                                  b'\x18j\x17\xe5\xad\xf8)\x11'),
+ 'mypy/checkmember.cpython-39-darwin.so': bytearray(b'\x88U&\x15\x9fE\xe1\x86'
+                                                    b'\xc8<\xe6\xdd\x9ciSd'
+                                                    b'\x0f\xd9\xe6t'),
+ 'mypy/checkpattern.cpython-39-darwin.so': bytearray(b'a\xecU\x04\xd9P=\x86'
+                                                     b'\x8bLs\xa4\x1d\t\x9c\xc0'
+                                                     b'\xb5\xebzT'),
+ 'mypy/checkstrformat.cpython-39-darwin.so': bytearray(b'j\x96\xc5h'
+                                                       b'\x11\xbd\x90\xa5'
+                                                       b'T[\x18\x7f\xcaI|\xfb'
+                                                       b"\xc9\xd4\xb2'"),
+ 'mypy/constant_fold.cpython-39-darwin.so': bytearray(b'\x1a\x0e\xda?IY\xd7\xd6'
+                                                      b'qY`\\\xec\x9a\xe5\xe0'
+                                                      b'\xf2a\xac\x8e'),
+ 'mypy/constraints.cpython-39-darwin.so': bytearray(b'\xf1\x8a\xf0\xe1'
+                                                    b'$P\x81\xa7\x9d{o\xe9W8y.'
+                                                    b':e\xc00'),
+ 'mypy/copytype.cpython-39-darwin.so': bytearray(b'K\x08s\x1d\x7f\x19\xdf\xc5'
+                                                 b' \xdb\xc1\x87\xff\xedi\x83'
+                                                 b'}\xddz\x8c'),
+ 'mypy/defaults.cpython-39-darwin.so': bytearray(b'\x94\xee\x13\xf64\xff\xa4X'
+                                                 b'\xe9\xc0+\xe7\xbb\xbe=\x82'
+                                                 b'\xcb\xac2\x80'),
+ 'mypy/erasetype.cpython-39-darwin.so': bytearray(b'\xc4E\xe6Z\xe9I\x91\xa3'
+                                                  b'\xd8h\xdd\xed'
+                                                  b'\x10\xc2\xdb\x15\x0em]?'),
+ 'mypy/error_formatter.cpython-39-darwin.so': bytearray(b'\x92\xb7m\xe0'
+                                                        b'\xd1\xac\x1a{'
+                                                        b'c\x1e\x88\xc4'
+                                                        b'\x97\xb5\xca\x02'
+                                                        b'-\xe0B\x06'),
+ 'mypy/errorcodes.cpython-39-darwin.so': bytearray(b"\xdb\x17\xe1\xa2'U\xc7\xe9"
+                                                   b'\x1c4\xb4\xdb\x92\x8a\xea4'
+                                                   b'\xb6\xaf\x17\t'),
+ 'mypy/errors.cpython-39-darwin.so': bytearray(b'\xd0\xbd\xef\xe57\x02l\x00'
+                                               b'\xbc\x1d\xb5\xa7\x90\x00T\xc7'
+                                               b'L.e\x7f'),
+ 'mypy/expandtype.cpython-39-darwin.so': bytearray(b'\xf0\x90/\\}(\x84\xef'
+                                                   b'\xa2\xa3\x94\xdb'
+                                                   b'\x90\x06P\xa8x\x18\x87\xe4'),
+ 'mypy/exprtotype.cpython-39-darwin.so': bytearray(b'$\x05\xb7\x7f\xa3\x01vp'
+                                                   b'\xcdqZH\xc8A%\x0f'
+                                                   b'\x95\xec3\x81'),
+ 'mypy/fastparse.cpython-39-darwin.so': bytearray(b'\rJs]\x82\xe4\xfe\xaf'
+                                                  b'ZS\x08\xa6\xcb\x91\x10w'
+                                                  b'g\x8d-:'),
+ 'mypy/fixup.cpython-39-darwin.so': bytearray(b'\xde\xdc\x99\xc3\x96p8\xbf'
+                                              b'4\xb5[^\x93\x83\x1fC\x86\x13(p'),
+ 'mypy/graph_utils.cpython-39-darwin.so': bytearray(b'\xf5O)Y5R\x98\x00'
+                                                    b'\xc67\x89[\xae\x11Wp'
+                                                    b'\x9c\xd9\xc2/'),
+ 'mypy/infer.cpython-39-darwin.so': bytearray(b'u\xf1~\xb4\xb7T\x08\xa2'
+                                              b'\x85\x8d\xafFY)\x9f~\xd2\x07OQ'),
+ 'mypy/join.cpython-39-darwin.so': bytearray(b'L(\xcf:\xaa\xbca\x89'
+                                             b'!\x8b\x91\x0eG\xd4\x13\xfa'
+                                             b'l\xf6=\xac'),
+ 'mypy/literals.cpython-39-darwin.so': bytearray(b'\x8er_\xdc\xc5\xa4\xd5\xbc'
+                                                 b'\xf6\x8b\xee$?\x93.\x95'
+                                                 b'\x92\\\x12\x0b'),
+ 'mypy/lookup.cpython-39-darwin.so': bytearray(b'?\xa6\xa8\x9f\xe8ha\xad'
+                                               b'A\xae\xd0\x83\x1a{\x08pfQ`+'),
+ 'mypy/maptype.cpython-39-darwin.so': bytearray(b'\xd77\xcb\x06~y\x96O'
+                                                b'\x0f\xc9\x03\x9a\xf6\xe1GU'
+                                                b'k\xd4k\xf8'),
+ 'mypy/meet.cpython-39-darwin.so': bytearray(b'\xda\xcd\x81\xc0v\x1f\x9e\x1e'
+                                             b'!\x1c\x11\x18\x96\x96\x05\x84'
+                                             b'\r\xde_u'),
+ 'mypy/message_registry.cpython-39-darwin.so': bytearray(b'\x83\xed\xc8\xd8'
+                                                         b'h~\xe38'
+                                                         b'\xeb\xd7\x9a\xf1'
+                                                         b'\x12\x1f\xa1Y'
+                                                         b'\xae\xd3\xc1\xef'),
+ 'mypy/messages.cpython-39-darwin.so': bytearray(b'H\x98\x0cz\xe0\xba\x96)'
+                                                 b'\xc7\x11\x12\xdc'
+                                                 b'\x00\x94\x8a2\x95X}\xb5'),
+ 'mypy/mro.cpython-39-darwin.so': bytearray(b'rK\xd5?\x1f\xd5=qy\x82Q\xd0'
+                                            b'\x07\xa7\xd9\xd7)-\xa9U'),
+ 'mypy/nodes.cpython-39-darwin.so': bytearray(b'\xcb\xaa>`\x9b\xba:\x82'
+                                              b'\xaen\x96\xc5\xda(E@'
+                                              b'\xff;\x13\xc3'),
+ 'mypy/operators.cpython-39-darwin.so': bytearray(b'Ol\xc4\xdd\xf0\xda\x95<'
+                                                  b'\x92\x95+nY\x0f\xfa\x1a'
+                                                  b'y\xbf\xf0a'),
+ 'mypy/options.cpython-39-darwin.so': bytearray(b'\xa3\xf4\xb2\xc1\x00!\x95\xe1'
+                                                b'\xdf\xa2~\xa0D\xd2\t\xbe'
+                                                b'\x93\xb1\xe3n'),
+ 'mypy/parse.cpython-39-darwin.so': bytearray(b'D\x0c\xc0\x90\x88b\xdf6'
+                                              b'B\xc8`\xd24\xa29]\x00\x18\xdfe'),
+ 'mypy/patterns.cpython-39-darwin.so': bytearray(b'\x08"\x1b\x06p\xe3~\x0b'
+                                                 b'd2\xc6\x99%\xe6h\x97\x9bs0p'),
+ 'mypy/plugin.cpython-39-darwin.so': bytearray(b'\xaf\xf6\xf4\xe9\xae;\xf7TAJ;O'
+                                               b'-@Y6\x12\x951\xfa'),
+ 'mypy/plugins/__init__.cpython-39-darwin.so': bytearray(b'\xeb\x08\x0c\x19'
+                                                         b'\x93_\xb9\x0c/`y\xbd'
+                                                         b'\xa4\xb5\xc6\xb4'
+                                                         b'"\xd2\xdf\xde'),
+ 'mypy/plugins/common.cpython-39-darwin.so': bytearray(b'\xd9j\xb5\xc23\x1cIG'
+                                                       b'\xbdx\xd1-'
+                                                       b'\xf4\x0b\xab\t'
+                                                       b'\xfe\xfd\xad\xa4'),
+ 'mypy/plugins/dataclasses.cpython-39-darwin.so': bytearray(b'n\xb6\xf4\xbd'
+                                                            b'\xdb\x1ej\x0f'
+                                                            b'm\x1dVC'
+                                                            b'\x01\xab\x7fl'
+                                                            b'\x1e\xd0\xb8\xcb'),
+ 'mypy/reachability.cpython-39-darwin.so': bytearray(b'C\xb5\x16\x0f\xd39\xe2H'
+                                                     b'\x98\xf3o\xae'
+                                                     b'\xa7\xe4\xf9W'
+                                                     b'\xc7\xb3\x89]'),
+ 'mypy/scope.cpython-39-darwin.so': bytearray(b'\xeb\x18)\x11&\xb8!\x04'
+                                              b'\xb1\xc6_\xa2!\x15NU"\x0b\xd2P'),
+ 'mypy/semanal.cpython-39-darwin.so': bytearray(b'rC\xa4\xf9^\xbdr \xcc47r'
+                                                b'\x90\xabI)\xc01.|'),
+ 'mypy/semanal_enum.cpython-39-darwin.so': bytearray(b'SF\xdf(\x0fc\xee9'
+                                                     b'\xc8\xbe\xdb\x80'
+                                                     b'\x14\x8e\xcd\xc0'
+                                                     b'\xe2@\x03\xcb'),
+ 'mypy/semanal_namedtuple.cpython-39-darwin.so': bytearray(b'\xcf\xc0\x0f\x14'
+                                                           b'\xa5\xd4\x91$'
+                                                           b'\x11\x8fG)'
+                                                           b'\x84\x10T\x96'
+                                                           b'\xe8\xd3Z\xa2'),
+ 'mypy/semanal_newtype.cpython-39-darwin.so': bytearray(b'p]\xc1\xddr\xa0c\t'
+                                                        b'\xe7\x1d\xfa}'
+                                                        b'<b\xc1\xd2\x840d9'),
+ 'mypy/semanal_shared.cpython-39-darwin.so': bytearray(b'\x11\xd1\x1e\xe0'
+                                                       b'\xae\xa4\xc4\xf0'
+                                                       b'\xc3\x10\xc1"\xbfEv]'
+                                                       b'\xd4<SY'),
+ 'mypy/semanal_typeddict.cpython-39-darwin.so': bytearray(b'=oZ\xb5\xf0l>.'
+                                                          b'\x11,>='
+                                                          b'\xd1\xad\xc7\xfb'
+                                                          b"\x0c\xbf\x19'"),
+ 'mypy/server/__init__.cpython-39-darwin.so': bytearray(b'\xef\xe7\xd7|2\xa7zc'
+                                                        b'c\xf4\xa0\xa7'
+                                                        b'}\xc4\xce\xda'
+                                                        b"'\xeb \x04"),
+ 'mypy/server/trigger.cpython-39-darwin.so': bytearray(b'\r^\xb2~\xa9\x81K\x98'
+                                                       b'X\xbbl\n\x94C\xca!'
+                                                       b"k'\x18\x9e"),
+ 'mypy/sharedparse.cpython-39-darwin.so': bytearray(b'\xa7\xbaf\x8c'
+                                                    b'\xd9\x84\x9c\xe2'
+                                                    b'\xd3\t\x8b\xa6'
+                                                    b'\x8a\xd5W\xcb'
+                                                    b'\x08\xba\xa9\xa8'),
+ 'mypy/solve.cpython-39-darwin.so': bytearray(b'\xf1f\xde\xd4\x067)\xee'
+                                              b'\x01-\x16\xf3C-\x97\xbb'
+                                              b'\x0cG\xccd'),
+ 'mypy/state.cpython-39-darwin.so': bytearray(b'\x9d\xf3\x87Q\xbc\xcdv\xe4'
+                                              b'\xd6\x13\x9c\xbb'
+                                              b'\x1a\xb1\xde\xb6{\x92\xfe\xcd'),
+ 'mypy/strconv.cpython-39-darwin.so': bytearray(b'\xa3Z\xe8\x14\xcf\xdbz\x13'
+                                                b'. \xc9\xf8V\x849\xa1'
+                                                b'\x02\xd2\x02\xb2'),
+ 'mypy/subtypes.cpython-39-darwin.so': bytearray(b'\xc8\xb4W<J\x0f\x8b\xe3'
+                                                 b'Zp~\x19\x1c\xc44J/Q\x0e\x8f'),
+ 'mypy/traverser.cpython-39-darwin.so': bytearray(b'\xe4p\x93"\xa7^\xb7\xe1'
+                                                  b'e\xf7W\x1cN+\xc4\x16'
+                                                  b'\x83\x1d\xd5\x04'),
+ 'mypy/treetransform.cpython-39-darwin.so': bytearray(b'\x18g\xbb\x85\xc1l\x8a0'
+                                                      b'\x17\xfc\xe8@`"\xd7\xb4'
+                                                      b'l4\xf5\xec'),
+ 'mypy/tvar_scope.cpython-39-darwin.so': bytearray(b'\xebG\x96\xc1i\xed\xf1y'
+                                                   b'\xaa?^\x9a\xedb\xa2e'
+                                                   b' x\x18\xb7'),
+ 'mypy/type_visitor.cpython-39-darwin.so': bytearray(b'\xcc\xf5\xd7\x7f'
+                                                     b'\x885\x0f\xe4\xcfXL\xd8'
+                                                     b'?\xcd\xc6\xbf'
+                                                     b'\xed\xa0F\xf8'),
+ 'mypy/typeanal.cpython-39-darwin.so': bytearray(b'\xb3\x86=\xe9\x9al\xec\x82'
+                                                 b"\xdee\xc1\xb2ex'\xc4"
+                                                 b'\xa3\xa2fs'),
+ 'mypy/typeops.cpython-39-darwin.so': bytearray(b'\xeb\xaa\x8dH\xeeL\x0cb'
+                                                b'w>\xb2\x84\xb7\xa8\x91\xa0'
+                                                b'qMWO'),
+ 'mypy/types.cpython-39-darwin.so': bytearray(b'\xd0&\x8f\xde\x12\x0b\x90\x85'
+                                              b'\xc2j\x8e\xf5\xd5\xec\xc2\x03'
+                                              b'\x91c\xa0\xfc'),
+ 'mypy/types_utils.cpython-39-darwin.so': bytearray(b'\x1f.\xa2\x91><\x98k'
+                                                    b'y\xb7\xf2N\xd6\x17UH'
+                                                    b'\xc5\x04\xf8\x85'),
+ 'mypy/typestate.cpython-39-darwin.so': bytearray(b'Q\xa0}a\xf2\xa2\x8f2'
+                                                  b'P\x80\x7fi\xc1G\xb4\xc9'
+                                                  b'?\x7fs\xd3'),
+ 'mypy/typetraverser.cpython-39-darwin.so': bytearray(b'\xe8!\xc2\xe1'
+                                                      b'H\x9a\x06\x85I\xa85\xd6'
+                                                      b'\xac\xcaEIt\xbbP\x1a'),
+ 'mypy/typevars.cpython-39-darwin.so': bytearray(b'b\xdd\xa8\xbb(^\x85j'
+                                                 b'E^\x18\xe9?w\x15\xab'
+                                                 b"\xaa\xec'a"),
+ 'mypy/typevartuples.cpython-39-darwin.so': bytearray(b'\xa4\xd5\xfd\xb3'
+                                                      b'\xfe\xdc\xac\x8f'
+                                                      b'\xc8\xccQ\xe6!X\x83('
+                                                      b'\t\xcdX\x00'),
+ 'mypy/util.cpython-39-darwin.so': bytearray(b'\x96-\x00i\xc0\xfdY\x02'
+                                             b'\x9fe\x0fM\xf7\x83\x8aV'
+                                             b'\xd0\r\r\xb5'),
+ 'mypy/visitor.cpython-39-darwin.so': bytearray(b'\xcd&\xa2\x95"~\xc4;'
+                                                b"\xfaY\x9eK'\x12\xf9\x0c"
+                                                b"*\xda\x98'"),
+ 'propcache/_helpers_c.cpython-39-darwin.so': bytearray(b'\xd0\xd2m\xfe'
+                                                        b'L<\x89\x9bB-\xfcH'
+                                                        b"f\xb6\xedz'F\xd1r"),
+ 'pydantic_core/_pydantic_core.cpython-39-darwin.so': bytearray(b'\xf9\x89\x8f:'
+                                                                b'V8\xcb}'
+                                                                b'G\xf4\x92\xec'
+                                                                b'\x0bVc\xab'
+                                                                b'\x8c9T\x82'),
+ 'python3.9/lib-dynload/_asyncio.cpython-39-darwin.so': bytearray(b'\xb2mo\xb9'
+                                                                  b'h\xbdAL'
+                                                                  b'\x0e\xdc3\xc9'
+                                                                  b'ed\xaf0'
+                                                                  b'w\x1d\xecc'),
+ 'python3.9/lib-dynload/_bisect.cpython-39-darwin.so': bytearray(b'B\x9d\xc9Z'
+                                                                 b'\xed\xecFn'
+                                                                 b'\xef\xa9\xb2\x8a'
+                                                                 b'?\xa6\x0f\x94'
+                                                                 b'\xa0\x90BQ'),
+ 'python3.9/lib-dynload/_blake2.cpython-39-darwin.so': bytearray(b'\x0b\xcfnH'
+                                                                 b'\xc2\xb1\xcd\x8a'
+                                                                 b'\xb92\xb4\xbc'
+                                                                 b'\n>\xf76'
+                                                                 b'\x957\xaf\x16'),
+ 'python3.9/lib-dynload/_bz2.cpython-39-darwin.so': bytearray(b'\x81\x91,0'
+                                                              b'(@\xc4/'
+                                                              b'\x9awS\x10'
+                                                              b'v\xd2\x8b9'
+                                                              b'\xe5\xbd\x91\xbd'),
+ 'python3.9/lib-dynload/_codecs_cn.cpython-39-darwin.so': bytearray(b'\x17\xcbB+'
+                                                                    b'\xc0O\x163'
+                                                                    b'\xf9\xccZ;'
+                                                                    b'\\\xc8\x1f\xa9'
+                                                                    b'\xef\x85\x91\x8e'),
+ 'python3.9/lib-dynload/_codecs_hk.cpython-39-darwin.so': bytearray(b'"\x82%A'
+                                                                    b'\xefX)p'
+                                                                    b'\xa3\x04)F'
+                                                                    b'\xf4\xcfXu'
+                                                                    b'\xa4\xb5\xc6\t'),
+ 'python3.9/lib-dynload/_codecs_iso2022.cpython-39-darwin.so': bytearray(b'\xd0q\x13L'
+                                                                         b'\xd0\xee\xcb\xcc'
+                                                                         b'\xb0Zx\r'
+                                                                         b'\x9d\xe3*H'
+                                                                         b']6S\x18'),
+ 'python3.9/lib-dynload/_codecs_jp.cpython-39-darwin.so': bytearray(b'\x94\xe1\xc6\xd5'
+                                                                    b'\xe5\n\xafT'
+                                                                    b'b\xb1A\xb9'
+                                                                    b'\xb2n\xe70'
+                                                                    b'\xa0\xb8\xc1\x05'),
+ 'python3.9/lib-dynload/_codecs_kr.cpython-39-darwin.so': bytearray(b'\x01\xc5\xf0>'
+                                                                    b'N\x1f\xcbi'
+                                                                    b'\xfa\x8fz\xd2'
+                                                                    b'\xe4\x93\xd0\xd7'
+                                                                    b'b\xaf\xd6u'),
+ 'python3.9/lib-dynload/_codecs_tw.cpython-39-darwin.so': bytearray(b'\xde\xf0\x12\x8a'
+                                                                    b'\x18\t.:'
+                                                                    b'\x96N8\x91'
+                                                                    b'\x99\xd5\xd8\xa2'
+                                                                    b'\xfa\xba\xc6N'),
+ 'python3.9/lib-dynload/_contextvars.cpython-39-darwin.so': bytearray(b'\xd9\xbdK\x0f'
+                                                                      b'x\xeb=t'
+                                                                      b'\xd2A\x12\n'
+                                                                      b'L\x15Hk'
+                                                                      b'\x89N\xb3\x8c'),
+ 'python3.9/lib-dynload/_csv.cpython-39-darwin.so': bytearray(b';\rt3B\xb9\xa1$'
+                                                              b'!GZ\x9dT\\\x92A'
+                                                              b'/\xbb\x85\xd4'),
+ 'python3.9/lib-dynload/_ctypes.cpython-39-darwin.so': bytearray(b'\x16K\xa0a'
+                                                                 b'\xf5]\xdf0'
+                                                                 b'?\xeaU['
+                                                                 b'<p\xa4\x87'
+                                                                 b'\xf3\xa6\xd7\xb2'),
+ 'python3.9/lib-dynload/_curses.cpython-39-darwin.so': bytearray(b'`\x14\n\xf8'
+                                                                 b'I\x8fN\xfc'
+                                                                 b';\x9d\x07_'
+                                                                 b'\x8d&\x97\x87'
+                                                                 b'"%\xab\xf5'),
+ 'python3.9/lib-dynload/_datetime.cpython-39-darwin.so': bytearray(b'\xf2\x19\x81\x05'
+                                                                   b'\xf3\xc2\xc3|'
+                                                                   b'\xc9\xfcK\xf8'
+                                                                   b'u\x17\n%'
+                                                                   b'8\x19\xa2\xa0'),
+ 'python3.9/lib-dynload/_decimal.cpython-39-darwin.so': bytearray(b'\xcb\x97A\x87'
+                                                                  b'0m\xb6\x88'
+                                                                  b'\xf1\xa4\xcc8'
+                                                                  b'\xe0\xe9\x95\xa0'
+                                                                  b'\xa6j\x9f\xbb'),
+ 'python3.9/lib-dynload/_elementtree.cpython-39-darwin.so': bytearray(b'\x15\x97\x81\x12'
+                                                                      b'$[Eo'
+                                                                      b'\xff\xaa\x10"'
+                                                                      b'\x07\xbe\xae2'
+                                                                      b'\xa4\x8d\x01\xf1'),
+ 'python3.9/lib-dynload/_hashlib.cpython-39-darwin.so': bytearray(b'\xd5\x8c\xe21'
+                                                                  b'=\xd3Yk'
+                                                                  b'\xeawm\xdd'
+                                                                  b'js\x95A'
+                                                                  b'\x1chZ\x92'),
+ 'python3.9/lib-dynload/_heapq.cpython-39-darwin.so': bytearray(b'2\xb7Jp'
+                                                                b'p\xfcZ\xde'
+                                                                b'\xe8|\x87W'
+                                                                b'\x81]\x0b\x1d'
+                                                                b'\x06\x07\xa4\xd2'),
+ 'python3.9/lib-dynload/_json.cpython-39-darwin.so': bytearray(b"\xd9\xbe\xae'"
+                                                               b'vt\x88\x08'
+                                                               b'Nk8\xe9'
+                                                               b'w\xcd(\x7f'
+                                                               b'\xfa\x1d\x19\x05'),
+ 'python3.9/lib-dynload/_lzma.cpython-39-darwin.so': bytearray(b'\xfc\xf9\xdd6'
+                                                               b'\xa0\xc3\xc0\xbb'
+                                                               b'\xa8F\x06-'
+                                                               b'\x93\xfd\x9d\xd2'
+                                                               b'\x1e\xfd\\\x19'),
+ 'python3.9/lib-dynload/_md5.cpython-39-darwin.so': bytearray(b'\x9f\xc2\n\xf5'
+                                                              b'\xe7"\x84\x9e'
+                                                              b'\x92\xfcv\r'
+                                                              b'\x9d\xb2!!'
+                                                              b'\x99F\xfb\xdc'),
+ 'python3.9/lib-dynload/_multibytecodec.cpython-39-darwin.so': bytearray(b'\xbc\x9f&\xac'
+                                                                         b'\r\x96\xc3\xf1'
+                                                                         b'K\xc9\xbc\x8c'
+                                                                         b'\nI\xe5\x96'
+                                                                         b'e\x88\n\x02'),
+ 'python3.9/lib-dynload/_multiprocessing.cpython-39-darwin.so': bytearray(b'\xbb\xd0\x06\x1d'
+                                                                          b'\xe2m{\x8a'
+                                                                          b'b\x82v\x0b'
+                                                                          b'^\xd0\xe8Z'
+                                                                          b'\xcf\x07=\x02'),
+ 'python3.9/lib-dynload/_opcode.cpython-39-darwin.so': bytearray(b'\xbb\xd5Id'
+                                                                 b'x\xfb\x02\xb6'
+                                                                 b'$\x99\x82\xdb'
+                                                                 b'\xacX\x00-'
+                                                                 b'@\x13p\xf4'),
+ 'python3.9/lib-dynload/_pickle.cpython-39-darwin.so': bytearray(b'b\xd4f7'
+                                                                 b'\xf5\x8b\x07\xf9'
+                                                                 b'\x0f\x93\x03,'
+                                                                 b'-\xbe\x8ff'
+                                                                 b'"C3\xe4'),
+ 'python3.9/lib-dynload/_posixshmem.cpython-39-darwin.so': bytearray(b'c\x9f\x86]'
+                                                                     b'?\xa0\xf7='
+                                                                     b'J\x8c(\x8c'
+                                                                     b'\x84\xef\xa2\xae'
+                                                                     b'=\xb0\xc3\x91'),
+ 'python3.9/lib-dynload/_posixsubprocess.cpython-39-darwin.so': bytearray(b'MBk+'
+                                                                          b'\x1d\x93!\xaf'
+                                                                          b'\x8f\xb4\xd5B'
+                                                                          b'/0\x9bz'
+                                                                          b'\xb7<\x96\xf3'),
+ 'python3.9/lib-dynload/_queue.cpython-39-darwin.so': bytearray(b'Bt\xbc\xd2'
+                                                                b'\xfb\xb1\xf3\x89'
+                                                                b'9\xda"4'
+                                                                b'\x90k\xf0\xdb'
+                                                                b':0\xb5g'),
+ 'python3.9/lib-dynload/_random.cpython-39-darwin.so': bytearray(b'\xb4<CQ'
+                                                                 b'\xea\xc6\xb0\xa9'
+                                                                 b'W\x9e\xc7\x88'
+                                                                 b'-\xf8\xe1\x95'
+                                                                 b'\x8a\x12\xd9\xe0'),
+ 'python3.9/lib-dynload/_scproxy.cpython-39-darwin.so': bytearray(b'X\xc8"M'
+                                                                  b'\x9d\x88\xbf\x89'
+                                                                  b'\xa6$\x16\x05'
+                                                                  b'8\xaf\x04\xde'
+                                                                  b'}\xa6F\xe4'),
+ 'python3.9/lib-dynload/_sha1.cpython-39-darwin.so': bytearray(b'"\xfe\xe6m'
+                                                               b'v\x17\x9a\xf4'
+                                                               b'\xaf\xa3)\x91'
+                                                               b'3\x01/qMJK\x01'),
+ 'python3.9/lib-dynload/_sha256.cpython-39-darwin.so': bytearray(b'.=\x88\xba'
+                                                                 b'\xdf\x90\x84\x17'
+                                                                 b'h\x03\x00\x8e'
+                                                                 b'\xc2\xaan\xa6'
+                                                                 b'\x02\xf33\xf5'),
+ 'python3.9/lib-dynload/_sha3.cpython-39-darwin.so': bytearray(b'\xda\xfaW\xd0'
+                                                               b'L\x89\x96\xbd'
+                                                               b'}\xf6no'
+                                                               b'|\xe7\xf9\xde'
+                                                               b'-a\xbe\x13'),
+ 'python3.9/lib-dynload/_sha512.cpython-39-darwin.so': bytearray(b'\xe7\xac\xe1b'
+                                                                 b'KRh\xb9'
+                                                                 b'+\x81\x1c\x08'
+                                                                 b'\xcf\xf8\xbc\xca'
+                                                                 b'P\xa9\xc97'),
+ 'python3.9/lib-dynload/_socket.cpython-39-darwin.so': bytearray(b'\xdf`\x07\x84'
+                                                                 b'[SU\xe6'
+                                                                 b'\xb7o\xdc='
+                                                                 b'\x1fM\x95\xab'
+                                                                 b'\xab\x8aE\xc6'),
+ 'python3.9/lib-dynload/_sqlite3.cpython-39-darwin.so': bytearray(b'\x06\xb5-\xe3'
+                                                                  b'\x8d]\xb6\x1b'
+                                                                  b'\x0c\x12Y.'
+                                                                  b'\xc5\x8d\xd6!'
+                                                                  b'\t\x93\xf4\x98'),
+ 'python3.9/lib-dynload/_ssl.cpython-39-darwin.so': bytearray(b'\x18\xc1\x1f\xa9'
+                                                              b'v\xd3\x18\x17'
+                                                              b'UK\x14\xc8'
+                                                              b'\xe5\x88s\xa3'
+                                                              b'\xf0<\xe4?'),
+ 'python3.9/lib-dynload/_statistics.cpython-39-darwin.so': bytearray(b'\x1d\xe4\xf3\x99'
+                                                                     b'\xe47t\xe3'
+                                                                     b'\xa9\xbbT~'
+                                                                     b'^\x1e\x96_'
+                                                                     b'\x95\x07\x82\xe2'),
+ 'python3.9/lib-dynload/_struct.cpython-39-darwin.so': bytearray(b'\x91)\xdb\xec'
+                                                                 b'\x0c/\xb9\xbf'
+                                                                 b'(\x7f\xd4\x10'
+                                                                 b'\x10\x17\xf0Z'
+                                                                 b'@\x9a\xeb\xfa'),
+ 'python3.9/lib-dynload/_uuid.cpython-39-darwin.so': bytearray(b'p\xde\x88\xfb'
+                                                               b'\xf2\x0fc\x13'
+                                                               b'(\r\xa5\xdb'
+                                                               b'\x12\x15O\xb0'
+                                                               b'\xea\xe7j\xf9'),
+ 'python3.9/lib-dynload/_zoneinfo.cpython-39-darwin.so': bytearray(b'\x8e\xf7\xcb\xf9'
+                                                                   b'\xb0I4\xa7'
+                                                                   b'\x8c\x93\x0c\xbc'
+                                                                   b'`LA\xbd'
+                                                                   b'F\xb4[E'),
+ 'python3.9/lib-dynload/array.cpython-39-darwin.so': bytearray(b'\x8f\x8b\xf0.'
+                                                               b'\xf4\x02\xdc\xb1'
+                                                               b'\x05-2\xe9'
+                                                               b'\xe7B\x9c\x87'
+                                                               b'#\x8a\xc0\x9d'),
+ 'python3.9/lib-dynload/binascii.cpython-39-darwin.so': bytearray(b'}\xd9\x02B'
+                                                                  b'*;\x00\x11'
+                                                                  b'\xd0\x0c\xb1\x9e'
+                                                                  b'u.5\xb0'
+                                                                  b'\x06:\xdd$'),
+ 'python3.9/lib-dynload/grp.cpython-39-darwin.so': bytearray(b'W\xd1\x03\x08'
+                                                             b'\xc7\xfd\xdc\xc5'
+                                                             b'g\x9e\x11\xbf'
+                                                             b'\x0fr\xec\xef'
+                                                             b'\xc8+\xb8\xe3'),
+ 'python3.9/lib-dynload/math.cpython-39-darwin.so': bytearray(b'\x1e\xb7\x97\x1d'
+                                                              b'\x88o\x89m'
+                                                              b'\xc0\x00A\xd1'
+                                                              b'?Z\xf2X'
+                                                              b'\xdf\x9958'),
+ 'python3.9/lib-dynload/mmap.cpython-39-darwin.so': bytearray(b'\xd4\xfekp'
+                                                              b's\xac}\x0c'
+                                                              b'\xa4\xba\xf1B'
+                                                              b'\xc4\xefy1'
+                                                              b'k\x86\x81\x0f'),
+ 'python3.9/lib-dynload/pyexpat.cpython-39-darwin.so': bytearray(b'A"5H'
+                                                                 b'\x98I\x1e\xc5'
+                                                                 b'\x98\xfb\x02='
+                                                                 b'\x0f\x1eC\xb3'
+                                                                 b'\xea\x81\x0b\x99'),
+ 'python3.9/lib-dynload/readline.cpython-39-darwin.so': bytearray(b'"\xd6\xff8'
+                                                                  b'\x8f\xafB\xd3'
+                                                                  b'QH2\xfc'
+                                                                  b'n\x9d\r8'
+                                                                  b'/\x7f\xfd\x1a'),
+ 'python3.9/lib-dynload/resource.cpython-39-darwin.so': bytearray(b'\xb4\x89\xa6\x05'
+                                                                  b'\xca\xf6\x9e\xaa'
+                                                                  b'v3\xf1\xab'
+                                                                  b'\xd1d\x9c\x89'
+                                                                  b'\x91\xe0\xab\xcc'),
+ 'python3.9/lib-dynload/select.cpython-39-darwin.so': bytearray(b'>\x93\xc2\xb2'
+                                                                b'k^\x86V'
+                                                                b'F\xdc\xffq'
+                                                                b'\x01\x1b\xc7\xb6'
+                                                                b'\xbc\x95\xc6\x80'),
+ 'python3.9/lib-dynload/syslog.cpython-39-darwin.so': bytearray(b'\xaa\xfaqi'
+                                                                b'0\xe2\xa9c'
+                                                                b'V:\xee\xe9'
+                                                                b'o\xb7\xdd\x9a'
+                                                                b'\xcc\xc7\x1c\xb3'),
+ 'python3.9/lib-dynload/termios.cpython-39-darwin.so': bytearray(b'E\x1cHU'
+                                                                 b'\x01\xd9[\xc1'
+                                                                 b'\x10\xb9\x14<'
+                                                                 b'\x19\nt\x1d'
+                                                                 b'\xc5?\xc8\xf6'),
+ 'python3.9/lib-dynload/unicodedata.cpython-39-darwin.so': bytearray(b'\xf0W9\x0e'
+                                                                     b'o.\xaf\xd0'
+                                                                     b'\xf1#\xad '
+                                                                     b'F~z\t'
+                                                                     b'\xd0s)\xa1'),
+ 'python3.9/lib-dynload/zlib.cpython-39-darwin.so': bytearray(b'd\xe9\xa4\xc3'
+                                                              b's\xfc\xadi'
+                                                              b';\xd72X'
+                                                              b'\xd1z\xd3n'
+                                                              b'\xb4,\x9bi'),
+ 'python3__dot__9/lib-dynload/_asyncio.cpython-39-darwin.so': bytearray(b'\xb2mo\xb9'
+                                                                        b'h\xbdAL'
+                                                                        b'\x0e\xdc3\xc9'
+                                                                        b'ed\xaf0'
+                                                                        b'w\x1d\xecc'),
+ 'python3__dot__9/lib-dynload/_bisect.cpython-39-darwin.so': bytearray(b'B\x9d\xc9Z'
+                                                                       b'\xed\xecFn'
+                                                                       b'\xef\xa9\xb2\x8a'
+                                                                       b'?\xa6\x0f\x94'
+                                                                       b'\xa0\x90BQ'),
+ 'python3__dot__9/lib-dynload/_blake2.cpython-39-darwin.so': bytearray(b'\x0b\xcfnH'
+                                                                       b'\xc2\xb1\xcd\x8a'
+                                                                       b'\xb92\xb4\xbc'
+                                                                       b'\n>\xf76'
+                                                                       b'\x957\xaf\x16'),
+ 'python3__dot__9/lib-dynload/_bz2.cpython-39-darwin.so': bytearray(b'\x81\x91,0'
+                                                                    b'(@\xc4/'
+                                                                    b'\x9awS\x10'
+                                                                    b'v\xd2\x8b9'
+                                                                    b'\xe5\xbd\x91\xbd'),
+ 'python3__dot__9/lib-dynload/_codecs_cn.cpython-39-darwin.so': bytearray(b'\x17\xcbB+'
+                                                                          b'\xc0O\x163'
+                                                                          b'\xf9\xccZ;'
+                                                                          b'\\\xc8\x1f\xa9'
+                                                                          b'\xef\x85\x91\x8e'),
+ 'python3__dot__9/lib-dynload/_codecs_hk.cpython-39-darwin.so': bytearray(b'"\x82%A'
+                                                                          b'\xefX)p'
+                                                                          b'\xa3\x04)F'
+                                                                          b'\xf4\xcfXu'
+                                                                          b'\xa4\xb5\xc6\t'),
+ 'python3__dot__9/lib-dynload/_codecs_iso2022.cpython-39-darwin.so': bytearray(b'\xd0q\x13L'
+                                                                               b'\xd0\xee\xcb\xcc'
+                                                                               b'\xb0Zx\r'
+                                                                               b'\x9d\xe3*H'
+                                                                               b']6S\x18'),
+ 'python3__dot__9/lib-dynload/_codecs_jp.cpython-39-darwin.so': bytearray(b'\x94\xe1\xc6\xd5'
+                                                                          b'\xe5\n\xafT'
+                                                                          b'b\xb1A\xb9'
+                                                                          b'\xb2n\xe70'
+                                                                          b'\xa0\xb8\xc1\x05'),
+ 'python3__dot__9/lib-dynload/_codecs_kr.cpython-39-darwin.so': bytearray(b'\x01\xc5\xf0>'
+                                                                          b'N\x1f\xcbi'
+                                                                          b'\xfa\x8fz\xd2'
+                                                                          b'\xe4\x93\xd0\xd7'
+                                                                          b'b\xaf\xd6u'),
+ 'python3__dot__9/lib-dynload/_codecs_tw.cpython-39-darwin.so': bytearray(b'\xde\xf0\x12\x8a'
+                                                                          b'\x18\t.:'
+                                                                          b'\x96N8\x91'
+                                                                          b'\x99\xd5\xd8\xa2'
+                                                                          b'\xfa\xba\xc6N'),
+ 'python3__dot__9/lib-dynload/_contextvars.cpython-39-darwin.so': bytearray(b'\xd9\xbdK\x0f'
+                                                                            b'x\xeb=t'
+                                                                            b'\xd2A\x12\n'
+                                                                            b'L\x15Hk'
+                                                                            b'\x89N\xb3\x8c'),
+ 'python3__dot__9/lib-dynload/_csv.cpython-39-darwin.so': bytearray(b';\rt3'
+                                                                    b'B\xb9\xa1$'
+                                                                    b'!GZ\x9d'
+                                                                    b'T\\\x92A'
+                                                                    b'/\xbb\x85\xd4'),
+ 'python3__dot__9/lib-dynload/_ctypes.cpython-39-darwin.so': bytearray(b'\x16K\xa0a'
+                                                                       b'\xf5]\xdf0'
+                                                                       b'?\xeaU['
+                                                                       b'<p\xa4\x87'
+                                                                       b'\xf3\xa6\xd7\xb2'),
+ 'python3__dot__9/lib-dynload/_curses.cpython-39-darwin.so': bytearray(b'`\x14\n\xf8'
+                                                                       b'I\x8fN\xfc'
+                                                                       b';\x9d\x07_'
+                                                                       b'\x8d&\x97\x87'
+                                                                       b'"%\xab\xf5'),
+ 'python3__dot__9/lib-dynload/_datetime.cpython-39-darwin.so': bytearray(b'\xf2\x19\x81\x05'
+                                                                         b'\xf3\xc2\xc3|'
+                                                                         b'\xc9\xfcK\xf8'
+                                                                         b'u\x17\n%'
+                                                                         b'8\x19\xa2\xa0'),
+ 'python3__dot__9/lib-dynload/_decimal.cpython-39-darwin.so': bytearray(b'\xcb\x97A\x87'
+                                                                        b'0m\xb6\x88'
+                                                                        b'\xf1\xa4\xcc8'
+                                                                        b'\xe0\xe9\x95\xa0'
+                                                                        b'\xa6j\x9f\xbb'),
+ 'python3__dot__9/lib-dynload/_elementtree.cpython-39-darwin.so': bytearray(b'\x15\x97\x81\x12'
+                                                                            b'$[Eo'
+                                                                            b'\xff\xaa\x10"'
+                                                                            b'\x07\xbe\xae2'
+                                                                            b'\xa4\x8d\x01\xf1'),
+ 'python3__dot__9/lib-dynload/_hashlib.cpython-39-darwin.so': bytearray(b'\xd5\x8c\xe21'
+                                                                        b'=\xd3Yk'
+                                                                        b'\xeawm\xdd'
+                                                                        b'js\x95A'
+                                                                        b'\x1chZ\x92'),
+ 'python3__dot__9/lib-dynload/_heapq.cpython-39-darwin.so': bytearray(b'2\xb7Jp'
+                                                                      b'p\xfcZ\xde'
+                                                                      b'\xe8|\x87W'
+                                                                      b'\x81]\x0b\x1d'
+                                                                      b'\x06\x07\xa4\xd2'),
+ 'python3__dot__9/lib-dynload/_json.cpython-39-darwin.so': bytearray(b"\xd9\xbe\xae'"
+                                                                     b'vt\x88\x08'
+                                                                     b'Nk8\xe9'
+                                                                     b'w\xcd(\x7f'
+                                                                     b'\xfa\x1d\x19\x05'),
+ 'python3__dot__9/lib-dynload/_lzma.cpython-39-darwin.so': bytearray(b'\xfc\xf9\xdd6'
+                                                                     b'\xa0\xc3\xc0\xbb'
+                                                                     b'\xa8F\x06-'
+                                                                     b'\x93\xfd\x9d\xd2'
+                                                                     b'\x1e\xfd\\\x19'),
+ 'python3__dot__9/lib-dynload/_md5.cpython-39-darwin.so': bytearray(b'\x9f\xc2\n\xf5'
+                                                                    b'\xe7"\x84\x9e'
+                                                                    b'\x92\xfcv\r'
+                                                                    b'\x9d\xb2!!'
+                                                                    b'\x99F\xfb\xdc'),
+ 'python3__dot__9/lib-dynload/_multibytecodec.cpython-39-darwin.so': bytearray(b'\xbc\x9f&\xac'
+                                                                               b'\r\x96\xc3\xf1'
+                                                                               b'K\xc9\xbc\x8c'
+                                                                               b'\nI\xe5\x96'
+                                                                               b'e\x88\n\x02'),
+ 'python3__dot__9/lib-dynload/_multiprocessing.cpython-39-darwin.so': bytearray(b'\xbb\xd0\x06\x1d'
+                                                                                b'\xe2m{\x8a'
+                                                                                b'b\x82v\x0b'
+                                                                                b'^\xd0\xe8Z'
+                                                                                b'\xcf\x07=\x02'),
+ 'python3__dot__9/lib-dynload/_opcode.cpython-39-darwin.so': bytearray(b'\xbb\xd5Id'
+                                                                       b'x\xfb\x02\xb6'
+                                                                       b'$\x99\x82\xdb'
+                                                                       b'\xacX\x00-'
+                                                                       b'@\x13p\xf4'),
+ 'python3__dot__9/lib-dynload/_pickle.cpython-39-darwin.so': bytearray(b'b\xd4f7'
+                                                                       b'\xf5\x8b\x07\xf9'
+                                                                       b'\x0f\x93\x03,'
+                                                                       b'-\xbe\x8ff'
+                                                                       b'"C3\xe4'),
+ 'python3__dot__9/lib-dynload/_posixshmem.cpython-39-darwin.so': bytearray(b'c\x9f\x86]'
+                                                                           b'?\xa0\xf7='
+                                                                           b'J\x8c(\x8c'
+                                                                           b'\x84\xef\xa2\xae'
+                                                                           b'=\xb0\xc3\x91'),
+ 'python3__dot__9/lib-dynload/_posixsubprocess.cpython-39-darwin.so': bytearray(b'MBk+'
+                                                                                b'\x1d\x93!\xaf'
+                                                                                b'\x8f\xb4\xd5B'
+                                                                                b'/0\x9bz'
+                                                                                b'\xb7<\x96\xf3'),
+ 'python3__dot__9/lib-dynload/_queue.cpython-39-darwin.so': bytearray(b'Bt\xbc\xd2'
+                                                                      b'\xfb\xb1\xf3\x89'
+                                                                      b'9\xda"4'
+                                                                      b'\x90k\xf0\xdb'
+                                                                      b':0\xb5g'),
+ 'python3__dot__9/lib-dynload/_random.cpython-39-darwin.so': bytearray(b'\xb4<CQ'
+                                                                       b'\xea\xc6\xb0\xa9'
+                                                                       b'W\x9e\xc7\x88'
+                                                                       b'-\xf8\xe1\x95'
+                                                                       b'\x8a\x12\xd9\xe0'),
+ 'python3__dot__9/lib-dynload/_scproxy.cpython-39-darwin.so': bytearray(b'X\xc8"M'
+                                                                        b'\x9d\x88\xbf\x89'
+                                                                        b'\xa6$\x16\x05'
+                                                                        b'8\xaf\x04\xde'
+                                                                        b'}\xa6F\xe4'),
+ 'python3__dot__9/lib-dynload/_sha1.cpython-39-darwin.so': bytearray(b'"\xfe\xe6m'
+                                                                     b'v\x17\x9a\xf4'
+                                                                     b'\xaf\xa3)\x91'
+                                                                     b'3\x01/q'
+                                                                     b'MJK\x01'),
+ 'python3__dot__9/lib-dynload/_sha256.cpython-39-darwin.so': bytearray(b'.=\x88\xba'
+                                                                       b'\xdf\x90\x84\x17'
+                                                                       b'h\x03\x00\x8e'
+                                                                       b'\xc2\xaan\xa6'
+                                                                       b'\x02\xf33\xf5'),
+ 'python3__dot__9/lib-dynload/_sha3.cpython-39-darwin.so': bytearray(b'\xda\xfaW\xd0'
+                                                                     b'L\x89\x96\xbd'
+                                                                     b'}\xf6no'
+                                                                     b'|\xe7\xf9\xde'
+                                                                     b'-a\xbe\x13'),
+ 'python3__dot__9/lib-dynload/_sha512.cpython-39-darwin.so': bytearray(b'\xe7\xac\xe1b'
+                                                                       b'KRh\xb9'
+                                                                       b'+\x81\x1c\x08'
+                                                                       b'\xcf\xf8\xbc\xca'
+                                                                       b'P\xa9\xc97'),
+ 'python3__dot__9/lib-dynload/_socket.cpython-39-darwin.so': bytearray(b'\xdf`\x07\x84'
+                                                                       b'[SU\xe6'
+                                                                       b'\xb7o\xdc='
+                                                                       b'\x1fM\x95\xab'
+                                                                       b'\xab\x8aE\xc6'),
+ 'python3__dot__9/lib-dynload/_sqlite3.cpython-39-darwin.so': bytearray(b'\x06\xb5-\xe3'
+                                                                        b'\x8d]\xb6\x1b'
+                                                                        b'\x0c\x12Y.'
+                                                                        b'\xc5\x8d\xd6!'
+                                                                        b'\t\x93\xf4\x98'),
+ 'python3__dot__9/lib-dynload/_ssl.cpython-39-darwin.so': bytearray(b'\x18\xc1\x1f\xa9'
+                                                                    b'v\xd3\x18\x17'
+                                                                    b'UK\x14\xc8'
+                                                                    b'\xe5\x88s\xa3'
+                                                                    b'\xf0<\xe4?'),
+ 'python3__dot__9/lib-dynload/_statistics.cpython-39-darwin.so': bytearray(b'\x1d\xe4\xf3\x99'
+                                                                           b'\xe47t\xe3'
+                                                                           b'\xa9\xbbT~'
+                                                                           b'^\x1e\x96_'
+                                                                           b'\x95\x07\x82\xe2'),
+ 'python3__dot__9/lib-dynload/_struct.cpython-39-darwin.so': bytearray(b'\x91)\xdb\xec'
+                                                                       b'\x0c/\xb9\xbf'
+                                                                       b'(\x7f\xd4\x10'
+                                                                       b'\x10\x17\xf0Z'
+                                                                       b'@\x9a\xeb\xfa'),
+ 'python3__dot__9/lib-dynload/_uuid.cpython-39-darwin.so': bytearray(b'p\xde\x88\xfb'
+                                                                     b'\xf2\x0fc\x13'
+                                                                     b'(\r\xa5\xdb'
+                                                                     b'\x12\x15O\xb0'
+                                                                     b'\xea\xe7j\xf9'),
+ 'python3__dot__9/lib-dynload/_zoneinfo.cpython-39-darwin.so': bytearray(b'\x8e\xf7\xcb\xf9'
+                                                                         b'\xb0I4\xa7'
+                                                                         b'\x8c\x93\x0c\xbc'
+                                                                         b'`LA\xbd'
+                                                                         b'F\xb4[E'),
+ 'python3__dot__9/lib-dynload/array.cpython-39-darwin.so': bytearray(b'\x8f\x8b\xf0.'
+                                                                     b'\xf4\x02\xdc\xb1'
+                                                                     b'\x05-2\xe9'
+                                                                     b'\xe7B\x9c\x87'
+                                                                     b'#\x8a\xc0\x9d'),
+ 'python3__dot__9/lib-dynload/binascii.cpython-39-darwin.so': bytearray(b'}\xd9\x02B'
+                                                                        b'*;\x00\x11'
+                                                                        b'\xd0\x0c\xb1\x9e'
+                                                                        b'u.5\xb0'
+                                                                        b'\x06:\xdd$'),
+ 'python3__dot__9/lib-dynload/grp.cpython-39-darwin.so': bytearray(b'W\xd1\x03\x08'
+                                                                   b'\xc7\xfd\xdc\xc5'
+                                                                   b'g\x9e\x11\xbf'
+                                                                   b'\x0fr\xec\xef'
+                                                                   b'\xc8+\xb8\xe3'),
+ 'python3__dot__9/lib-dynload/math.cpython-39-darwin.so': bytearray(b'\x1e\xb7\x97\x1d'
+                                                                    b'\x88o\x89m'
+                                                                    b'\xc0\x00A\xd1'
+                                                                    b'?Z\xf2X'
+                                                                    b'\xdf\x9958'),
+ 'python3__dot__9/lib-dynload/mmap.cpython-39-darwin.so': bytearray(b'\xd4\xfekp'
+                                                                    b's\xac}\x0c'
+                                                                    b'\xa4\xba\xf1B'
+                                                                    b'\xc4\xefy1'
+                                                                    b'k\x86\x81\x0f'),
+ 'python3__dot__9/lib-dynload/pyexpat.cpython-39-darwin.so': bytearray(b'A"5H'
+                                                                       b'\x98I\x1e\xc5'
+                                                                       b'\x98\xfb\x02='
+                                                                       b'\x0f\x1eC\xb3'
+                                                                       b'\xea\x81\x0b\x99'),
+ 'python3__dot__9/lib-dynload/readline.cpython-39-darwin.so': bytearray(b'"\xd6\xff8'
+                                                                        b'\x8f\xafB\xd3'
+                                                                        b'QH2\xfc'
+                                                                        b'n\x9d\r8'
+                                                                        b'/\x7f\xfd\x1a'),
+ 'python3__dot__9/lib-dynload/resource.cpython-39-darwin.so': bytearray(b'\xb4\x89\xa6\x05'
+                                                                        b'\xca\xf6\x9e\xaa'
+                                                                        b'v3\xf1\xab'
+                                                                        b'\xd1d\x9c\x89'
+                                                                        b'\x91\xe0\xab\xcc'),
+ 'python3__dot__9/lib-dynload/select.cpython-39-darwin.so': bytearray(b'>\x93\xc2\xb2'
+                                                                      b'k^\x86V'
+                                                                      b'F\xdc\xffq'
+                                                                      b'\x01\x1b\xc7\xb6'
+                                                                      b'\xbc\x95\xc6\x80'),
+ 'python3__dot__9/lib-dynload/syslog.cpython-39-darwin.so': bytearray(b'\xaa\xfaqi'
+                                                                      b'0\xe2\xa9c'
+                                                                      b'V:\xee\xe9'
+                                                                      b'o\xb7\xdd\x9a'
+                                                                      b'\xcc\xc7\x1c\xb3'),
+ 'python3__dot__9/lib-dynload/termios.cpython-39-darwin.so': bytearray(b'E\x1cHU'
+                                                                       b'\x01\xd9[\xc1'
+                                                                       b'\x10\xb9\x14<'
+                                                                       b'\x19\nt\x1d'
+                                                                       b'\xc5?\xc8\xf6'),
+ 'python3__dot__9/lib-dynload/unicodedata.cpython-39-darwin.so': bytearray(b'\xf0W9\x0e'
+                                                                           b'o.\xaf\xd0'
+                                                                           b'\xf1#\xad '
+                                                                           b'F~z\t'
+                                                                           b'\xd0s)\xa1'),
+ 'python3__dot__9/lib-dynload/zlib.cpython-39-darwin.so': bytearray(b'd\xe9\xa4\xc3'
+                                                                    b's\xfc\xadi'
+                                                                    b';\xd72X'
+                                                                    b'\xd1z\xd3n'
+                                                                    b'\xb4,\x9bi'),
+ 'sqlalchemy/cyextension/collections.cpython-39-darwin.so': bytearray(b'\x81\xcf\x8a\xb3'
+                                                                      b'\xbeU\x8a\xde'
+                                                                      b'\ne%\x88'
+                                                                      b'\x8bLt+'
+                                                                      b'#C\xeaW'),
+ 'sqlalchemy/cyextension/immutabledict.cpython-39-darwin.so': bytearray(b'\xc7}#\x81'
+                                                                        b'\xe3)Z\xbd'
+                                                                        b'/\x90\xeb\x05'
+                                                                        b'\x9dq\x08\xe0'
+                                                                        b'\x197\x9dE'),
+ 'sqlalchemy/cyextension/processors.cpython-39-darwin.so': bytearray(b'\x80P\xf4<'
+                                                                     b'8\xf5\xc7\xf4'
+                                                                     b'X\x9e\xe3X'
+                                                                     b'\xdc\x03\xe8\xf5'
+                                                                     b'\xc3"\xe2\xc4'),
+ 'sqlalchemy/cyextension/resultproxy.cpython-39-darwin.so': bytearray(b'8@\xf6T'
+                                                                      b'\x103[\xdc'
+                                                                      b'9\x9c@\xa4'
+                                                                      b'\xa7\xbb\x85N'
+                                                                      b'\xe1\x82v\xea'),
+ 'sqlalchemy/cyextension/util.cpython-39-darwin.so': bytearray(b'\x8b\x85F\xe3'
+                                                               b'(\xdf\xe4j'
+                                                               b'\x10\xcc\x88\xfe'
+                                                               b'\xcf\xddY\xab'
+                                                               b'T\xd1K\x1d'),
+ 'yaml/_yaml.cpython-39-darwin.so': bytearray(b'\x93\xae\xf9\xb6\n\x02\x84\xce'
+                                              b'/l\xa6\x9b\xbaF\t\xbb'
+                                              b'\xfc\xcb\x1bL'),
+ 'yarl/_quoting_c.cpython-39-darwin.so': bytearray(b'\xf8\xdc\xd34/mz\xf2'
+                                                   b'\x05\xb1c\x02\xea\x8c?z'
+                                                   b'A\xb9\xc3\xca')}

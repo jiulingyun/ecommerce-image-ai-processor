@@ -95,7 +95,7 @@ exe = EXE(
     console=False,  # 不显示控制台窗口
     disable_windowed_traceback=False,
     argv_emulation=False,
-    target_arch=None,
+    target_arch='arm64',
     codesign_identity=None,
     entitlements_file=None,
     icon=str(icon_path) if icon_path else None,
@@ -123,6 +123,7 @@ if sys.platform == 'darwin':
         info_plist={
             'NSPrincipalClass': 'NSApplication',
             'NSHighResolutionCapable': 'True',
+            'LSMinimumSystemVersion': '11.0',
             'CFBundleShortVersionString': VERSION,
             'CFBundleVersion': VERSION,
         },

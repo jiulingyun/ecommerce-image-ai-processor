@@ -393,6 +393,45 @@ class TestSlots:
         # 避免夹具销毁时触发退出确认弹窗
         main_window.set_processing_state(False)
 
+    def test_kill_process_and_exit_prefers_graceful_shutdown(self, main_window):
+        """测试优先走优雅退出，不直接硬退出进程."""
+        app_mock = MagicMock()
+        app_mock.aboutToQuit = MagicMock()
+
+        with patch.object(main_window._queue_controller, "stop", return_value=True) as mock_stop:
+            with patch("src.ui.main_window.QApplication.instance", return_value=app_mock):
+                with patch("src.ui.main_window.logging.shutdown") as mock_shutdown:
+                    with patch("src.ui.main_window.os._exit") as mock_exit:
+                        main_window._kill_process_and_exit(2)
+
+        mock_stop.assert_called_once_with(timeout_ms=3000)
+        app_mock.exit.assert_called_once_with(2)
+        app_mock.quit.assert_called_once()
+        mock_shutdown.assert_called_once()
+        mock_exit.assert_not_called()
+
+    def test_kill_process_and_exit_schedules_fallback_when_stop_times_out(self, main_window):
+        """测试后台未停下时安排延迟兜底，而不是立即硬退出."""
+        app_mock = MagicMock()
+        app_mock.aboutToQuit = MagicMock()
+        timer_mock = MagicMock()
+
+        with patch.object(main_window._queue_controller, "stop", return_value=False) as mock_stop:
+            with patch("src.ui.main_window.QApplication.instance", return_value=app_mock):
+                with patch("src.ui.main_window.threading.Timer", return_value=timer_mock) as mock_timer:
+                    with patch("src.ui.main_window.logging.shutdown") as mock_shutdown:
+                        with patch("src.ui.main_window.os._exit") as mock_exit:
+                            main_window._kill_process_and_exit(3)
+
+        mock_stop.assert_called_once_with(timeout_ms=3000)
+        mock_timer.assert_called_once()
+        timer_mock.start.assert_called_once()
+        app_mock.aboutToQuit.connect.assert_called_once_with(timer_mock.cancel)
+        app_mock.exit.assert_called_once_with(3)
+        app_mock.quit.assert_called_once()
+        mock_shutdown.assert_called_once()
+        mock_exit.assert_not_called()
+
     def test_on_start_process_block_when_ai_unavailable(self, main_window):
         """测试 AI 不可用时阻止需要 AI 的任务启动."""
         task = ImageTask(image_paths=["a.jpg", "b.jpg"])

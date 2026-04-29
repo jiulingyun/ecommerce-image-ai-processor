@@ -143,7 +143,14 @@ class QueueWorker(QObject):
             self.error_occurred.emit(e)
         finally:
             if self._loop:
+                try:
+                    self._loop.run_until_complete(self._shutdown_async_resources())
+                    self._loop.run_until_complete(self._loop.shutdown_asyncgens())
+                    self._loop.run_until_complete(self._loop.shutdown_default_executor())
+                except Exception as e:
+                    logger.warning(f"关闭事件循环资源失败: {e}")
                 self._loop.close()
+                asyncio.set_event_loop(None)
                 self._loop = None
             self._is_running = False
             logger.debug(f"QueueWorker 已停止，_is_running={self._is_running}")
@@ -183,6 +190,16 @@ class QueueWorker(QObject):
             on_task_complete=on_task_complete,
             on_queue_complete=on_queue_complete,
         )
+
+    async def _shutdown_async_resources(self) -> None:
+        """关闭与当前事件循环绑定的异步资源."""
+        if self._processor is None:
+            return
+
+        try:
+            await self._processor.image_service.close()
+        except Exception as e:
+            logger.warning(f"关闭图片处理服务失败: {e}")
 
     @pyqtSlot()
     def pause_processing(self) -> None:
@@ -289,6 +306,11 @@ class QueueController(QObject):
         self._processing_tasks: set = set()  # 跟踪已开始处理的任务
         self._concurrent_limit: int = 3  # 默认并发数
 
+    def _clear_runtime_refs(self) -> None:
+        """清理当前工作线程引用."""
+        self._worker = None
+        self._thread = None
+
     @property
     def is_running(self) -> bool:
         """是否正在运行."""
@@ -382,19 +404,29 @@ class QueueController(QObject):
         if self._worker:
             self._worker.cancel_processing()
 
-    def stop(self) -> None:
-        """停止处理."""
+    def stop(self, timeout_ms: int = 5000) -> bool:
+        """停止处理并等待后台线程优雅退出.
+
+        Returns:
+            是否在超时前正常退出
+        """
         if self._worker:
             self._worker.cancel_processing()
-        if self._thread:
-            self._thread.quit()
-            self._thread.wait(5000)  # 等待最多5秒
-            if self._thread.isRunning():
-                logger.warning("线程未在5秒内停止，强制终止")
-                self._thread.terminate()
-                self._thread.wait()
-        self._worker = None
-        self._thread = None
+        if not self._thread:
+            self._clear_runtime_refs()
+            return True
+
+        self._thread.quit()
+        stopped = self._thread.wait(timeout_ms)
+        if not stopped:
+            logger.error(
+                "线程未在 %sms 内停止，保留运行中的线程引用，调用方可决定后续兜底策略",
+                timeout_ms,
+            )
+            return False
+
+        self._clear_runtime_refs()
+        return True
 
     def _on_task_progress(self, task_id: str, progress: int, message: str) -> None:
         """任务进度回调."""
@@ -429,9 +461,14 @@ class QueueController(QObject):
         if self._thread:
             self._thread.quit()
             self._thread.wait(1000)
+        self._clear_runtime_refs()
 
     def _on_error(self, exception: Exception) -> None:
         """错误回调."""
+        if self._thread:
+            self._thread.quit()
+            self._thread.wait(1000)
+        self._clear_runtime_refs()
         self.error_occurred.emit(exception)
 
 

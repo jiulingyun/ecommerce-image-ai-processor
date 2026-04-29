@@ -199,7 +199,7 @@ if git push origin "$TAG_NAME"; then
     echo ""
     print_info "GitHub Actions 将自动构建以下平台的安装包："
     echo "  • Windows (x64)"
-    echo "  • macOS (Intel & Apple Silicon)"
+    echo "  • macOS (Apple Silicon)"
     echo "  • Linux (x64)"
     echo ""
     print_info "构建完成后，Release 将自动发布到："

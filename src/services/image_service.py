@@ -133,6 +133,15 @@ class ImageService:
         """设置 AI 服务实例."""
         self._ai_service = value
 
+    async def close(self) -> None:
+        """关闭底层资源.
+
+        仅在当前服务持有 AI 服务实例时执行关闭，避免无意创建全局单例。
+        """
+        if self._ai_service is not None:
+            await self._ai_service.close()
+            self._ai_service = None
+
     async def remove_background(
         self,
         input_path: str | Path,
